@@ -49,8 +49,41 @@ public class Client extends JFrame {
 		setVisible(true);
 	}
 
-	private void getFile(String s) {
-		// TODO: 14.06.2021  
+	private void getFile(String filename) {
+		try {
+			out.writeUTF("download");
+			out.writeUTF(filename);
+			long size = in.readLong();
+			if (size == 0) {
+				System.out.println("File not found");
+				throw new FileNotFoundException();
+			}
+			File file = new File("client" + File.separator + filename);
+			if (!file.exists()) {
+				file.createNewFile();
+			}
+
+			FileOutputStream fos = new FileOutputStream(file);
+
+			byte[] buffer = new byte[8 * 1024];
+
+			for (int i = 0; i < (size + (buffer.length - 1)) / (buffer.length); i++) {
+				int read = in.read(buffer);
+				fos.write(buffer, 0, read);
+			}
+			fos.close();
+			//проверяем соответствие размера файла переданому с сервера
+			if (file.length() == size) {
+				System.out.println("download status: OK");
+			} else {
+				System.out.println("ERROR! File spoiled!");
+			}
+		}catch (FileNotFoundException e){
+			e.printStackTrace();
+		}catch (IOException e) {
+            e.printStackTrace();
+        }
+        // TODO: 14.06.2021
 	}
 
 	private void sendFile(String filename) {
@@ -74,7 +107,7 @@ public class Client extends JFrame {
 			}
 
 			out.flush();
-
+			fis.close();
 			String status = in.readUTF();
 			System.out.println("sending status: " + status);
 
