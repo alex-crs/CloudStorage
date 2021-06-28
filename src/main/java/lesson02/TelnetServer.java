@@ -72,7 +72,7 @@ public class TelnetServer {
         channel.write(ByteBuffer.wrap(("Welcome to my first Telnet server.\r\nPlease enter your command. " +
                 "for help enter --help\r\n\n").getBytes(StandardCharsets.UTF_8)));
         root = "server";
-        currentPath.delete(0,currentPath.length());
+        currentPath.delete(0, currentPath.length());
         currentPath.append(root);
         firstRun = true;
     }
@@ -213,7 +213,7 @@ public class TelnetServer {
 
     private void readDoc(String token, Selector selector, SocketAddress client) throws IOException {
         try {
-            sendMessage(Files.readString((Path.of(currentPath + File.separator + token))) + "\r\n", selector, client);
+            sendMessage(Files.readString((Path.of(currentPath + File.separator + clearEmptySymbolsAfterName(token)))) + "\r\n", selector, client);
         } catch (NoSuchFileException e) {
             sendMessage("Error: File not found!\r\n", selector, client);
         } catch (AccessDeniedException e) {
@@ -308,7 +308,7 @@ public class TelnetServer {
 
     private void touchFile(String name, Selector selector, SocketAddress client) throws IOException {
         try {
-            Files.createFile(Path.of(currentPath + File.separator + name));
+            Files.createFile(Path.of(currentPath + File.separator + clearEmptySymbolsAfterName(name)));
         } catch (FileAlreadyExistsException e) {
             sendMessage("Error: File already exist!\r\n", selector, client);
         }
@@ -316,10 +316,22 @@ public class TelnetServer {
 
     private void makeDir(String name, Selector selector, SocketAddress client) throws IOException {
         try {
-            Files.createDirectory(Path.of(currentPath + File.separator + name));
+            Files.createDirectory(Path.of(currentPath + File.separator + clearEmptySymbolsAfterName(name)));
         } catch (FileAlreadyExistsException e) {
             sendMessage("Error: Directory already exist!\r\n", selector, client);
         }
+    }
+
+    //удаляет пробелы в конце пути
+    private String clearEmptySymbolsAfterName(String name) {
+        StringBuilder string = new StringBuilder().append(name);
+        while (true) {
+            if (!string.toString().endsWith(" ")) {
+                break;
+            }
+            string.deleteCharAt(string.length() - 1);
+        }
+        return string.toString();
     }
 
     private void removeFileOrDirectory(String name) throws IOException {
