@@ -161,9 +161,9 @@ public class TelnetServer {
                                 queryCache = tokens;
                                 throw new DelAnswer();
                             } else if (queryAnswer) {
-                                removeFileOrDirectory(tokens[1]);
                                 queryCache = null;
                                 queryAnswer = false;
+                                removeFileOrDirectory(tokens[1]);
                             } else {
                                 queryCache = null;
                                 queryAnswer = false;
@@ -177,13 +177,13 @@ public class TelnetServer {
                             queryCache = tokens;
                             throw new CopyAnswer();
                         } else if (queryAnswer) {
+                            queryCache = null;
+                            queryAnswer = false;
                             copy(tokens[1], selector, client, StandardCopyOption.REPLACE_EXISTING);
-                            queryCache = null;
-                            queryAnswer = false;
                         } else {
-                            copy(tokens[1], selector, client, StandardCopyOption.COPY_ATTRIBUTES);
                             queryCache = null;
                             queryAnswer = false;
+                            copy(tokens[1], selector, client, StandardCopyOption.COPY_ATTRIBUTES);
                         }
                         break;
                     case ("cname"):
