@@ -224,28 +224,26 @@ public class TelnetServer {
     }
 
     private void copy(String source, Selector selector, SocketAddress client, CopyOption copyOption) throws IOException {
+        try {  //стащил с просторов интернета... и адаптировал под себя
         StringBuilder validSourcePath = new StringBuilder(); //определяем путь копируемого файла (даже если путь с пробелами)
         String[] paths = source.split(" ");
-        StringBuilder path = new StringBuilder();
-        for (String p : paths) {
-            path.append(p);
-            if (Files.exists(Path.of(currentPath + File.separator + path.toString()))) {
-                validSourcePath.delete(0, validSourcePath.length());
-                validSourcePath.append(path);
+        if (paths.length > 2) {
+            paths = source.split("\" \"");
+            if (paths.length > 2 || paths.length == 1) {
+                throw new FileNotFoundException();
             }
-            path.append(" ");
         }
-        //последний валидный путь и есть единственный действующий путь (если он введен правильно)
+        validSourcePath.append(paths[0].replace("\"", ""));
+
         //сегментируем полученный путь
         String[] dirStructure = validSourcePath.toString().split(Matcher.quoteReplacement(File.separator));
         //забираем имя файла из пути
         String filename = dirStructure[dirStructure.length - 1];
-        StringBuilder targetPath = new StringBuilder().append(source);
-        targetPath.delete(0, validSourcePath.length() + 1);
+        //получаем путь куда копировать
+        String targetPath = paths[1].replace("\"", "");
 
-        Path fromPath = Path.of(currentPath + File.separator + validSourcePath);
+        Path fromPath = Path.of(currentPath + File.separator + validSourcePath.toString());
         Path toPath = Path.of(currentPath.toString() + File.separator + targetPath + File.separator + filename);
-        try {  //стащил с просторов интернета... и адаптировал под себя
             Files.walkFileTree(fromPath, new SimpleFileVisitor<Path>() {
                 @Override
                 public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
