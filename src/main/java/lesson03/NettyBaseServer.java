@@ -9,12 +9,14 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.string.StringDecoder;
 import io.netty.handler.codec.string.StringEncoder;
-import lesson03.handlers.ChatMessageHandler;
+import lesson03.handlers.NettyTelnetServer;
 
 public class NettyBaseServer {
+    private static EventLoopGroup auth;
+    private static EventLoopGroup worker;
     public NettyBaseServer() {
-        EventLoopGroup auth = new NioEventLoopGroup(1); // light
-        EventLoopGroup worker = new NioEventLoopGroup();
+        auth = new NioEventLoopGroup(1); // light
+        worker = new NioEventLoopGroup();
 
         try {
             ServerBootstrap bootstrap = new ServerBootstrap();
@@ -27,11 +29,11 @@ public class NettyBaseServer {
                             channel.pipeline().addLast(
                                     new StringDecoder(), // in - 1
                                     new StringEncoder(), // out - 1
-                                    new ChatMessageHandler() // in - 2
+                                    new NettyTelnetServer() // in - 2
                             );
                         }
                     });
-            ChannelFuture future = bootstrap.bind(5000).sync();
+            ChannelFuture future = bootstrap.bind(5679).sync();
             System.out.println("Server started");
             future.channel().closeFuture().sync();
             System.out.println("Server finished");
@@ -41,6 +43,10 @@ public class NettyBaseServer {
             auth.shutdownGracefully();
             worker.shutdownGracefully();
         }
+    }
+    public static void shutdownServer(){
+        auth.shutdownGracefully();
+        worker.shutdownGracefully();
     }
 
     public static void main(String[] args) {

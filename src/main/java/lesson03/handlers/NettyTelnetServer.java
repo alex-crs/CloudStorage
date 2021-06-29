@@ -1,0 +1,318 @@
+package lesson03.handlers;
+
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.SimpleChannelInboundHandler;
+import lesson03.NettyBaseServer;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.net.SocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.charset.MalformedInputException;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.regex.Matcher;
+
+public class NettyTelnetServer extends SimpleChannelInboundHandler<String> {
+    private static final String LS_COMMAND = "ls (path) - view all files from current directory;\r\n" +
+            "    ~ - move to root directory;\r\n" +
+            "   .. - move to previous directory;\r\n";
+    private static final String MKDIR_COMMAND = "mkdir (path) - view all files from current directory;\r\n";
+    private static final String TOUCH_COMMAND = "touch (filename) - create file;\r\n";
+    private static final String RM_COMMAND = "rm (filename/directory) - delete file/directory;\r\n";
+    private static final String COPY_COMMAND = "copy (source) (target) - copy file/directory;\r\n" +
+            "   - to copy directory\\files with spaces, use \"\" for path;\r\n" +
+            "   - example: copy \"dir 1\\name\" \"dir 2\"; \r\n";
+    private static final String CAT_COMMAND = "cat (filename) - read file;\r\n";
+    private static final String CNAME_COMMAND = "cname (name) - change nickname;\r\n";
+    private static final String SHUTDOWN_COMMAND = "shutdown - for close connection and server shutdown;\r\n";
+
+    private final ByteBuffer buffer = ByteBuffer.allocate(512);
+    private String root;
+    private String userName = "root";
+    private StringBuilder currentPath = new StringBuilder();
+    private boolean firstRun = true;
+    private String[] queryCache;
+    private boolean queryAnswer = false;
+    private Map<SocketAddress, String> clients = new HashMap<>();
+
+
+    @Override
+    public void channelActive(ChannelHandlerContext ctx) throws Exception {
+        System.out.println("client connected: " + ctx.channel());
+        ctx.writeAndFlush("Hello user!\r\n");
+        ctx.writeAndFlush("Welcome to my second Telnet server from NETTY.\r\nPlease enter your command. " +
+                "for help enter --help\r\n\n");
+        root = "server";
+        userName = "root";
+        currentPath.delete(0, currentPath.length());
+        currentPath.append(root);
+        firstRun = true;
+    }
+
+    @Override
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        System.out.println("client disconnected: " + ctx.channel());
+    }
+
+    @Override
+    protected void channelRead0(ChannelHandlerContext ctx, String msg) throws Exception {
+        try {
+            String command = msg
+                    .replace("\n", "")
+                    .replace("\r", "");
+            String[] tokens = command.split(" ", 2);
+            if ("yes".toLowerCase().equals(tokens[0]) || "y".toLowerCase().equals(tokens[0])) {
+                queryAnswer = true;
+                tokens = queryCache;
+            } else if ("no".toLowerCase().equals(tokens[0]) || "n".toLowerCase().equals(tokens[0])) {
+                tokens = queryCache;
+            }
+            switch (tokens[0]) {
+                case ("--help"):
+                    sendMessage(LS_COMMAND, ctx);
+                    sendMessage(MKDIR_COMMAND, ctx);
+                    sendMessage(TOUCH_COMMAND, ctx);
+                    sendMessage(RM_COMMAND, ctx);
+                    sendMessage(COPY_COMMAND, ctx);
+                    sendMessage(CAT_COMMAND, ctx);
+                    sendMessage(CNAME_COMMAND, ctx);
+                    sendMessage(SHUTDOWN_COMMAND, ctx);
+                    break;
+                case ("ls"):
+                    sendMessage(getFilesList().concat("\r\n"), ctx);
+                    break;
+                case ("shutdown"):
+                    NettyBaseServer.shutdownServer();
+                    break;
+                case ("cd"):
+                    if (tokens[1].equals("..")) {
+                        changeDirectory(tokens[1], ctx, 'u');
+                    } else if (tokens[1].equals("~")) {
+                        currentPath.replace(0, currentPath.length(), root);
+                    } else {
+                        changeDirectory(tokens[1], ctx, 'd');
+                    }
+                    break;
+                case ("touch"):
+                    touchFile(tokens[1], ctx);
+                    break;
+                case ("mkdir"):
+                    makeDir(tokens[1], ctx);
+                    break;
+                case ("rm"):
+                    try {
+                        if (!Files.exists(Path.of(currentPath + File.separator + tokens[1]))) {
+                            throw new FileNotFoundException();
+                        }
+                        if (queryCache == null) {
+                            queryCache = tokens;
+                            throw new DelAnswer();
+                        } else if (queryAnswer) {
+                            queryCache = null;
+                            queryAnswer = false;
+                            removeFileOrDirectory(tokens[1]);
+                        } else {
+                            queryCache = null;
+                            queryAnswer = false;
+                        }
+                    } catch (FileNotFoundException e) {
+                        sendMessage("Error: File or directory not found!\r\n", ctx);
+                    }
+                    break;
+                case ("copy"): //у меня в Bush работает именно команда cp, а не copy...
+                    if (queryCache == null) {
+                        queryCache = tokens;
+                        throw new CopyAnswer();
+                    } else if (queryAnswer) {
+                        queryCache = null;
+                        queryAnswer = false;
+                        copy(tokens[1], ctx, StandardCopyOption.REPLACE_EXISTING);
+                    } else {
+                        queryCache = null;
+                        queryAnswer = false;
+                        copy(tokens[1], ctx, StandardCopyOption.COPY_ATTRIBUTES);
+                    }
+                    break;
+                case ("cname"):
+                    userName = tokens[1];
+                    sendMessage("Имя пользователя изменено на: " + userName + "\r\n", ctx);
+                    break;
+                case ("cat"):
+                    readDoc(tokens[1], ctx);
+                    break;
+                default:
+                    if (!firstRun) sendMessage(command + ": command not found\r\n", ctx);
+                    queryCache = null;
+                    queryAnswer = false;
+                    break;
+            }
+            firstRun = false;
+            sendMessage("\r\n" + userName + "@"
+                    + ctx.channel().localAddress().toString().replace("/", "")
+                    + " current dir:" + currentPath.toString() + "\r\n" + "$ ", ctx);
+        } catch (DelAnswer answer) {
+            sendMessage("Are you sure? (yes/no): ", ctx);
+        } catch (CopyAnswer answer) {
+            sendMessage("Overwrite exiting files? (yes/no): ", ctx);
+        }
+    }
+
+    private void readDoc(String token, ChannelHandlerContext ctx) throws IOException {
+        try {
+            sendMessage(Files.readString((Path.of(currentPath + File.separator
+                    + clearEmptySymbolsAfterName(token)))) + "\r\n", ctx);
+        } catch (NoSuchFileException e) {
+            sendMessage("Error: File not found!\r\n", ctx);
+        } catch (AccessDeniedException e) {
+            sendMessage("Error: this is directory!\r\n", ctx);
+        } catch (MalformedInputException e) {
+            sendMessage("Error: file type not supported!\r\n", ctx);
+        }
+    }
+
+    private void copy(String source, ChannelHandlerContext ctx, CopyOption copyOption) throws IOException {
+        try {
+            StringBuilder validSourcePath = new StringBuilder();
+            String[] paths = source.split(" ");
+            if (paths.length > 2) { //если в пути пробелы, если нет то можно копировать и так
+                paths = source.split("\" \""); //пробуем использовать кавычки
+                if (paths.length > 2 || paths.length == 1) {
+                    throw new FileNotFoundException(); //если без кавычек путь и с пробелами то ошибка
+                }
+            }
+            //получаем путь и сразу чистим от ненужных кавычек
+            validSourcePath.append(paths[0].replace("\"", ""));
+            //сегментируем полученный путь для дальнейшего извлечения имени файла
+            String[] dirStructure = validSourcePath.toString().split(Matcher.quoteReplacement(File.separator));
+            //забираем имя файла из пути
+            String filename = dirStructure[dirStructure.length - 1];
+            //получаем путь куда копировать и чистим от кавычек
+            String targetPath = paths[1].replace("\"", "");
+            //пути готовы начинаем копировать
+            Path fromPath = Path.of(currentPath + File.separator + validSourcePath.toString());
+            Path toPath = Path.of(currentPath.toString() + File.separator + targetPath + File.separator + filename);
+            Files.walkFileTree(fromPath, new SimpleFileVisitor<Path>() {
+                @Override
+                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                    Path targetPath = toPath.resolve(fromPath.relativize(dir));
+                    if (!Files.exists(targetPath)) {
+                        Files.createDirectory(targetPath);
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    Files.copy(file, toPath.resolve(fromPath.relativize(file)), copyOption);
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+        } catch (FileNotFoundException e) {
+            sendMessage("Error: File or directory not found!\r\n", ctx);
+        } catch (FileAlreadyExistsException e) {
+            sendMessage("Error: File already exist!\r\n", ctx);
+        }
+    }
+    //такой метод sendMessage выглядит потрясающе:)
+    private void sendMessage(String message, ChannelHandlerContext ctx) {
+        ctx.writeAndFlush(message);
+    }
+
+    private String getFilesList() {
+        String[] servers = new File(currentPath.toString()).list();
+        return String.join("\r\n", servers);
+    }
+
+    private void changeDirectory(String path, ChannelHandlerContext ctx, char direction) {
+        try {
+            if (!path.equals("..") && !checkUniqueFileOrDirectory(path)) {
+                throw new FileNotFoundException();
+            }
+            switch (direction) {
+                case ('d'):
+                    currentPath.append(File.separator + path);
+                    String[] servers = new File(currentPath.toString()).list();
+                    break;
+                case ('u'):
+                    String[] tokens = currentPath.toString().split(Matcher.quoteReplacement(File.separator));
+                    currentPath.delete(
+                            currentPath.length() - tokens[tokens.length - 1].length() - 1,
+                            currentPath.length());
+                    break;
+            }
+        } catch (FileNotFoundException e) {
+            sendMessage("Error: File or directory not found!\r\n", ctx);
+        }
+    }
+
+    private void touchFile(String name, ChannelHandlerContext ctx) throws IOException {
+        try {
+            Files.createFile(Path.of(currentPath + File.separator + clearEmptySymbolsAfterName(name)));
+        } catch (FileAlreadyExistsException e) {
+            sendMessage("Error: File already exist!\r\n", ctx);
+        }
+    }
+
+    private void makeDir(String name, ChannelHandlerContext ctx) throws IOException {
+        try {
+            Files.createDirectory(Path.of(currentPath + File.separator + clearEmptySymbolsAfterName(name)));
+        } catch (FileAlreadyExistsException e) {
+            sendMessage("Error: Directory already exist!\r\n", ctx);
+        }
+    }
+
+    //удаляет пробелы в конце пути (полезно при создании папки с пробелами на конце, во избежании ошибки)
+    private String clearEmptySymbolsAfterName(String name) {
+        StringBuilder string = new StringBuilder().append(name);
+        while (true) {
+            if (!string.toString().endsWith(" ")) {
+                break;
+            }
+            string.deleteCharAt(string.length() - 1);
+        }
+        return string.toString();
+    }
+
+    private void removeFileOrDirectory(String name) throws IOException {
+        Files.walkFileTree(Path.of(currentPath + File.separator + name), new SimpleFileVisitor<Path>() {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                Files.delete(file);
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                Files.delete(dir);
+                return FileVisitResult.CONTINUE;
+            }
+        });
+    }
+
+    private boolean checkUniqueFileOrDirectory(String path) {
+        String checkDirectory = path;
+        String[] tokens = path.split(Matcher.quoteReplacement(File.separator));
+        if (tokens.length > 1) {
+            checkDirectory = tokens[tokens.length - 1];
+        }
+        String[] string = new File(currentPath.toString() + File.separator + path.replaceAll(checkDirectory, "")).list();
+        for (String l : string) {
+            if (l.equals(checkDirectory)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private class DelAnswer extends Exception {
+
+    }
+
+    private class CopyAnswer extends Exception {
+
+    }
+}
