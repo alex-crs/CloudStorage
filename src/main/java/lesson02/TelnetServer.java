@@ -72,6 +72,7 @@ public class TelnetServer {
         channel.write(ByteBuffer.wrap(("Welcome to my first Telnet server.\r\nPlease enter your command. " +
                 "for help enter --help\r\n\n").getBytes(StandardCharsets.UTF_8)));
         root = "server";
+        userName = "root";
         currentPath.delete(0, currentPath.length());
         currentPath.append(root);
         firstRun = true;
@@ -224,8 +225,8 @@ public class TelnetServer {
     }
 
     private void copy(String source, Selector selector, SocketAddress client, CopyOption copyOption) throws IOException {
-        try {  //стащил с просторов интернета... и адаптировал под себя
-        StringBuilder validSourcePath = new StringBuilder(); //определяем путь копируемого файла (даже если путь с пробелами)
+        try {
+        StringBuilder validSourcePath = new StringBuilder();
         String[] paths = source.split(" ");
         if (paths.length > 2) {
             paths = source.split("\" \"");
