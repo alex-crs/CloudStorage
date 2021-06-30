@@ -9,7 +9,7 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.string.StringDecoder;
 import io.netty.handler.codec.string.StringEncoder;
-import lesson03.handlers.NettyTelnetServer;
+import lesson03.handlers.TelnetHandler;
 
 public class NettyBaseServer {
     private static EventLoopGroup auth;
@@ -29,7 +29,7 @@ public class NettyBaseServer {
                             channel.pipeline().addLast(
                                     new StringDecoder(), // in - 1
                                     new StringEncoder(), // out - 1
-                                    new NettyTelnetServer() // in - 2
+                                    new TelnetHandler() // in - 2
                             );
                         }
                     });

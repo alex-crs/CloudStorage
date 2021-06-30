@@ -1,22 +1,17 @@
 package lesson03.handlers;
 
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.SimpleChannelInboundHandler;
 import lesson03.NettyBaseServer;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.SocketAddress;
-import java.nio.ByteBuffer;
 import java.nio.charset.MalformedInputException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.regex.Matcher;
 
-public class NettyTelnetServer extends SimpleChannelInboundHandler<String> {
+public class CommandHandler {
     private static final String LS_COMMAND = "ls (path) - view all files from current directory;\r\n" +
             "    ~ - move to root directory;\r\n" +
             "   .. - move to previous directory;\r\n";
@@ -30,46 +25,17 @@ public class NettyTelnetServer extends SimpleChannelInboundHandler<String> {
     private static final String CNAME_COMMAND = "cname (name) - change nickname;\r\n";
     private static final String SHUTDOWN_COMMAND = "shutdown - for close connection and server shutdown;\r\n";
 
-    private final ByteBuffer buffer = ByteBuffer.allocate(512);
-    private String root;
-    private String userName = "root";
-    private StringBuilder currentPath = new StringBuilder();
-    private boolean firstRun = true;
-    private String[] queryCache;
-    private boolean queryAnswer = false;
-    private Map<SocketAddress, String> clients = new HashMap<>();
-
-
-    @Override
-    public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        System.out.println("client connected: " + ctx.channel());
-        ctx.writeAndFlush("Hello user!\r\n");
-        ctx.writeAndFlush("Welcome to my second Telnet server from NETTY.\r\nPlease enter your command. " +
-                "for help enter --help\r\n\n");
-        root = "server";
-        userName = "root";
-        currentPath.delete(0, currentPath.length());
-        currentPath.append(root);
-        firstRun = true;
-    }
-
-    @Override
-    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        System.out.println("client disconnected: " + ctx.channel());
-    }
-
-    @Override
-    protected void channelRead0(ChannelHandlerContext ctx, String msg) throws Exception {
+    public static void query(String msg, TelnetUser client, ChannelHandlerContext ctx) throws IOException {
         try {
             String command = msg
                     .replace("\n", "")
                     .replace("\r", "");
             String[] tokens = command.split(" ", 2);
             if ("yes".toLowerCase().equals(tokens[0]) || "y".toLowerCase().equals(tokens[0])) {
-                queryAnswer = true;
-                tokens = queryCache;
+                client.setQueryAnswer(true);
+                tokens = client.getQueryCache();
             } else if ("no".toLowerCase().equals(tokens[0]) || "n".toLowerCase().equals(tokens[0])) {
-                tokens = queryCache;
+                tokens = client.getQueryCache();
             }
             switch (tokens[0]) {
                 case ("--help"):
@@ -83,77 +49,77 @@ public class NettyTelnetServer extends SimpleChannelInboundHandler<String> {
                     sendMessage(SHUTDOWN_COMMAND, ctx);
                     break;
                 case ("ls"):
-                    sendMessage(getFilesList().concat("\r\n"), ctx);
+                    sendMessage(getFilesList(client).concat("\r\n"), ctx);
                     break;
                 case ("shutdown"):
                     NettyBaseServer.shutdownServer();
                     break;
                 case ("cd"):
                     if (tokens[1].equals("..")) {
-                        changeDirectory(tokens[1], ctx, 'u');
+                        changeDirectory(tokens[1], ctx, 'u', client);
                     } else if (tokens[1].equals("~")) {
-                        currentPath.replace(0, currentPath.length(), root);
+                        client.getCurrentPath().replace(0, client.getCurrentPath().length(), client.getRoot());
                     } else {
-                        changeDirectory(tokens[1], ctx, 'd');
+                        changeDirectory(tokens[1], ctx, 'd', client);
                     }
                     break;
                 case ("touch"):
-                    touchFile(tokens[1], ctx);
+                    touchFile(tokens[1], ctx, client);
                     break;
                 case ("mkdir"):
-                    makeDir(tokens[1], ctx);
+                    makeDir(tokens[1], ctx, client);
                     break;
                 case ("rm"):
                     try {
-                        if (!Files.exists(Path.of(currentPath + File.separator + tokens[1]))) {
+                        if (!Files.exists(Path.of(client.getCurrentPath() + File.separator + tokens[1]))) {
                             throw new FileNotFoundException();
                         }
-                        if (queryCache == null) {
-                            queryCache = tokens;
+                        if (client.getQueryCache() == null) {
+                            client.setQueryCache(tokens);
                             throw new DelAnswer();
-                        } else if (queryAnswer) {
-                            queryCache = null;
-                            queryAnswer = false;
-                            removeFileOrDirectory(tokens[1]);
+                        } else if (client.isQueryAnswer()) {
+                            client.setQueryCache(null);
+                            client.setQueryAnswer(false);
+                            removeFileOrDirectory(tokens[1], client);
                         } else {
-                            queryCache = null;
-                            queryAnswer = false;
+                            client.setQueryCache(null);
+                            client.setQueryAnswer(false);
                         }
                     } catch (FileNotFoundException e) {
                         sendMessage("Error: File or directory not found!\r\n", ctx);
                     }
                     break;
-                case ("copy"): //у меня в Bush работает именно команда cp, а не copy...
-                    if (queryCache == null) {
-                        queryCache = tokens;
+                case ("copy"):
+                    if (client.getQueryCache() == null) {
+                        client.setQueryCache(tokens);
                         throw new CopyAnswer();
-                    } else if (queryAnswer) {
-                        queryCache = null;
-                        queryAnswer = false;
-                        copy(tokens[1], ctx, StandardCopyOption.REPLACE_EXISTING);
+                    } else if (client.isQueryAnswer()) {
+                        client.setQueryCache(null);
+                        client.setQueryAnswer(false);
+                        copy(tokens[1], ctx, StandardCopyOption.REPLACE_EXISTING, client);
                     } else {
-                        queryCache = null;
-                        queryAnswer = false;
-                        copy(tokens[1], ctx, StandardCopyOption.COPY_ATTRIBUTES);
+                        client.setQueryCache(null);
+                        client.setQueryAnswer(false);
+                        copy(tokens[1], ctx, StandardCopyOption.COPY_ATTRIBUTES, client);
                     }
                     break;
                 case ("cname"):
-                    userName = tokens[1];
-                    sendMessage("Имя пользователя изменено на: " + userName + "\r\n", ctx);
+                    client.setUserName(tokens[1]);
+                    sendMessage("Имя пользователя изменено на: " + client.getUserName() + "\r\n", ctx);
                     break;
                 case ("cat"):
-                    readDoc(tokens[1], ctx);
+                    readDoc(tokens[1], ctx, client);
                     break;
                 default:
-                    if (!firstRun) sendMessage(command + ": command not found\r\n", ctx);
-                    queryCache = null;
-                    queryAnswer = false;
+                    if (!client.isFirstRun()) sendMessage(command + ": command not found\r\n", ctx);
+                    client.setQueryCache(null);
+                    client.setQueryAnswer(false);
                     break;
             }
-            firstRun = false;
-            sendMessage("\r\n" + userName + "@"
+            client.setFirstRun(false);
+            sendMessage("\r\n" + client.getUserName() + "@"
                     + ctx.channel().localAddress().toString().replace("/", "")
-                    + " current dir:" + currentPath.toString() + "\r\n" + "$ ", ctx);
+                    + " current dir:" + client.getCurrentPath().toString() + "\r\n" + "$ ", ctx);
         } catch (DelAnswer answer) {
             sendMessage("Are you sure? (yes/no): ", ctx);
         } catch (CopyAnswer answer) {
@@ -161,9 +127,9 @@ public class NettyTelnetServer extends SimpleChannelInboundHandler<String> {
         }
     }
 
-    private void readDoc(String token, ChannelHandlerContext ctx) throws IOException {
+    private static void readDoc(String token, ChannelHandlerContext ctx, TelnetUser client) throws IOException {
         try {
-            sendMessage(Files.readString((Path.of(currentPath + File.separator
+            sendMessage(Files.readString((Path.of(client.getCurrentPath() + File.separator
                     + clearEmptySymbolsAfterName(token)))) + "\r\n", ctx);
         } catch (NoSuchFileException e) {
             sendMessage("Error: File not found!\r\n", ctx);
@@ -174,7 +140,7 @@ public class NettyTelnetServer extends SimpleChannelInboundHandler<String> {
         }
     }
 
-    private void copy(String source, ChannelHandlerContext ctx, CopyOption copyOption) throws IOException {
+    private static void copy(String source, ChannelHandlerContext ctx, CopyOption copyOption, TelnetUser client) throws IOException {
         try {
             StringBuilder validSourcePath = new StringBuilder();
             String[] paths = source.split(" ");
@@ -193,8 +159,9 @@ public class NettyTelnetServer extends SimpleChannelInboundHandler<String> {
             //получаем путь куда копировать и чистим от кавычек
             String targetPath = paths[1].replace("\"", "");
             //пути готовы начинаем копировать
-            Path fromPath = Path.of(currentPath + File.separator + validSourcePath.toString());
-            Path toPath = Path.of(currentPath.toString() + File.separator + targetPath + File.separator + filename);
+            Path fromPath = Path.of(client.getCurrentPath() + File.separator + validSourcePath.toString());
+            Path toPath = Path.of(client.getCurrentPath().toString() + File.separator
+                    + targetPath + File.separator + filename);
             Files.walkFileTree(fromPath, new SimpleFileVisitor<Path>() {
                 @Override
                 public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
@@ -217,31 +184,31 @@ public class NettyTelnetServer extends SimpleChannelInboundHandler<String> {
             sendMessage("Error: File already exist!\r\n", ctx);
         }
     }
-    //такой метод sendMessage выглядит потрясающе:)
-    private void sendMessage(String message, ChannelHandlerContext ctx) {
+
+    private static void sendMessage(String message, ChannelHandlerContext ctx) {
         ctx.writeAndFlush(message);
     }
 
-    private String getFilesList() {
-        String[] servers = new File(currentPath.toString()).list();
+    private static String getFilesList(TelnetUser client) {
+        String[] servers = new File(client.getCurrentPath().toString()).list();
         return String.join("\r\n", servers);
     }
 
-    private void changeDirectory(String path, ChannelHandlerContext ctx, char direction) {
+    private static void changeDirectory(String path, ChannelHandlerContext ctx, char direction, TelnetUser client) {
         try {
-            if (!path.equals("..") && !checkUniqueFileOrDirectory(path)) {
+            if (!path.equals("..") && !checkUniqueFileOrDirectory(path, client)) {
                 throw new FileNotFoundException();
             }
             switch (direction) {
                 case ('d'):
-                    currentPath.append(File.separator + path);
-                    String[] servers = new File(currentPath.toString()).list();
+                    client.setCurrentPath(client.getCurrentPath().append(File.separator + path));
+                    String[] servers = new File(client.getCurrentPath().toString()).list();
                     break;
                 case ('u'):
-                    String[] tokens = currentPath.toString().split(Matcher.quoteReplacement(File.separator));
-                    currentPath.delete(
-                            currentPath.length() - tokens[tokens.length - 1].length() - 1,
-                            currentPath.length());
+                    String[] tokens = client.getCurrentPath().toString().split(Matcher.quoteReplacement(File.separator));
+                    client.setCurrentPath(client.getCurrentPath().delete(
+                            client.getCurrentPath().length() - tokens[tokens.length - 1].length() - 1,
+                            client.getCurrentPath().length()));
                     break;
             }
         } catch (FileNotFoundException e) {
@@ -249,24 +216,24 @@ public class NettyTelnetServer extends SimpleChannelInboundHandler<String> {
         }
     }
 
-    private void touchFile(String name, ChannelHandlerContext ctx) throws IOException {
+    private static void touchFile(String name, ChannelHandlerContext ctx, TelnetUser client) throws IOException {
         try {
-            Files.createFile(Path.of(currentPath + File.separator + clearEmptySymbolsAfterName(name)));
+            Files.createFile(Path.of(client.getCurrentPath() + File.separator + clearEmptySymbolsAfterName(name)));
         } catch (FileAlreadyExistsException e) {
             sendMessage("Error: File already exist!\r\n", ctx);
         }
     }
 
-    private void makeDir(String name, ChannelHandlerContext ctx) throws IOException {
+    private static void makeDir(String name, ChannelHandlerContext ctx, TelnetUser client) throws IOException {
         try {
-            Files.createDirectory(Path.of(currentPath + File.separator + clearEmptySymbolsAfterName(name)));
+            Files.createDirectory(Path.of(client.getCurrentPath() + File.separator + clearEmptySymbolsAfterName(name)));
         } catch (FileAlreadyExistsException e) {
             sendMessage("Error: Directory already exist!\r\n", ctx);
         }
     }
 
     //удаляет пробелы в конце пути (полезно при создании папки с пробелами на конце, во избежании ошибки)
-    private String clearEmptySymbolsAfterName(String name) {
+    private static String clearEmptySymbolsAfterName(String name) {
         StringBuilder string = new StringBuilder().append(name);
         while (true) {
             if (!string.toString().endsWith(" ")) {
@@ -277,8 +244,8 @@ public class NettyTelnetServer extends SimpleChannelInboundHandler<String> {
         return string.toString();
     }
 
-    private void removeFileOrDirectory(String name) throws IOException {
-        Files.walkFileTree(Path.of(currentPath + File.separator + name), new SimpleFileVisitor<Path>() {
+    private static void removeFileOrDirectory(String name, TelnetUser client) throws IOException {
+        Files.walkFileTree(Path.of(client.getCurrentPath() + File.separator + name), new SimpleFileVisitor<Path>() {
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                 Files.delete(file);
@@ -293,13 +260,14 @@ public class NettyTelnetServer extends SimpleChannelInboundHandler<String> {
         });
     }
 
-    private boolean checkUniqueFileOrDirectory(String path) {
+    private static boolean checkUniqueFileOrDirectory(String path, TelnetUser client) {
         String checkDirectory = path;
         String[] tokens = path.split(Matcher.quoteReplacement(File.separator));
         if (tokens.length > 1) {
             checkDirectory = tokens[tokens.length - 1];
         }
-        String[] string = new File(currentPath.toString() + File.separator + path.replaceAll(checkDirectory, "")).list();
+        String[] string = new File(client.getCurrentPath().toString() + File.separator
+                + path.replaceAll(checkDirectory, "")).list();
         for (String l : string) {
             if (l.equals(checkDirectory)) {
                 return true;
@@ -308,11 +276,11 @@ public class NettyTelnetServer extends SimpleChannelInboundHandler<String> {
         return false;
     }
 
-    private class DelAnswer extends Exception {
+    private static class DelAnswer extends Exception {
 
     }
 
-    private class CopyAnswer extends Exception {
+    private static class CopyAnswer extends Exception {
 
     }
 }
