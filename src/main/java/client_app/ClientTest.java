@@ -61,48 +61,81 @@ public class ClientTest extends JFrame {
         setVisible(true);
     }
 
-    private void downloadFile(String filename) {
-        try {
-            out.writeUTF("download");
-            out.writeUTF(filename);
-            long size = in.readLong();
-            if (size == 0) {
-                System.out.println("File not found");
-                throw new FileNotFoundException();
-            }
-            File file = new File("client" + File.separator + filename);
-            if (!file.exists()) {
-                file.createNewFile();
-            }
+    private void downloadFile(String fileName) {
+        File file = new File("client" + File.separator + fileName);
+        //out.write(("u " + "\'" + fileName + "\"").getBytes());
 
-            FileOutputStream fos = new FileOutputStream(file);
 
-            byte[] buffer = new byte[8 * 1024];
 
-            for (int i = 0; i < (size + (buffer.length - 1)) / (buffer.length); i++) {
-                int read = in.read(buffer);
-                fos.write(buffer, 0, read);
-            }
-            fos.close();
-            //проверяем соответствие размера файла переданому с сервера
-            if (file.length() == size) {
-                System.out.println("download status: OK");
-            } else {
-                System.out.println("ERROR! File spoiled!");
-            }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//        try {
+//            out.writeUTF("download");
+//            out.writeUTF(filename);
+//            long size = in.readLong();
+//            if (size == 0) {
+//                System.out.println("File not found");
+//                throw new FileNotFoundException();
+//            }
+//            File file = new File("client" + File.separator + filename);
+//            if (!file.exists()) {
+//                file.createNewFile();
+//            }
+//
+//            FileOutputStream fos = new FileOutputStream(file);
+//
+//            byte[] buffer = new byte[8 * 1024];
+//
+//            for (int i = 0; i < (size + (buffer.length - 1)) / (buffer.length); i++) {
+//                int read = in.read(buffer);
+//                fos.write(buffer, 0, read);
+//            }
+//            fos.close();
+//            //проверяем соответствие размера файла переданому с сервера
+//            if (file.length() == size) {
+//                System.out.println("download status: OK");
+//            } else {
+//                System.out.println("ERROR! File spoiled!");
+//            }
+//        } catch (FileNotFoundException e) {
+//            e.printStackTrace();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
     }
 
 
-    private void uploadFile(String fileName) {
+    private void uploadFile(String fileName) {  //готов для работы
         try {
             File file = new File("client" + File.separator + fileName);
-            out.write(("u " + "\"" + fileName + "\""
-                    + " " + "\"" + file.length() + "\"").getBytes());
+            out.write(("u" + "  " + fileName + "  "
+                    + file.length()).getBytes());
 
             while (true) {
                 String answer = bufferedReader.readLine().replace("\n", "");

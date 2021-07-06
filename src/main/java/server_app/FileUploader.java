@@ -9,6 +9,9 @@ import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 
+import static server_app.Action.WAIT;
+import static server_app.InputStreamHandler.*;
+
 public class FileUploader extends ChannelInboundHandlerAdapter {
     private static long fileLength;
     private static File file;
@@ -33,7 +36,7 @@ public class FileUploader extends ChannelInboundHandlerAdapter {
         }
         System.out.print("\r" + "Transfer %: " + (file.length() * 100) / fileLength);
         if (fileLength == file.length()) {
-            InputStreamHandler.setUploadPermission(false);
+            setAction(WAIT);
             file = null;
             fileLength = 0;
         }
