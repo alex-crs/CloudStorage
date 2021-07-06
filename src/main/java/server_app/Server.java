@@ -25,7 +25,7 @@ public class Server {
                         @Override
                         protected void initChannel(Channel channel) throws Exception {
                             channel.pipeline().addLast(
-                                    new InputStreamHandler(),
+                                    new MainHandler(),
                                     new FileUploader());
                         }
                     });

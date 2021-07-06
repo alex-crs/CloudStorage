@@ -9,6 +9,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.*;
 import java.net.Socket;
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.WritableByteChannel;
@@ -64,35 +65,6 @@ public class ClientTest extends JFrame {
     private void downloadFile(String fileName) {
         File file = new File("client" + File.separator + fileName);
         //out.write(("u " + "\'" + fileName + "\"").getBytes());
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 //        try {

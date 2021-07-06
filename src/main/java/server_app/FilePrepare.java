@@ -11,26 +11,21 @@ import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 
+import static server_app.Action.OVERWRITE;
+
 public class FilePrepare {
     private static final String READY_STATUS = "ok\n";
     private static final String FILE_EXIST = "ex\n";
     private static final String FILE_NOT_EXIST = "nex\n";
 
-    public static void prepareForUpload(ChannelHandlerContext ctx, Object msg, String[] fileInfo) throws IOException {
-        File file = new File("root" + File.separator + fileInfo[1]);
-        if (!file.exists()) {
-            file.createNewFile();
-        }
 
-//        } else {
-//            ctx.writeAndFlush(Unpooled.wrappedBuffer(FILE_EXIST.getBytes()));
-//        }
-        //прописать логику сообщения если файл существует
+    public static FileInfo prepareFile(ChannelHandlerContext ctx, String[] header) {
+        File file = new File("root" + File.separator + header[1]);
         ctx.writeAndFlush(Unpooled.wrappedBuffer(READY_STATUS.getBytes()));
-        FileUploader.setFile(file);
-        FileUploader.setFileLength(Long.parseLong(fileInfo[2]));
+        return new FileInfo(file, Long.parseLong(header[2]), OVERWRITE);
     }
-    public static void prepareForDownload(ChannelHandlerContext ctx, Object msg, String[] fileInfo) throws IOException {
+
+    public static void download(ChannelHandlerContext ctx, Object msg, String[] fileInfo) throws IOException {
         ByteBuf byteBuf = (ByteBuf) msg;
         String fileName = fileInfo[1].replace("\"", "");
         long fileLength = Long.parseLong(fileInfo[2].replace("\"", ""));
