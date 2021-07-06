@@ -1,12 +1,20 @@
 package client_app;
 
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.*;
 import java.net.Socket;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.channels.WritableByteChannel;
 import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 
 
 public class ClientTest extends JFrame {
@@ -62,7 +70,7 @@ public class ClientTest extends JFrame {
                 System.out.println("File not found");
                 throw new FileNotFoundException();
             }
-            File file = new File("client_app" + File.separator + filename);
+            File file = new File("client" + File.separator + filename);
             if (!file.exists()) {
                 file.createNewFile();
             }
@@ -92,7 +100,7 @@ public class ClientTest extends JFrame {
 
     private void uploadFile(String fileName) {
         try {
-            File file = new File("client_app" + File.separator + fileName);
+            File file = new File("client" + File.separator + fileName);
             out.write(("u " + "\"" + fileName + "\""
                     + " " + "\"" + file.length() + "\"").getBytes());
 
@@ -101,14 +109,18 @@ public class ClientTest extends JFrame {
                 if ("ok".equals(answer)) {
                     break;
                 } else if ("ex".equals(answer)) {
+                    System.out.println("Файл уже существует заменить?"); //отработать этот модуль
                     throw new FileAlreadyExistsException(fileName);
                 }
             }
+
             RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");
+            int read = 0;
             byte[] buffer = new byte[8 * 1024];
-            while (randomAccessFile.read(buffer) != -1) {
-                out.write(buffer);
+            while ((read = randomAccessFile.read(buffer)) != -1) {
+                out.write(buffer, 0, read);
             }
+            out.flush();
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -9,7 +9,12 @@ import static server_app.FileTransfer.*;
 
 public class InputStreamHandler extends ChannelInboundHandlerAdapter {
     private static final String READY_STATUS = "ok\n";
-    String[] queryHistory;
+    private static boolean uploadPermission;
+    boolean downloadPermission;
+
+    public static void setUploadPermission(boolean uploadPermission) {
+        InputStreamHandler.uploadPermission = uploadPermission;
+    }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
@@ -19,22 +24,22 @@ public class InputStreamHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        ByteBuf byteBuf = (ByteBuf) msg;
-        if (queryHistory.length > 0) {
-
+        if (uploadPermission) {
+            ctx.fireChannelRead(msg);
         } else {
+            ByteBuf byteBuf = (ByteBuf) msg;
             String[] query = byteBuf.toString(StandardCharsets.UTF_8)
                     .replace("\n", "")
                     .replace("\r", "")
                     .split(" ", 0);
             switch (query[0]) {
                 case ("u"):
-                    prepareFileInServer(ctx, query);
+                    prepareForUpload(ctx, msg, query);
+                    uploadPermission = true;
                     break;
                 case ("d"):
                     break;
             }
-
         }
     }
 
