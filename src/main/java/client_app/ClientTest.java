@@ -1,7 +1,9 @@
 package client_app;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.Unpooled;
+import io.netty.channel.ChannelOutboundBuffer;
 
 import javax.swing.*;
 import java.awt.*;
@@ -11,8 +13,11 @@ import java.io.*;
 import java.net.Socket;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
+import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -22,13 +27,13 @@ public class ClientTest extends JFrame {
     private final Socket socket;
     private final DataOutputStream out;
     private final DataInputStream in;
-    private BufferedReader bufferedReader;
+
 
     public ClientTest() throws IOException {
         socket = new Socket("localhost", 5679);
         out = new DataOutputStream(socket.getOutputStream());
         in = new DataInputStream(socket.getInputStream());
-        bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+
 
         setSize(300, 300);
         JPanel panel = new JPanel(new GridLayout(2, 1));
@@ -64,47 +69,45 @@ public class ClientTest extends JFrame {
 
     private void downloadFile(String fileName) {
         File file = new File("client" + File.separator + fileName);
-        //out.write(("u " + "\'" + fileName + "\"").getBytes());
-
-
-//        try {
-//            out.writeUTF("download");
-//            out.writeUTF(filename);
-//            long size = in.readLong();
-//            if (size == 0) {
-//                System.out.println("File not found");
-//                throw new FileNotFoundException();
-//            }
-//            File file = new File("client" + File.separator + filename);
-//            if (!file.exists()) {
-//                file.createNewFile();
-//            }
-//
-//            FileOutputStream fos = new FileOutputStream(file);
-//
-//            byte[] buffer = new byte[8 * 1024];
-//
-//            for (int i = 0; i < (size + (buffer.length - 1)) / (buffer.length); i++) {
-//                int read = in.read(buffer);
-//                fos.write(buffer, 0, read);
-//            }
-//            fos.close();
-//            //проверяем соответствие размера файла переданому с сервера
-//            if (file.length() == size) {
-//                System.out.println("download status: OK");
-//            } else {
-//                System.out.println("ERROR! File spoiled!");
-//            }
-//        } catch (FileNotFoundException e) {
-//            e.printStackTrace();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
+        try {
+            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            out.write(("d" + "  " + fileName + "  " + file.length()).getBytes());
+            if (!file.exists()) {
+                file.createNewFile();
+            }
+            while (true) {
+                String answer = bufferedReader.readLine().replace("\n", "");
+                if ("ok".equals(answer)) {
+                    break;
+                } else if ("nex".equals(answer)) {
+                    System.out.println("File not found!"); //отработать этот модуль
+                    throw new FileNotFoundException();
+                }
+            }
+            ReadableByteChannel rbc = Channels.newChannel(in);
+            ByteBuffer byteBuffer = ByteBuffer.allocate(8 * 1024);
+            RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");
+            FileChannel fileChannel = randomAccessFile.getChannel();
+            while (rbc.read(byteBuffer) != -1) {
+                byteBuffer.flip();
+                fileChannel.position(file.length());
+                fileChannel.write(byteBuffer);
+                byteBuffer.compact();
+            }
+            System.out.println("done");
+            byteBuffer.clear();
+            rbc.close();
+            fileChannel.close();
+            randomAccessFile.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 
     private void uploadFile(String fileName) {  //готов для работы
         try {
+            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             File file = new File("client" + File.separator + fileName);
             out.write(("u" + "  " + fileName + "  "
                     + file.length()).getBytes());
