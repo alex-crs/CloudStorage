@@ -25,9 +25,8 @@ public class Server {
                         @Override
                         protected void initChannel(Channel channel) throws Exception {
                             channel.pipeline().addLast(
-                                    new ByteBufDecoder(),
-                                    new MainHandler(),
-                                    new FileUploader());
+                                    new ByteBufEncoder(),
+                                    new MainHandler());
                         }
                     });
             ChannelFuture future = bootstrap.bind(5679).sync();

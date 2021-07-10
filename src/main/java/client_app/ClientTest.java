@@ -1,38 +1,35 @@
 package client_app;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufInputStream;
-import io.netty.buffer.Unpooled;
-import io.netty.channel.ChannelOutboundBuffer;
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.*;
 import java.net.Socket;
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
-import java.nio.channels.WritableByteChannel;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
+import java.util.Arrays;
+
+import static client_app.Action.OVERWRITE;
 
 
 public class ClientTest extends JFrame {
     private final Socket socket;
     private final DataOutputStream out;
     private final DataInputStream in;
-
+    private final BufferedReader bufferedReader;
+    private final ReadableByteChannel rbc;
+    ByteBuffer byteBuffer = ByteBuffer.allocate(8 * 1024);
 
     public ClientTest() throws IOException {
         socket = new Socket("localhost", 5679);
         out = new DataOutputStream(socket.getOutputStream());
         in = new DataInputStream(socket.getInputStream());
+        bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        rbc = Channels.newChannel(in);
 
 
         setSize(300, 300);
@@ -46,9 +43,9 @@ public class ClientTest extends JFrame {
             // download img.png
             String[] cmd = textField.getText().split(" ");
             if ("upload".equals(cmd[0])) {
-                uploadFile(cmd[1]);
+                uploadToServer(cmd[1]);
             } else if ("download".equals(cmd[0])) {
-                downloadFile(cmd[1]);
+                downloadFromServer(cmd[1]);
             }
         });
 
@@ -67,36 +64,40 @@ public class ClientTest extends JFrame {
         setVisible(true);
     }
 
-    private void downloadFile(String fileName) {
+    private void downloadFromServer(String fileName) { //готов для работы
         File file = new File("client" + File.separator + fileName);
+        long downloadFileLength = 0;
+
+
         try {
-            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            out.write(("d" + "  " + fileName + "  " + file.length()).getBytes());
+            out.write(("d  " + fileName).getBytes());
+            String[] serverAnswer = queryFileInfo(fileName);
             if (!file.exists()) {
                 file.createNewFile();
             }
             while (true) {
-                String answer = bufferedReader.readLine().replace("\n", "");
-                if ("ok".equals(answer)) {
+                if ("ok".equals(serverAnswer[0])) {
+                    downloadFileLength = Long.parseLong(serverAnswer[1].replace("\n", ""));
                     break;
-                } else if ("nex".equals(answer)) {
+                } else if ("nex".equals(serverAnswer[0])) {
                     System.out.println("File not found!"); //отработать этот модуль
                     throw new FileNotFoundException();
                 }
             }
-            ReadableByteChannel rbc = Channels.newChannel(in);
-            ByteBuffer byteBuffer = ByteBuffer.allocate(8 * 1024);
+            out.write(" ".getBytes());
+            byteBuffer.clear();
             RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");
             FileChannel fileChannel = randomAccessFile.getChannel();
-            while (rbc.read(byteBuffer) != -1) {
+            while ((rbc.read(byteBuffer)) > 0) {
                 byteBuffer.flip();
                 fileChannel.position(file.length());
                 fileChannel.write(byteBuffer);
                 byteBuffer.compact();
+                if (file.length() == downloadFileLength) {
+                    break;
+                }
             }
-            System.out.println("done");
             byteBuffer.clear();
-            rbc.close();
             fileChannel.close();
             randomAccessFile.close();
         } catch (IOException e) {
@@ -105,18 +106,18 @@ public class ClientTest extends JFrame {
     }
 
 
-    private void uploadFile(String fileName) {  //готов для работы
+    private void uploadToServer(String fileName) {
         try {
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             File file = new File("client" + File.separator + fileName);
-            out.write(("u" + "  " + fileName + "  "
-                    + file.length()).getBytes());
+            out.write(("u  " + fileName + "  "
+                    + file.length() + "  " + OVERWRITE).getBytes());
 
+            String[] serverAnswer = queryFileInfo(fileName);
             while (true) {
-                String answer = bufferedReader.readLine().replace("\n", "");
-                if ("ok".equals(answer)) {
+                if ("ok".equals(serverAnswer[0].replace("\n", ""))) {
                     break;
-                } else if ("ex".equals(answer)) {
+                } else if ("nex".equals(serverAnswer[0])) {
                     System.out.println("Файл уже существует заменить?"); //отработать этот модуль
                     throw new FileAlreadyExistsException(fileName);
                 }
@@ -128,7 +129,8 @@ public class ClientTest extends JFrame {
             while ((read = randomAccessFile.read(buffer)) != -1) {
                 out.write(buffer, 0, read);
             }
-            out.flush();
+            byteBuffer.clear();
+            randomAccessFile.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -140,6 +142,11 @@ public class ClientTest extends JFrame {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public String[] queryFileInfo(String filename) throws IOException {
+        int readNumberBytes = rbc.read(byteBuffer);
+        return new String(Arrays.copyOfRange(byteBuffer.array(), 0, readNumberBytes)).split("  ");
     }
 
     public static void main(String[] args) throws IOException {

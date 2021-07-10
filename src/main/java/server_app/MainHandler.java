@@ -6,27 +6,28 @@ import io.netty.channel.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
 import static server_app.Action.*;
-import static server_app.FilePrepare.*;
-import static server_app.FileUploader.setFileInfo;
+import static server_app.FileTransfer.downloadFile;
+import static server_app.FileTransfer.uploadFile;
 
 public class MainHandler extends ChannelInboundHandlerAdapter {
     /*  Фиксирует текущеее состояния MainHandler
-    * - по умолчанию MainHandler читает только заголовки;
-    * - после обработки заголовка присваевается определенное состояние;
-    * -- WAIT - режим ожидания (читает только заголовки);
-    * -- UPLOAD - режим загрузки, после его установки пакеты летят только в FileUploader, после того
-    *    как он отработает, action переходит в режим ожидания WAIT и MainHandler снова читает только заголовки */
+     * - по умолчанию MainHandler читает только заголовки;
+     * - после обработки заголовка присваевается определенное состояние;
+     * -- WAIT - режим ожидания (читает только заголовки);
+     * -- UPLOAD - режим загрузки, после его установки пакеты летят только в FileUploader, после того
+     *    как он отработает, action переходит в режим ожидания WAIT и MainHandler снова читает только заголовки */
     private static Action action = WAIT;
-    private static final String READY_STATUS = "ok\n";
-    private static final String FILE_EXIST = "ex\n";
-    private static final String FILE_NOT_EXIST = "nex\n";
-
-    public static void setAction(Action action) {
-        MainHandler.action = action;
-    }
+    private static File file;
+    private static long transferFileLength;
+    private static Action transferOptions;
+    private static final String READY_STATUS = "ok";
+    private static final String FILE_EXIST = "ex";
+    private static final String FILE_NOT_EXIST = "nex";
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
@@ -36,15 +37,15 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        switch (action){
+        switch (action) {
             case UPLOAD:
-                ctx.fireChannelRead(msg);
+                uploadFile(msg, file, transferFileLength);
                 break;
             case DOWNLOAD:
-                //ctx.fireChannelRead(msg);
+                downloadFile(ctx, msg, file);
                 break;
-            default:
-                stringListener(ctx,msg);
+            case WAIT:
+                stringListener(ctx, msg);
                 break;
         }
     }
@@ -67,19 +68,37 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
                 .split("  ", 0);
         switch (header[0]) {
             case ("u"):
-                setFileInfo(prepareFile(ctx,header));
+                file = new File("root" + File.separator + header[1]);
+                transferFileLength = Long.parseLong(header[2]);
+                transferOptions = (header[3].equals("OVERWRITE") ? OVERWRITE : null);
+                if (!file.exists()) {
+                    file.createNewFile();
+                } else if (file.exists() && transferOptions == null) {
+                    ctx.writeAndFlush(Unpooled.wrappedBuffer((FILE_EXIST + "\n").getBytes()));
+                    break;
+                } else {
+                    //написать логику удаления файла (добавить из коммандера)
+                    file.createNewFile();
+                }
+                ctx.writeAndFlush(Unpooled.wrappedBuffer((READY_STATUS + "\n").getBytes()));
                 action = UPLOAD;
                 break;
             case ("d"):
-                download(ctx, msg, header);
+                file = new File("root" + File.separator + header[1]);
+                if (!file.exists()) {
+                    ctx.writeAndFlush(Unpooled.wrappedBuffer((FILE_NOT_EXIST + "\n").getBytes()));
+                }
+                ctx.writeAndFlush(Unpooled.wrappedBuffer((READY_STATUS + "  " + file.length() + "\n").getBytes()));
                 action = DOWNLOAD;
                 break;
         }
     }
 
-    public static FileInfo prepareFile(ChannelHandlerContext ctx, String[] header) throws IOException {
-        File file = new File("root" + File.separator + header[1]);
-        ctx.writeAndFlush(Unpooled.wrappedBuffer(READY_STATUS.getBytes()));
-        return new FileInfo(file, Long.parseLong(header[2]), OVERWRITE);
+
+    public static void setWaitAction() {
+        file = null;
+        transferOptions = null;
+        transferFileLength = 0;
+        action = WAIT;
     }
 }
