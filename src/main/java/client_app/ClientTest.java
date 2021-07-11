@@ -71,7 +71,7 @@ public class ClientTest extends JFrame {
 
         try {
             out.write(("d  " + fileName).getBytes());
-            String[] serverAnswer = queryFileInfo(fileName);
+            String[] serverAnswer = queryFileInfo();
             if (!file.exists()) {
                 file.createNewFile();
             }
@@ -106,14 +106,14 @@ public class ClientTest extends JFrame {
     }
 
 
-    private void uploadToServer(String fileName) {
+    private void uploadToServer(String fileName) { //готов для работы
         try {
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             File file = new File("client" + File.separator + fileName);
             out.write(("u  " + fileName + "  "
                     + file.length() + "  " + OVERWRITE).getBytes());
 
-            String[] serverAnswer = queryFileInfo(fileName);
+            String[] serverAnswer = queryFileInfo();
             while (true) {
                 if ("ok".equals(serverAnswer[0].replace("\n", ""))) {
                     break;
@@ -144,7 +144,7 @@ public class ClientTest extends JFrame {
         }
     }
 
-    public String[] queryFileInfo(String filename) throws IOException {
+    public String[] queryFileInfo() throws IOException {
         int readNumberBytes = rbc.read(byteBuffer);
         return new String(Arrays.copyOfRange(byteBuffer.array(), 0, readNumberBytes)).split("  ");
     }

@@ -20,7 +20,9 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
      * - после обработки заголовка присваевается определенное состояние;
      * -- WAIT - режим ожидания (читает только заголовки);
      * -- UPLOAD - режим загрузки, после его установки пакеты летят только в FileUploader, после того
-     *    как он отработает, action переходит в режим ожидания WAIT и MainHandler снова читает только заголовки */
+     *    как он отработает, action переходит в режим ожидания WAIT и MainHandler снова читает только заголовки;
+     * -- DOWNLOAD - сразу перенаправляет соответствующий метод, после работы он также переводит сервер
+     *    в режим ожидания */
     private static Action action = WAIT;
     private static File file;
     private static long transferFileLength;
