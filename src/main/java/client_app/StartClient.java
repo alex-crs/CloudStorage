@@ -11,7 +11,7 @@ public class StartClient extends Application {
     public void start(Stage primaryStage) throws Exception {
         primaryStage.setMinWidth(300);
         primaryStage.setMinHeight(150);
-        primaryStage.setTitle("CloudStorage");
+        primaryStage.setTitle("Pixel File Explorer");
         FXMLLoader mainWindow = new FXMLLoader(getClass().getResource("/fxml/MainWindow.fxml"));
         Parent main = mainWindow.load();
         primaryStage.setScene(new Scene(main, 600, 500));

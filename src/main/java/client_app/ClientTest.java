@@ -20,7 +20,6 @@ public class ClientTest extends JFrame {
     private final Socket socket;
     private final DataOutputStream out;
     private final DataInputStream in;
-    private final BufferedReader bufferedReader;
     private final ReadableByteChannel rbc;
     ByteBuffer byteBuffer = ByteBuffer.allocate(8 * 1024);
 
@@ -28,7 +27,6 @@ public class ClientTest extends JFrame {
         socket = new Socket("localhost", 5679);
         out = new DataOutputStream(socket.getOutputStream());
         in = new DataInputStream(socket.getInputStream());
-        bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         rbc = Channels.newChannel(in);
 
 

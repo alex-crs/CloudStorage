@@ -93,6 +93,9 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
                 ctx.writeAndFlush(Unpooled.wrappedBuffer((READY_STATUS + "  " + file.length() + "\n").getBytes()));
                 action = DOWNLOAD;
                 break;
+            case ("auth"):
+                ctx.writeAndFlush(Unpooled.wrappedBuffer(("/auth-ok  Alex" + "\n").getBytes()));
+                break;
         }
     }
 

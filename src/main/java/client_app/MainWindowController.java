@@ -1,25 +1,39 @@
 package client_app;
 
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.control.Button;
+import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
+import javafx.stage.Stage;
 
 import java.awt.*;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.net.Socket;
 import java.net.URL;
+import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
+import java.nio.channels.ReadableByteChannel;
 import java.nio.file.*;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 
 import static client_app.Action.*;
 import static client_app.FileOperations.*;
 
 public class MainWindowController implements Initializable {
+
+    //взаимодействие с javafx
+    //----------------------------------------------------
     @FXML
     ListView<String> leftList;
 
@@ -41,12 +55,56 @@ public class MainWindowController implements Initializable {
     @FXML
     Button move;
 
+    @FXML
+    TextField leftPathView;
+
+    @FXML
+    TextField rightPathView;
+
+    Stage stage;
+    //----------------------------------------------------
+
+    //...
+
+    //сетевое взаимодействие
+    //----------------------------------------------------
+    public static final String ADDRESS = "127.0.0.1";
+    public static final int PORT = 5679;
+    Socket socket;
+    DataOutputStream out;
+    DataInputStream in;
+    ReadableByteChannel rbc;
+    ByteBuffer byteBuffer = ByteBuffer.allocate(8 * 1024);
+    private ExecutorService threadManager;
+    //----------------------------------------------------
+
+    //...
+
+    //управление ListView и текущими путями
+    //----------------------------------------------------
     StringBuilder rightPath = new StringBuilder();
     StringBuilder leftPath = new StringBuilder();
     ObservableList<String> leftFiles = FXCollections.emptyObservableList();
     ObservableList<String> rightFiles = FXCollections.emptyObservableList();
     MultipleSelectionModel<String> leftMarkedFiles;
     MultipleSelectionModel<String> rightMarkedFiles;
+    //----------------------------------------------------
+
+    //...
+
+    //авторизация и статусы подключения
+    //----------------------------------------------------
+    private StringBuilder nickname = new StringBuilder();
+    private boolean isAuthorized;
+
+    public void setAuthorized(boolean authorized) {
+        this.isAuthorized = authorized;
+
+        if (!isAuthorized) {
+        } else {
+        }
+    }
+    //----------------------------------------------------
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
@@ -54,6 +112,8 @@ public class MainWindowController implements Initializable {
         rightPath.append("c:\\");
         showDirectory(rightPath, rightList);
         showDirectory(leftPath, leftList);
+        leftPathView.setText(leftPath.toString());
+        rightPathView.setText(rightPath.toString());
         rightMarkedFiles = rightList.getSelectionModel();
         rightMarkedFiles.setSelectionMode(SelectionMode.MULTIPLE);
         leftMarkedFiles = leftList.getSelectionModel();
@@ -63,6 +123,47 @@ public class MainWindowController implements Initializable {
         rename.setFocusTraversable(false);
         newButton.setFocusTraversable(false);
         move.setFocusTraversable(false);
+        leftPathView.setFocusTraversable(false);
+        rightPathView.setFocusTraversable(false);
+    }
+
+    public void connect() {
+        try {
+            socket = new Socket(ADDRESS, PORT);
+            out = new DataOutputStream(socket.getOutputStream());
+            in = new DataInputStream(socket.getInputStream());
+            rbc = Channels.newChannel(in);
+            stage = (Stage) leftList.getScene().getWindow();
+            threadManager = Executors.newFixedThreadPool(2);
+            out.write("auth".getBytes());
+            Thread netClientThread = new Thread(() -> {
+                try {
+                    while (true) {
+                        String[] serverAnswer = queryFileInfo();
+                        if (!serverAnswer[0].isEmpty() && "/end".equals(serverAnswer[0])) {
+                            break;
+                        }
+                        if (!serverAnswer[0].isEmpty() && "/auth-ok".equals(serverAnswer[0])) {
+                            setAuthorized(true);
+                            nickname.append(serverAnswer[1].replace("\n", ""));
+                            Platform.runLater(new Runnable() {
+                                @Override
+                                public void run() {
+                                    stage.setTitle("Pixel Cloud Explorer. User: " + nickname);
+
+                                }
+                            });
+                        }
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            });
+            threadManager.execute(netClientThread);
+        } catch (IOException e) {
+            threadManager.shutdown();
+            e.printStackTrace();
+        }
     }
 
     //--------------------------------------------------------------------------------
@@ -76,7 +177,7 @@ public class MainWindowController implements Initializable {
         }
         if (mouseEvent.getClickCount() == 2) {
             String currentElement = leftList.getSelectionModel().getSelectedItem();
-            eventAction(currentElement, leftPath, leftList);
+            eventAction(currentElement, leftPath, leftList, leftPathView);
         }
     }
 
@@ -87,7 +188,7 @@ public class MainWindowController implements Initializable {
         }
         if (mouseEvent.getClickCount() == 2) {
             String currentElement = rightList.getSelectionModel().getSelectedItem();
-            eventAction(currentElement, rightPath, rightList);
+            eventAction(currentElement, rightPath, rightList, rightPathView);
         }
     }
     //--------------------------------------------------------------------------------
@@ -95,18 +196,20 @@ public class MainWindowController implements Initializable {
 
     /*Данный метод строит путь как вперед так и назад, если дважды кликнуть по кнопке BACK, то данный метод
      * возвращает в предыдущую директорию, если было передано имя директории, то метод строит путь дальше.
-     * Также в данном методе производится проверка на то, является ли файлом переданное имя, если да, то ПОКА
-     * ничего не происходит (в дальнейшем добавлю открытие в системных программах)*/
-    private void eventAction(String element, StringBuilder currentPath, ListView<String> renewableFileList) {
+     * Также в данном методе производится проверка на то, является ли файлом переданное имя, если да, то файл
+     * запускается в программе по умолчанию*/
+    private void eventAction(String element, StringBuilder currentPath, ListView<String> renewableFileList, TextField pathView) {
         String[] tokens = currentPath.toString().split(Matcher.quoteReplacement(File.separator));
         if ("BACK".equals(element)) {
             currentPath.delete((currentPath.length() - tokens[tokens.length - 1].length() - 1), currentPath.length());
             showDirectory(currentPath, renewableFileList);
+            pathView.setText(currentPath.toString());
         } else {
             File file = new File(currentPath.toString() + File.separator + element);
             if (file.isDirectory()) {
                 currentPath.append(element + File.separator);
                 showDirectory(currentPath, renewableFileList);
+                pathView.setText(currentPath.toString());
             } else {
                 try {
                     Desktop desktop = Desktop.getDesktop();
@@ -207,6 +310,7 @@ public class MainWindowController implements Initializable {
         mds.show();
     }
 
+    //перемещает выбранные файлы
     public void moveAction() throws IOException {
         if (leftFiles.size() > 0) { //если выделенные файлы слева
             prepareAndCopy(leftPath, rightPath, leftFiles, rightList);
@@ -221,5 +325,18 @@ public class MainWindowController implements Initializable {
     public void updateAllFilesLists() {
         showDirectory(leftPath, leftList);
         showDirectory(rightPath, rightList);
+        leftPathView.setText(leftPath.toString());
+        rightPathView.setText(rightPath.toString());
     }
+
+    public String[] queryFileInfo() throws IOException {
+        int readNumberBytes = rbc.read(byteBuffer);
+        return new String(Arrays.copyOfRange(byteBuffer.array(), 0, readNumberBytes)).split("  ");
+    }
+
+
 }
+
+/*Обнаруженныне косяки:
+ * 1. при вставке пути вместо имени файла (например C:\path\) выскакивает исключение
+ * 2. */
