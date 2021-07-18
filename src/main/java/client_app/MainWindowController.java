@@ -1,15 +1,14 @@
 package client_app;
 
-import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.TextFieldListCell;
+import javafx.scene.control.Button;
 import javafx.scene.input.MouseEvent;
 
-import java.beans.EventHandler;
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -104,9 +103,18 @@ public class MainWindowController implements Initializable {
             currentPath.delete((currentPath.length() - tokens[tokens.length - 1].length() - 1), currentPath.length());
             showDirectory(currentPath, renewableFileList);
         } else {
-            if (new File(currentPath.toString() + File.separator + element).isDirectory()) {
+            File file = new File(currentPath.toString() + File.separator + element);
+            if (file.isDirectory()) {
                 currentPath.append(element + File.separator);
                 showDirectory(currentPath, renewableFileList);
+            } else {
+                try {
+                    Desktop desktop = Desktop.getDesktop();
+                    desktop.open(file);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
             }
         }
     }
