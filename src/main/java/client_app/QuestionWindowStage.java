@@ -16,7 +16,6 @@ import static client_app.MainWindowController.*;
 
 public class QuestionWindowStage extends Stage {
 
-    private static String message;
     static Action action;
     private static String markedFile;
     Path sourcePath, targetPath;

@@ -1,14 +1,15 @@
 package client_app;
 
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.ListView;
-import javafx.scene.control.MultipleSelectionModel;
-import javafx.scene.control.SelectionMode;
+import javafx.scene.control.*;
+import javafx.scene.control.cell.TextFieldListCell;
 import javafx.scene.input.MouseEvent;
 
+import java.beans.EventHandler;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -139,7 +140,21 @@ public class MainWindowController implements Initializable {
         updateAllFilesLists();
     }
 
-    private void updateAllFilesLists() {
+    public void renameAction() {
+        if (leftFiles.size() > 0) { //если выделенные файлы слева
+            RenameWindowStage rws = new RenameWindowStage(leftFiles.get(0), leftPath, leftList, rightPath, rightList);
+            rws.setMinWidth(410);
+            rws.setMinHeight(25);
+            rws.setResizable(false);
+            rws.show();
+        }
+        if (rightFiles.size() > 0) { //если выделенные файлы справа
+
+        }
+
+    }
+
+    public void updateAllFilesLists() {
         showDirectory(leftPath, leftList);
         showDirectory(rightPath, rightList);
     }
