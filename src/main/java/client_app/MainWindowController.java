@@ -39,6 +39,9 @@ public class MainWindowController implements Initializable {
     @FXML
     Button newButton;
 
+    @FXML
+    Button move;
+
     StringBuilder rightPath = new StringBuilder();
     StringBuilder leftPath = new StringBuilder();
     ObservableList<String> leftFiles = FXCollections.emptyObservableList();
@@ -60,7 +63,7 @@ public class MainWindowController implements Initializable {
         delete.setFocusTraversable(false);
         rename.setFocusTraversable(false);
         newButton.setFocusTraversable(false);
-
+        move.setFocusTraversable(false);
     }
 
     //--------------------------------------------------------------------------------
@@ -194,6 +197,17 @@ public class MainWindowController implements Initializable {
         mds.setMinHeight(25);
         mds.setResizable(false);
         mds.show();
+    }
+
+    public void moveAction() throws IOException {
+        if (leftFiles.size() > 0) { //если выделенные файлы слева
+            prepareAndCopy(leftPath, rightPath, leftFiles, rightList);
+            prepareAndDelete(leftPath, leftFiles, leftList);
+        }
+        if (rightFiles.size() > 0) { //если выделенные файлы справа
+            prepareAndCopy(rightPath, leftPath, rightFiles, leftList);
+            prepareAndDelete(rightPath, rightFiles, rightList);
+        }
     }
 
     public void updateAllFilesLists() {
