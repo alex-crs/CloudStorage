@@ -29,9 +29,7 @@ public class FileOperations {
         for (int i = 0; i < tokens.length; i++) {
             fileList.getItems().add(tokens[i]);
         }
-
         fileList.setCellFactory(l -> new ListCell<String>() {
-
             @Override
             public void updateItem(String friend, boolean empty) {
                 super.updateItem(friend, empty);

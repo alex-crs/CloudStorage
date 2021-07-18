@@ -27,6 +27,18 @@ public class MainWindowController implements Initializable {
     @FXML
     ListView<String> rightList;
 
+    @FXML
+    Button copy;
+
+    @FXML
+    Button delete;
+
+    @FXML
+    Button rename;
+
+    @FXML
+    Button newButton;
+
     StringBuilder rightPath = new StringBuilder();
     StringBuilder leftPath = new StringBuilder();
     ObservableList<String> leftFiles = FXCollections.emptyObservableList();
@@ -44,6 +56,11 @@ public class MainWindowController implements Initializable {
         rightMarkedFiles.setSelectionMode(SelectionMode.MULTIPLE);
         leftMarkedFiles = leftList.getSelectionModel();
         leftMarkedFiles.setSelectionMode(SelectionMode.MULTIPLE);
+        copy.setFocusTraversable(false);
+        delete.setFocusTraversable(false);
+        rename.setFocusTraversable(false);
+        newButton.setFocusTraversable(false);
+
     }
 
     //--------------------------------------------------------------------------------
@@ -140,18 +157,43 @@ public class MainWindowController implements Initializable {
         updateAllFilesLists();
     }
 
+
     public void renameAction() {
         if (leftFiles.size() > 0) { //если выделенные файлы слева
-            RenameWindowStage rws = new RenameWindowStage(leftFiles.get(0), leftPath, leftList, rightPath, rightList);
-            rws.setMinWidth(410);
-            rws.setMinHeight(25);
-            rws.setResizable(false);
-            rws.show();
+            prepareAndRename(leftFiles.get(0), leftPath, leftList, rightPath, rightList);
         }
         if (rightFiles.size() > 0) { //если выделенные файлы справа
-
+            prepareAndRename(rightFiles.get(0), rightPath, rightList, leftPath, leftList);
         }
+    }
 
+    //переименовывает файл в отдельном окне
+    private void prepareAndRename(String fileName, StringBuilder renamePath, ListView<String> renameList,
+                                  StringBuilder secondPath, ListView<String> secondList) {
+        RenameWindowStage rws = new RenameWindowStage(fileName, renamePath, renameList, secondPath, secondList);
+        rws.setMinWidth(410);
+        rws.setMinHeight(25);
+        rws.setResizable(false);
+        rws.show();
+    }
+
+    public void makeDirAction() {
+        if (leftList.isFocused()) { //если выделенное окно слева
+            prepareAndMakeDir(leftPath, leftList, rightPath, rightList);
+        }
+        if (rightList.isFocused()) { //если выделенное окно слева
+            prepareAndMakeDir(rightPath, rightList, leftPath, leftList);
+        }
+    }
+
+    //создание файла/директории производится по первому пути
+    private void prepareAndMakeDir(StringBuilder firstPath, ListView<String> firstList,
+                                   StringBuilder secondPath, ListView<String> secondList) {
+        MakeFileOrDirStage mds = new MakeFileOrDirStage(firstPath, firstList, secondPath, secondList);
+        mds.setMinWidth(480);
+        mds.setMinHeight(25);
+        mds.setResizable(false);
+        mds.show();
     }
 
     public void updateAllFilesLists() {
