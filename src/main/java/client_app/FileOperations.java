@@ -92,8 +92,8 @@ public class FileOperations {
         }
     }
 
-    public static void delete(String name, TelnetUser client) throws IOException {
-        Files.walkFileTree(Path.of(client.getCurrentPath() + File.separator + name), new SimpleFileVisitor<Path>() {
+    public static void delete(StringBuilder path, String fileName, ListView<String> fileList) throws IOException {
+        Files.walkFileTree(Path.of(path + File.separator + fileName), new SimpleFileVisitor<Path>() {
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                 Files.delete(file);
@@ -106,6 +106,7 @@ public class FileOperations {
                 return FileVisitResult.CONTINUE;
             }
         });
+
     }
 
 }

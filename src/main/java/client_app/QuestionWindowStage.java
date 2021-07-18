@@ -16,17 +16,25 @@ import static client_app.MainWindowController.*;
 
 public class QuestionWindowStage extends Stage {
 
+    private static String message;
+    static Action action;
     private static String markedFile;
     Path sourcePath, targetPath;
     StringBuilder currentPath;
     ListView<String> fileList;
 
-    public static String getMarkedFile() {
-        return markedFile;
+    public static String getMessage() {
+        switch (action) {
+            case COPY:
+                return markedFile + " уже существует." + "\n\r Желаете заменить?";
+            case DELETE:
+                return "Вы уверены что хотите удалить " + markedFile;
+        }
+        return null;
     }
 
     public QuestionWindowStage(Path sourcePath, Path targetPath, String markedFile,
-                               StringBuilder currentPath, ListView<String> fileList) {
+                               StringBuilder currentPath, ListView<String> fileList, Action action) {
         Parent root = null;
         try {
             this.sourcePath = sourcePath;
@@ -34,6 +42,7 @@ public class QuestionWindowStage extends Stage {
             QuestionWindowStage.markedFile = markedFile;
             this.currentPath = currentPath;
             this.fileList = fileList;
+            this.action = action;
             root = FXMLLoader.load(getClass().getResource("/fxml/QuestionWindow.fxml"));
             setTitle("Warning");
             Scene scene = new Scene(root, 400, 150);

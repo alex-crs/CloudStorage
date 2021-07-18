@@ -4,6 +4,8 @@ public enum Action {
     DOWNLOAD,
     UPLOAD,
     WAIT,
-    OVERWRITE
+    OVERWRITE,
+    COPY,
+    DELETE
 
 }

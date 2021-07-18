@@ -31,7 +31,7 @@ public class QuestionWindowController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        message.setText(getMarkedFile() + " уже существует." + "\n\r Желаете заменить?");
+        message.setText(getMessage());
     }
 
     public void yesBtnClick() throws IOException {
@@ -39,7 +39,18 @@ public class QuestionWindowController implements Initializable {
         Path targetPath = ((QuestionWindowStage) yesBtn.getScene().getWindow()).targetPath;
         StringBuilder currentPath = ((QuestionWindowStage) yesBtn.getScene().getWindow()).currentPath;
         ListView<String> fileList = ((QuestionWindowStage) yesBtn.getScene().getWindow()).fileList;
-        copy(sourcePath, targetPath, currentPath, fileList);
+        Action action = ((QuestionWindowStage) yesBtn.getScene().getWindow()).action;
+
+        switch (action){
+            case COPY:
+                copy(sourcePath, targetPath, currentPath, fileList);
+                break;
+            case DELETE:
+
+                break;
+            default:
+                System.out.println("Команда не отработала");
+        }
         stage = (Stage) yesBtn.getScene().getWindow();
         stage.close();
     }

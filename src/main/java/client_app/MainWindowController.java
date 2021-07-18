@@ -1,5 +1,6 @@
 package client_app;
 
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -12,9 +13,10 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.*;
-import java.util.ResourceBundle;
+import java.util.*;
 import java.util.regex.Matcher;
 
+import static client_app.Action.*;
 import static client_app.FileOperations.*;
 
 public class MainWindowController implements Initializable {
@@ -26,8 +28,8 @@ public class MainWindowController implements Initializable {
 
     StringBuilder rightPath = new StringBuilder();
     StringBuilder leftPath = new StringBuilder();
-    ObservableList<String> leftFiles;
-    ObservableList<String> rightFiles;
+    ObservableList<String> leftFiles = FXCollections.emptyObservableList();
+    ObservableList<String> rightFiles = FXCollections.emptyObservableList();
     MultipleSelectionModel<String> leftMarkedFiles;
     MultipleSelectionModel<String> rightMarkedFiles;
 
@@ -43,6 +45,10 @@ public class MainWindowController implements Initializable {
         leftMarkedFiles.setSelectionMode(SelectionMode.MULTIPLE);
     }
 
+    //--------------------------------------------------------------------------------
+    /*управляют активными окнами. В случае выделения одного или нескольких файлов
+     * добавляют их в лист для дальнейших операций. При этом если файлы выбираются в одном окне
+     * в другом список очищается, таким образом мы работаем только с одним активным окном*/
     public void leftEvent(MouseEvent mouseEvent) {
         if (mouseEvent.getClickCount() == 1) {
             leftFiles = leftMarkedFiles.getSelectedItems();
@@ -64,20 +70,22 @@ public class MainWindowController implements Initializable {
             eventAction(currentElement, rightPath, rightList);
         }
     }
+    //--------------------------------------------------------------------------------
+
 
     /*Данный метод строит путь как вперед так и назад, если дважды кликнуть по кнопке BACK, то данный метод
      * возвращает в предыдущую директорию, если было передано имя директории, то метод строит путь дальше.
      * Также в данном методе производится проверка на то, является ли файлом переданное имя, если да, то ПОКА
      * ничего не происходит (в дальнейшем добавлю открытие в системных программах)*/
-    private void eventAction(String element, StringBuilder currentPath, ListView<String> fileList) {
+    private void eventAction(String element, StringBuilder currentPath, ListView<String> renewableFileList) {
         String[] tokens = currentPath.toString().split(Matcher.quoteReplacement(File.separator));
         if ("BACK".equals(element)) {
             currentPath.delete((currentPath.length() - tokens[tokens.length - 1].length() - 1), currentPath.length());
-            showDirectory(currentPath, fileList);
+            showDirectory(currentPath, renewableFileList);
         } else {
             if (new File(currentPath.toString() + File.separator + element).isDirectory()) {
                 currentPath.append(element + File.separator);
-                showDirectory(currentPath, fileList);
+                showDirectory(currentPath, renewableFileList);
             }
         }
     }
@@ -88,41 +96,22 @@ public class MainWindowController implements Initializable {
     public void copyAction() throws IOException {
         if (leftFiles.size() > 0) { //если выделенные файлы слева
             prepareAndCopy(leftPath, rightPath, leftFiles, rightList);
-//            for (String element : leftFiles) {
-//                Path source = Path.of(leftPath + File.separator + element);
-//                Path target = Path.of(rightPath + File.separator + element);
-//                if (target.toFile().exists()) {
-//                    QuestionWindowStage qwc = new QuestionWindowStage(source, target, element, rightPath, rightList);
-//                    qwc.setResizable(false);
-//                    qwc.show();
-//                } else {
-//                    copy(source, target, rightPath, rightList);
-//                }
-//            }
         }
         if (rightFiles.size() > 0) { //если выделенные файлы справа
             prepareAndCopy(rightPath, leftPath, rightFiles, leftList);
-//            for (String element : rightFiles) {
-//                Path source = Path.of(rightPath + File.separator + element);
-//                Path target = Path.of(leftPath + File.separator + element);
-//                if (target.toFile().exists()) {
-//                    QuestionWindowStage qws = new QuestionWindowStage(source, target, element, rightPath, rightList);
-//                    qws.setResizable(false);
-//                    qws.show();
-//                } else {
-//                    copy(source, target, leftPath, leftList);
-//                }
-//            }
         }
     }
 
+    /*позволяет построить пути для копирования и проверить существует ли файл, если файл существует,
+     * появится окно с запросом о замене файла*/
     public void prepareAndCopy(StringBuilder sourcePath, StringBuilder targetPath,
                                ObservableList<String> files, ListView<String> renewableFileList) throws IOException {
         for (String element : files) {
             Path source = Path.of(sourcePath + File.separator + element);
             Path target = Path.of(targetPath + File.separator + element);
             if (target.toFile().exists()) {
-                QuestionWindowStage qws = new QuestionWindowStage(source, target, element, targetPath, renewableFileList);
+                QuestionWindowStage qws = new QuestionWindowStage(source, target, element,
+                        targetPath, renewableFileList, COPY);
                 qws.setResizable(false);
                 qws.show();
             } else {
@@ -131,7 +120,27 @@ public class MainWindowController implements Initializable {
         }
     }
 
-    public void deleteAction() {
+    public void deleteAction() throws IOException {
+        if (leftFiles.size() > 0) { //если выделенные файлы слева
+            prepareAndDelete(leftPath, leftFiles, leftList);
+        }
+        if (rightFiles.size() > 0) { //если выделенные файлы справа
+            prepareAndDelete(rightPath, rightFiles, rightList);
+        }
+    }
 
+    private void prepareAndDelete(StringBuilder path, ObservableList<String> files,
+                                  ListView<String> renewableFileList) throws IOException {
+        Iterator<String> iterator = files.iterator();
+        while (iterator.hasNext()) {
+            String fileName = iterator.next();
+            delete(path, fileName, renewableFileList);
+        }
+        updateAllFilesLists();
+    }
+
+    private void updateAllFilesLists() {
+        showDirectory(leftPath, leftList);
+        showDirectory(rightPath, rightList);
     }
 }
