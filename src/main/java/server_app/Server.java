@@ -7,10 +7,14 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import org.apache.log4j.Logger;
+
+import java.nio.charset.StandardCharsets;
 
 public class Server {
     private static EventLoopGroup auth;
     private static EventLoopGroup worker;
+    private static final Logger LOGGER = Logger.getLogger(Server.class);
 
     public Server() {
         auth = new NioEventLoopGroup(1);
@@ -30,7 +34,7 @@ public class Server {
                         }
                     });
             ChannelFuture future = bootstrap.bind(5679).sync();
-            System.out.println("Server started");
+            LOGGER.info("Server start");
             future.channel().closeFuture().sync();
             System.out.println("Server finished");
         } catch (Exception e) {

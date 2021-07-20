@@ -3,10 +3,12 @@ package client_app;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
@@ -54,6 +56,24 @@ public class MainWindowController implements Initializable {
 
     @FXML
     Button move;
+
+    @FXML
+    Button sourceTarget;
+
+    @FXML
+    Button authEnterButton;
+
+    @FXML
+    Button authCancelButton;
+
+    @FXML
+    Label authInfo;
+
+    @FXML
+    TextField loginField;
+
+    @FXML
+    PasswordField passwordField;
 
     @FXML
     TextField leftPathView;
@@ -125,6 +145,32 @@ public class MainWindowController implements Initializable {
         move.setFocusTraversable(false);
         leftPathView.setFocusTraversable(false);
         rightPathView.setFocusTraversable(false);
+        sourceTarget.setFocusTraversable(false);
+        authInfo.setVisible(false);
+        loginField.setVisible(false);
+        passwordField.setVisible(false);
+        authEnterButton.setVisible(false);
+        authCancelButton.setVisible(false);
+    }
+
+    public void showAuthFields(){
+        rightPathView.setVisible(false);
+        rightList.setVisible(false);
+        authInfo.setVisible(true);
+        loginField.setVisible(true);
+        passwordField.setVisible(true);
+        authEnterButton.setVisible(true);
+        authCancelButton.setVisible(true);
+    }
+
+    public void hideAuthFields(){
+        rightList.setVisible(true);
+        rightPathView.setVisible(true);
+        authInfo.setVisible(false);
+        loginField.setVisible(false);
+        passwordField.setVisible(false);
+        authEnterButton.setVisible(false);
+        authCancelButton.setVisible(false);
     }
 
     public void connect() {
@@ -150,7 +196,6 @@ public class MainWindowController implements Initializable {
                                 @Override
                                 public void run() {
                                     stage.setTitle("Pixel Cloud Explorer. User: " + nickname);
-
                                 }
                             });
                         }
@@ -329,12 +374,32 @@ public class MainWindowController implements Initializable {
         rightPathView.setText(rightPath.toString());
     }
 
+    //позволяет выставить каталог слева равный каталогу справа (для удобства работы)
+    public void sourceEquallyTarget() {
+        if (leftList.isFocused()) { //если выделенное окно слева правый==левому
+            rightPath.delete(0, rightPath.length());
+            rightPath.append(leftPath);
+            showDirectory(rightPath, rightList);
+        }
+        if (rightList.isFocused()) { //если выделенное окно справа левый=правому
+            leftPath.delete(0, leftPath.length());
+            leftPath.append(rightPath);
+            showDirectory(leftPath, leftList);
+        }
+    }
+
     public String[] queryFileInfo() throws IOException {
         int readNumberBytes = rbc.read(byteBuffer);
         return new String(Arrays.copyOfRange(byteBuffer.array(), 0, readNumberBytes)).split("  ");
     }
 
-
+    public void registration(ActionEvent actionEvent) {
+        RegistrationWindowStage rs = new RegistrationWindowStage(out);
+        rs.setMinWidth(400);
+        rs.setMinHeight(150);
+        rs.setResizable(false);
+        rs.show();
+    }
 }
 
 /*Обнаруженныне косяки:

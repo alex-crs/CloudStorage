@@ -3,6 +3,7 @@ package server_app;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
+import org.apache.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,6 +31,7 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
     private static final String READY_STATUS = "ok";
     private static final String FILE_EXIST = "ex";
     private static final String FILE_NOT_EXIST = "nex";
+    private static final Logger LOGGER = Logger.getLogger(MainHandler.class);
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
@@ -68,6 +70,7 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
                 .replace("\n", "")
                 .replace("\r", "")
                 .split("  ", 0);
+        LOGGER.info(String.format("Received header with content: [%s]", byteBuf.toString(StandardCharsets.UTF_8)));
         switch (header[0]) {
             case ("u"):
                 file = new File("root" + File.separator + header[1]);
