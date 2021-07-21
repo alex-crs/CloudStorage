@@ -13,7 +13,7 @@ import static server_app.Action.DOWNLOAD;
 
 public class FileTransfer {
 
-    public static void uploadFile(Object msg, File file, long transferFileLength) {
+    public static void uploadFile(ChannelHandlerContext ctx, Object msg, File file, long transferFileLength) {
             ByteBuf byteBuf = (ByteBuf) msg;
             ByteBuffer byteBuffer = byteBuf.nioBuffer();
         try {
@@ -25,6 +25,7 @@ public class FileTransfer {
             }
 
             if (transferFileLength == file.length()) {
+                ctx.writeAndFlush(Unpooled.wrappedBuffer(("/status-ok" + "\n").getBytes()));
                 MainHandler.setWaitAction();
             }
 

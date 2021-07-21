@@ -15,8 +15,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ResourceBundle;
 
-import static client_app.FileOperations.showDirectory;
-import static client_app.RenameWindowStage.getFileName;
+import static client_app.FileOperations.*;
 
 public class MakeFileOrDirController implements Initializable {
     @FXML
@@ -80,8 +79,8 @@ public class MakeFileOrDirController implements Initializable {
                 } else {
                     Files.createFile(path);
                 }
-                showDirectory(firstPath, firstList);
-                showDirectory(secondPath, secondList);
+                showLocalDirectory(firstPath, firstList);
+                showLocalDirectory(secondPath, secondList);
                 stage.close();
             } catch (IOException e) {
                 e.printStackTrace();

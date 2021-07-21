@@ -14,10 +14,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
 
 import java.awt.*;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.net.Socket;
 import java.net.URL;
 import java.nio.ByteBuffer;
@@ -96,6 +93,8 @@ public class MainWindowController implements Initializable {
     ReadableByteChannel rbc;
     ByteBuffer byteBuffer = ByteBuffer.allocate(8 * 1024);
     private ExecutorService threadManager;
+    public String DELIMETER = ";";
+    private String AUTH_COMMAND = "/auth";
     //----------------------------------------------------
 
     //...
@@ -108,6 +107,8 @@ public class MainWindowController implements Initializable {
     ObservableList<String> rightFiles = FXCollections.emptyObservableList();
     MultipleSelectionModel<String> leftMarkedFiles;
     MultipleSelectionModel<String> rightMarkedFiles;
+    public static boolean isRightListOnline;
+    public static boolean isLeftListOnline;
     //----------------------------------------------------
 
     //...
@@ -130,8 +131,8 @@ public class MainWindowController implements Initializable {
     public void initialize(URL url, ResourceBundle resourceBundle) {
         leftPath.append("c:\\");
         rightPath.append("c:\\");
-        showDirectory(rightPath, rightList);
-        showDirectory(leftPath, leftList);
+        showLocalDirectory(rightPath, rightList);
+        showLocalDirectory(leftPath, leftList);
         leftPathView.setText(leftPath.toString());
         rightPathView.setText(rightPath.toString());
         rightMarkedFiles = rightList.getSelectionModel();
@@ -153,7 +154,7 @@ public class MainWindowController implements Initializable {
         authCancelButton.setVisible(false);
     }
 
-    public void showAuthFields(){
+    public void showAuthFields() {
         rightPathView.setVisible(false);
         rightList.setVisible(false);
         authInfo.setVisible(true);
@@ -163,7 +164,7 @@ public class MainWindowController implements Initializable {
         authCancelButton.setVisible(true);
     }
 
-    public void hideAuthFields(){
+    public void hideAuthFields() {
         rightList.setVisible(true);
         rightPathView.setVisible(true);
         authInfo.setVisible(false);
@@ -180,35 +181,68 @@ public class MainWindowController implements Initializable {
             in = new DataInputStream(socket.getInputStream());
             rbc = Channels.newChannel(in);
             stage = (Stage) leftList.getScene().getWindow();
-            threadManager = Executors.newFixedThreadPool(2);
-            out.write("auth".getBytes());
+            threadManager = Executors.newFixedThreadPool(5);
+        } catch (IOException e) {
+//            threadManager.shutdown();
+            e.printStackTrace();
+        }
+    }
+
+    public void authorisation() {
+        if (socket == null) {
+            connect();
+        }
+        try {
+            out.write(("/auth" + DELIMETER + loginField.getText() + DELIMETER + passwordField.getText()).getBytes());
             Thread netClientThread = new Thread(() -> {
-                try {
-                    while (true) {
-                        String[] serverAnswer = queryFileInfo();
-                        if (!serverAnswer[0].isEmpty() && "/end".equals(serverAnswer[0])) {
-                            break;
+                String[] serverAnswer = queryStringListener();
+                if (!serverAnswer[0].isEmpty() && "/auth-ok".equals(serverAnswer[0])) {
+                    setAuthorized(true);
+                    nickname.append(serverAnswer[1].replace("\n", ""));
+                    hideAuthFields();
+                    Platform.runLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            stage.setTitle("Pixel Cloud Explorer. User: " + nickname);
                         }
-                        if (!serverAnswer[0].isEmpty() && "/auth-ok".equals(serverAnswer[0])) {
-                            setAuthorized(true);
-                            nickname.append(serverAnswer[1].replace("\n", ""));
-                            Platform.runLater(new Runnable() {
-                                @Override
-                                public void run() {
-                                    stage.setTitle("Pixel Cloud Explorer. User: " + nickname);
-                                }
-                            });
-                        }
+                    });
+                    byteBuffer.clear();
+                    String[] queryAnswer = receiveFileList(out);
+                    try {
+                        rightList.setCellFactory(null);
+                        isRightListOnline = true;
+                        changeCurrentPath(rightPath, queryAnswer[0], rightPathView);
+                        showOnlineDirectory(queryAnswer, rightList, rightPath);
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
-                } catch (IOException e) {
-                    e.printStackTrace();
+                }
+                if (!serverAnswer[0].isEmpty() && "/auth-no".equals(serverAnswer[0].replace("\n", ""))) {
+                    Platform.runLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            authInfo.setText("Wrong login/password, try again");
+                        }
+                    });
+//                        }
                 }
             });
             threadManager.execute(netClientThread);
+            byteBuffer.clear();
+            out.flush();
         } catch (IOException e) {
-            threadManager.shutdown();
             e.printStackTrace();
         }
+    }
+
+    public void changeCurrentPath(StringBuilder currentPath, String newPath, TextField pathView) {
+        currentPath.delete(0, currentPath.length());
+        currentPath.append(newPath);
+        pathView.setText(currentPath.toString());
+    }
+
+    public void disconnect() {
+        hideAuthFields();
     }
 
     //--------------------------------------------------------------------------------
@@ -222,7 +256,11 @@ public class MainWindowController implements Initializable {
         }
         if (mouseEvent.getClickCount() == 2) {
             String currentElement = leftList.getSelectionModel().getSelectedItem();
-            eventAction(currentElement, leftPath, leftList, leftPathView);
+            if (!isLeftListOnline) {
+                eventAction(currentElement, leftPath, leftList, leftPathView);
+            } else {
+                eventOnlineAction(currentElement, leftPath, leftList, leftPathView);
+            }
         }
     }
 
@@ -233,7 +271,11 @@ public class MainWindowController implements Initializable {
         }
         if (mouseEvent.getClickCount() == 2) {
             String currentElement = rightList.getSelectionModel().getSelectedItem();
-            eventAction(currentElement, rightPath, rightList, rightPathView);
+            if (!isRightListOnline) {
+                eventAction(currentElement, rightPath, rightList, rightPathView);
+            } else {
+                eventOnlineAction(currentElement, rightPath, rightList, rightPathView);
+            }
         }
     }
     //--------------------------------------------------------------------------------
@@ -247,13 +289,13 @@ public class MainWindowController implements Initializable {
         String[] tokens = currentPath.toString().split(Matcher.quoteReplacement(File.separator));
         if ("BACK".equals(element)) {
             currentPath.delete((currentPath.length() - tokens[tokens.length - 1].length() - 1), currentPath.length());
-            showDirectory(currentPath, renewableFileList);
+            showLocalDirectory(currentPath, renewableFileList);
             pathView.setText(currentPath.toString());
         } else {
             File file = new File(currentPath.toString() + File.separator + element);
             if (file.isDirectory()) {
                 currentPath.append(element + File.separator);
-                showDirectory(currentPath, renewableFileList);
+                showLocalDirectory(currentPath, renewableFileList);
                 pathView.setText(currentPath.toString());
             } else {
                 try {
@@ -267,14 +309,41 @@ public class MainWindowController implements Initializable {
         }
     }
 
+    private void eventOnlineAction(String element, StringBuilder currentPath, ListView<String> renewableFileList, TextField pathView) {
+        Thread eventAction = new Thread(() -> {
+            try {
+                if ("BACK".equals(element)) {
+                    String[] tokens = currentPath.toString().split(Matcher.quoteReplacement(File.separator));
+                    currentPath.delete((currentPath.length() - tokens[tokens.length - 1].length() - 1), currentPath.length());
+                    out.write(("/cd" + DELIMETER + currentPath).getBytes());
+                    String[] serverAnswer = queryStringListener();
+                    changeCurrentPath(currentPath, serverAnswer[0], pathView);
+                    showOnlineDirectory(serverAnswer, renewableFileList, currentPath);
+                } else {
+                    out.write(("/cd" + DELIMETER + currentPath + File.separator + element.replaceAll(".:", "")).getBytes());
+                    String[] serverAnswer = queryStringListener();
+                    changeCurrentPath(currentPath, serverAnswer[0], pathView);
+                    showOnlineDirectory(serverAnswer, renewableFileList, currentPath);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+        threadManager.execute(eventAction);
+    }
+
     /*Проверяем текущий выделенный файл в окне (если например выделен файл в правом окне, то копируем в левый
      * если выделен в левом окне, то копируем в правое окно
      * Если левое или правое окно подключены к облачному хранилищу, то вместо команды copy(), запускается метод upload*/
     public void copyAction() throws IOException {
         if (leftFiles.size() > 0) { //если выделенные файлы слева
-            prepareAndCopy(leftPath, rightPath, leftFiles, rightList);
+            if (!isRightListOnline) {
+                prepareAndCopy(leftPath, rightPath, leftFiles, rightList);
+            } else {
+                prepareAndUpload(leftList.getSelectionModel().getSelectedItem(), rightList, rightPath);
+            }
         }
-        if (rightFiles.size() > 0) { //если выделенные файлы справа
+        if (rightFiles.size() > 0 && !isLeftListOnline) { //если выделенные файлы справа
             prepareAndCopy(rightPath, leftPath, rightFiles, leftList);
         }
     }
@@ -295,6 +364,46 @@ public class MainWindowController implements Initializable {
                 copy(source, target, targetPath, renewableFileList);
             }
         }
+    }
+
+    public void prepareAndUpload(String fileName, ListView<String> renewableFileList, StringBuilder currentPath) {
+        Thread uploadThread = new Thread(() -> {
+            try {
+                File file = new File(leftPath + File.separator + fileName);
+                out.write(("/upload" + DELIMETER + fileName + DELIMETER
+                        + file.length() + DELIMETER + OVERWRITE).getBytes());
+
+                while (true) {
+                String[] serverAnswer = queryStringListener();
+                    if ("/upload-ok".equals(serverAnswer[0].replace("\n", ""))) {
+                        break;
+                    } else if ("nex".equals(serverAnswer[0])) {
+                        System.out.println("Файл уже существует заменить?"); //отработать этот модуль
+                        throw new FileAlreadyExistsException(fileName);
+                    }
+                }
+                RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");
+                int read = 0;
+                byte[] buffer = new byte[8 * 1024];
+                while ((read = randomAccessFile.read(buffer)) != -1) {
+                    out.write(buffer, 0, read);
+                }
+                byteBuffer.clear();
+                randomAccessFile.close();
+                out.flush();
+                while (true) {
+                    String[] serverAnswer = queryStringListener();
+                    if ("/status-ok".equals(serverAnswer[0].replace("\n", ""))) {
+                        updateAllFilesLists();
+                        break;
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+        uploadThread.interrupt();
+        threadManager.execute(uploadThread);
     }
 
     public void deleteAction() throws IOException {
@@ -367,34 +476,67 @@ public class MainWindowController implements Initializable {
         }
     }
 
-    public void updateAllFilesLists() {
-        showDirectory(leftPath, leftList);
-        showDirectory(rightPath, rightList);
-        leftPathView.setText(leftPath.toString());
-        rightPathView.setText(rightPath.toString());
+    public void updateAllFilesLists() throws IOException {
+        if (!isLeftListOnline) {
+            showLocalDirectory(leftPath, leftList);
+            leftPathView.setText(leftPath.toString());
+        }
+        if (!isRightListOnline) {
+            showLocalDirectory(rightPath, rightList);
+            rightPathView.setText(rightPath.toString());
+        }
+        if (isRightListOnline) {
+            showOnlineDirectory(receiveFileList(out), rightList, rightPath);
+        }
+        if (isLeftListOnline) {
+            showOnlineDirectory(receiveFileList(out), leftList, leftPath);
+        }
     }
 
     //позволяет выставить каталог слева равный каталогу справа (для удобства работы)
     public void sourceEquallyTarget() {
-        if (leftList.isFocused()) { //если выделенное окно слева правый==левому
-            rightPath.delete(0, rightPath.length());
-            rightPath.append(leftPath);
-            showDirectory(rightPath, rightList);
-        }
-        if (rightList.isFocused()) { //если выделенное окно справа левый=правому
-            leftPath.delete(0, leftPath.length());
-            leftPath.append(rightPath);
-            showDirectory(leftPath, leftList);
-        }
+        Thread directoryUpdate = new Thread(() -> {
+            if (leftList.isFocused()) { //если выделенное окно слева правый==левому
+                rightPath.delete(0, rightPath.length());
+                rightPath.append(leftPath);
+                isRightListOnline = isLeftListOnline;
+                showLocalDirectory(rightPath, rightList);
+            }
+            if (rightList.isFocused()) { //если выделенное окно справа левый=правому
+                leftPath.delete(0, leftPath.length());
+                leftPath.append(rightPath);
+                isLeftListOnline = isRightListOnline;
+                showLocalDirectory(leftPath, leftList);
+            }
+        });
+        directoryUpdate.interrupt();
+        threadManager.execute(directoryUpdate);
     }
 
-    public String[] queryFileInfo() throws IOException {
-        int readNumberBytes = rbc.read(byteBuffer);
-        return new String(Arrays.copyOfRange(byteBuffer.array(), 0, readNumberBytes)).split("  ");
+    public String[] queryStringListener() {
+        int readNumberBytes = 0;
+        try {
+            readNumberBytes = rbc.read(byteBuffer);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        String[] queryAnswer = new String(Arrays.copyOfRange(byteBuffer.array(), 0, readNumberBytes)).split(DELIMETER);
+        byteBuffer.clear();
+        return queryAnswer;
+    }
+
+    public String[] receiveFileList(DataOutputStream out) {
+        try {
+            out.write("/ls".getBytes());
+            out.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return queryStringListener();
     }
 
     public void registration(ActionEvent actionEvent) {
-        RegistrationWindowStage rs = new RegistrationWindowStage(out);
+        RegistrationWindowStage rs = new RegistrationWindowStage(out, rbc);
         rs.setMinWidth(400);
         rs.setMinHeight(150);
         rs.setResizable(false);
@@ -404,4 +546,5 @@ public class MainWindowController implements Initializable {
 
 /*Обнаруженныне косяки:
  * 1. при вставке пути вместо имени файла (например C:\path\) выскакивает исключение
- * 2. */
+ * 2. когда у пользователя в директории ничего нет, ничего не открывается:) надо поправить
+ * 3. не забыть при создании файла или папки убирать в окончании пробелы*/

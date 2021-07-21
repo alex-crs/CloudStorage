@@ -60,8 +60,8 @@ public class RenameWindowController implements Initializable {
             targetFile = new File(renamePath + File.separator + fileName.getText());
         }
         sourceFile.renameTo(targetFile);
-        showDirectory(renamePath, renameList);
-        showDirectory(secondPath, secondList);
+        showLocalDirectory(renamePath, renameList);
+        showLocalDirectory(secondPath, secondList);
         stage = (Stage) apply.getScene().getWindow();
         stage.close();
     }

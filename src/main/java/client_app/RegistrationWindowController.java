@@ -12,6 +12,10 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
+import java.nio.channels.ReadableByteChannel;
+import java.util.Arrays;
 
 public class RegistrationWindowController {
     @FXML
@@ -27,30 +31,42 @@ public class RegistrationWindowController {
     @FXML
     public Button signupBtn;
 
+    public static String DELIMETER = ";";
+
     public void signUp(ActionEvent actionEvent) {
         if ("Sign Up".equals(signupBtn.getText())) {
             Socket socket = null;
             DataOutputStream out = null;
             DataInputStream in = null;
             String result = null;
+            ReadableByteChannel rbc = null;
+            ByteBuffer byteBuffer = ByteBuffer.allocate(8 * 1024);
 
             try {
                 socket = new Socket(MainWindowController.ADDRESS, MainWindowController.PORT);
                 out = new DataOutputStream(socket.getOutputStream());
                 in = new DataInputStream(socket.getInputStream());
+                rbc = Channels.newChannel(in);
                 if (socket != null && !password.getText().isEmpty() && password.getText().equals(passwordRepeater.getText())) {
-                    out.writeUTF("/signup " + login.getText().toLowerCase() + " " + password.getText() + " " + nickname.getText());
-                    result = in.readUTF();
+                    out.write(("/signup" + DELIMETER + login.getText().toLowerCase() + DELIMETER
+                            + password.getText() + DELIMETER + nickname.getText()).getBytes());
+                    int readNumberBytes = rbc.read(byteBuffer);
+                    String answer = new String(Arrays.copyOfRange(byteBuffer.array(), 0, readNumberBytes)).replace("\n","");
+                    if ("/signup-no".equals(answer)){
+                        resultLabel.setText("Registration denied");
+                    }
+                    if ("/signup-ok".equals(answer)){
+                        resultLabel.setText("Registration successfully");
+                    }
                 } else {
-                    result = "Пароли не совпадают";
+                    resultLabel.setText("Password mismatch");
                 }
             } catch (IOException e) {
                 signupBtn.setText("Нет соединения с сервером");
             }
 
-            resultLabel.setText(result);
             resultLabel.setVisible(true);
-            if (resultLabel.getText() != null && resultLabel.getText().contains("Успешная регистрация")) {
+            if (resultLabel.getText() != null && resultLabel.getText().contains("Registration successfully")) {
                 signupBtn.setText("Exit");
             }
         } else {

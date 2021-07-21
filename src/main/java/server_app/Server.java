@@ -34,6 +34,7 @@ public class Server {
                         }
                     });
             ChannelFuture future = bootstrap.bind(5679).sync();
+            AuthService.connect();
             LOGGER.info("Server start");
             future.channel().closeFuture().sync();
             System.out.println("Server finished");

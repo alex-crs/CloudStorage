@@ -12,6 +12,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 import static server_app.Action.*;
+import static server_app.AuthService.tryToAuth;
+import static server_app.AuthService.tryToReg;
+import static server_app.CommandHandler.*;
 import static server_app.FileTransfer.downloadFile;
 import static server_app.FileTransfer.uploadFile;
 
@@ -28,10 +31,16 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
     private static File file;
     private static long transferFileLength;
     private static Action transferOptions;
-    private static final String READY_STATUS = "ok";
+    private static final String READY_STATUS = "/upload-ok";
     private static final String FILE_EXIST = "ex";
     private static final String FILE_NOT_EXIST = "nex";
+    public static String DELIMETER = ";";
+    private static CSUser csUser;
     private static final Logger LOGGER = Logger.getLogger(MainHandler.class);
+
+    public static void setCsUser(String user) {
+        csUser = new CSUser(user);
+    }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
@@ -43,7 +52,7 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         switch (action) {
             case UPLOAD:
-                uploadFile(msg, file, transferFileLength);
+                uploadFile(ctx, msg, file, transferFileLength);
                 break;
             case DOWNLOAD:
                 downloadFile(ctx, msg, file);
@@ -64,22 +73,22 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
         System.out.println("Client disconnected " + ctx.channel().localAddress());
     }
 
-    public static void stringListener(ChannelHandlerContext ctx, Object msg) throws IOException {
+    public void stringListener(ChannelHandlerContext ctx, Object msg) throws IOException {
         ByteBuf byteBuf = (ByteBuf) msg;
         String[] header = byteBuf.toString(StandardCharsets.UTF_8)
                 .replace("\n", "")
                 .replace("\r", "")
-                .split("  ", 0);
+                .split(DELIMETER, 0);
         LOGGER.info(String.format("Received header with content: [%s]", byteBuf.toString(StandardCharsets.UTF_8)));
         switch (header[0]) {
-            case ("u"):
-                file = new File("root" + File.separator + header[1]);
+            case ("/upload"):
+                file = new File(csUser.getRoot() + File.separator + header[1]);
                 transferFileLength = Long.parseLong(header[2]);
                 transferOptions = (header[3].equals("OVERWRITE") ? OVERWRITE : null);
                 if (!file.exists()) {
                     file.createNewFile();
                 } else if (file.exists() && transferOptions == null) {
-                    ctx.writeAndFlush(Unpooled.wrappedBuffer((FILE_EXIST + "\n").getBytes()));
+                    //ctx.writeAndFlush(Unpooled.wrappedBuffer((FILE_EXIST + "\n").getBytes()));
                     break;
                 } else {
                     //написать логику удаления файла (добавить из коммандера)
@@ -93,11 +102,22 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
                 if (!file.exists()) {
                     ctx.writeAndFlush(Unpooled.wrappedBuffer((FILE_NOT_EXIST + "\n").getBytes()));
                 }
-                ctx.writeAndFlush(Unpooled.wrappedBuffer((READY_STATUS + "  " + file.length() + "\n").getBytes()));
+                ctx.writeAndFlush(Unpooled.wrappedBuffer((READY_STATUS + DELIMETER + file.length() + "\n").getBytes()));
                 action = DOWNLOAD;
                 break;
-            case ("auth"):
-                ctx.writeAndFlush(Unpooled.wrappedBuffer(("/auth-ok  Alex" + "\n").getBytes()));
+            case ("/auth"):
+                tryToAuth(ctx, header);
+                break;
+            case ("/signup"):
+                tryToReg(ctx, header);
+                break;
+            case ("/ls"):
+                ctx.writeAndFlush(Unpooled.wrappedBuffer((csUser.getCurrentPath() + DELIMETER + getFilesList(csUser)).getBytes()));
+                break;
+            case ("/cd"):
+                csUser.setCurrentPath(header[1]);
+                getFilesList(csUser);
+                ctx.writeAndFlush(Unpooled.wrappedBuffer((csUser.getCurrentPath() + DELIMETER + getFilesList(csUser)).getBytes()));
                 break;
         }
     }
