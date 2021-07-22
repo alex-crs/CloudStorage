@@ -47,23 +47,25 @@ public class FileOperations {
                         } else if ("BACK".equals(friend)) {
                             setText(friend);
                             setGraphic(new ImageView(new Image("/images/arrow.png")));
-                        } else {
+                        } else if ((!friend.contains("d:")) && (!friend.contains("f:"))) {
                             File file = new File(directory + File.separator + friend);
                             ImageIcon imageIcon = (ImageIcon) FileSystemView.getFileSystemView().getSystemIcon(file);
-                            java.awt.Image imageIconView = imageIcon.getImage();
-                            BufferedImage bi = new BufferedImage(
-                                    imageIcon.getIconWidth(),
-                                    imageIcon.getIconHeight(),
-                                    BufferedImage.TYPE_INT_ARGB
-                            );
-                            imageIcon.paintIcon(null, bi.getGraphics(), 0, 0);
-                            SwingFXUtils.toFXImage(bi, null);
-                            if (file.isFile()) {
-                                setText(friend);
-                                setGraphic(new ImageView(SwingFXUtils.toFXImage(bi, null)));
-                            } else if (file.isDirectory()) {
-                                setText(friend);
-                                setGraphic(new ImageView(SwingFXUtils.toFXImage(bi, null)));
+                            if (imageIcon != null) {
+                                java.awt.Image imageIconView = imageIcon.getImage();
+                                BufferedImage bi = new BufferedImage(
+                                        imageIcon.getIconWidth(),
+                                        imageIcon.getIconHeight(),
+                                        BufferedImage.TYPE_INT_ARGB
+                                );
+                                imageIcon.paintIcon(null, bi.getGraphics(), 0, 0);
+                                SwingFXUtils.toFXImage(bi, null);
+                                if (file.isFile()) {
+                                    setText(friend);
+                                    setGraphic(new ImageView(SwingFXUtils.toFXImage(bi, null)));
+                                } else if (file.isDirectory()) {
+                                    setText(friend);
+                                    setGraphic(new ImageView(SwingFXUtils.toFXImage(bi, null)));
+                                }
                             }
                         }
                     } catch (Exception e) {
@@ -78,7 +80,6 @@ public class FileOperations {
     }
 
     public static void showOnlineDirectory(String[] onlineFileList, ListView<String> fileList, StringBuilder currentPath) throws IOException {
-//        fileList.setCellFactory(null);
         Platform.runLater(new Runnable() {
             @Override
             public void run() {
@@ -118,21 +119,26 @@ public class FileOperations {
                             tempElement = Files.createTempFile(tempPath, "", (friendPath[1].replace("\n", "")));
                         }
 
-                        ImageIcon imageIcon = (ImageIcon) FileSystemView.getFileSystemView().getSystemIcon(tempElement.toFile());
-                        java.awt.Image imageIconView = imageIcon.getImage();
-                        BufferedImage bi = new BufferedImage(
-                                imageIcon.getIconWidth(),
-                                imageIcon.getIconHeight(),
-                                BufferedImage.TYPE_INT_ARGB
-                        );
-                        imageIcon.paintIcon(null, bi.getGraphics(), 0, 0);
-                        SwingFXUtils.toFXImage(bi, null);
-                        if (tempElement.toFile().isFile()) {
-                            setText(friendPath[1]);
-                            setGraphic(new ImageView(SwingFXUtils.toFXImage(bi, null)));
-                        } else if (tempElement.toFile().isDirectory()) {
-                            setText(friendPath[1]);
-                            setGraphic(new ImageView(SwingFXUtils.toFXImage(bi, null)));
+                        ImageIcon imageIcon = null;
+                        if (tempElement != null) {
+                            imageIcon = (ImageIcon) FileSystemView.getFileSystemView().getSystemIcon(tempElement.toFile());
+                        }
+                        if (imageIcon != null) {
+                            java.awt.Image imageIconView = imageIcon.getImage();
+                            BufferedImage bi = new BufferedImage(
+                                    imageIcon.getIconWidth(),
+                                    imageIcon.getIconHeight(),
+                                    BufferedImage.TYPE_INT_ARGB
+                            );
+                            imageIcon.paintIcon(null, bi.getGraphics(), 0, 0);
+                            SwingFXUtils.toFXImage(bi, null);
+                            if (tempElement.toFile().isFile()) {
+                                setText(friendPath[1]);
+                                setGraphic(new ImageView(SwingFXUtils.toFXImage(bi, null)));
+                            } else if (tempElement.toFile().isDirectory()) {
+                                setText(friendPath[1]);
+                                setGraphic(new ImageView(SwingFXUtils.toFXImage(bi, null)));
+                            }
                         }
                         tempElement.toFile().delete();
                     }

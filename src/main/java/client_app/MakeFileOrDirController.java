@@ -79,8 +79,7 @@ public class MakeFileOrDirController implements Initializable {
                 } else {
                     Files.createFile(path);
                 }
-                showLocalDirectory(firstPath, firstList);
-                showLocalDirectory(secondPath, secondList);
+
                 stage.close();
             } catch (IOException e) {
                 e.printStackTrace();

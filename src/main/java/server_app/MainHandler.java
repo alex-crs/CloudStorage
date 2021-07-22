@@ -9,6 +9,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 
 import static server_app.Action.*;
@@ -82,27 +84,37 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
         LOGGER.info(String.format("Received header with content: [%s]", byteBuf.toString(StandardCharsets.UTF_8)));
         switch (header[0]) {
             case ("/upload"):
-                file = new File(csUser.getRoot() + File.separator + header[1]);
-                transferFileLength = Long.parseLong(header[2]);
-                transferOptions = (header[3].equals("OVERWRITE") ? OVERWRITE : null);
-                if (!file.exists()) {
-                    file.createNewFile();
-                } else if (file.exists() && transferOptions == null) {
-                    //ctx.writeAndFlush(Unpooled.wrappedBuffer((FILE_EXIST + "\n").getBytes()));
-                    break;
-                } else {
-                    //написать логику удаления файла (добавить из коммандера)
-                    file.createNewFile();
+                if ("f".equals(header[1])) {
+                    file = new File(csUser.getCurrentPath() + File.separator + header[2]);
+                    transferFileLength = Long.parseLong(header[3]);
+//                    transferOptions = (header[4].equals("OVERWRITE") ? OVERWRITE : null); //логика не реализована
+                    if (!file.exists()) {
+                        file.createNewFile();
+                    } else if (file.exists() && transferOptions == null) {
+                        //ctx.writeAndFlush(Unpooled.wrappedBuffer((FILE_EXIST + "\n").getBytes()));
+                        break;
+                    } else {
+                        //написать логику удаления файла (добавить из коммандера)
+                        file.createNewFile();
+                    }
+                    ctx.writeAndFlush(Unpooled.wrappedBuffer((READY_STATUS + "\n").getBytes()));
+                    if (transferFileLength != 0) {
+                        action = UPLOAD;
+                    } else {
+                        ctx.writeAndFlush(Unpooled.wrappedBuffer(("/status-ok" + "\n").getBytes()));
+                    }
                 }
-                ctx.writeAndFlush(Unpooled.wrappedBuffer((READY_STATUS + "\n").getBytes()));
-                action = UPLOAD;
+                if ("d".equals(header[1])) {
+                    Files.createDirectory(Path.of(csUser.getRoot() + File.separator + header[2]));
+                    ctx.writeAndFlush(Unpooled.wrappedBuffer(("/status-ok" + "\n").getBytes()));
+                }
                 break;
-            case ("d"):
-                file = new File("root" + File.separator + header[1]);
+            case ("/download"):
+                file = new File(header[1]);
                 if (!file.exists()) {
-                    ctx.writeAndFlush(Unpooled.wrappedBuffer((FILE_NOT_EXIST + "\n").getBytes()));
+//                    ctx.writeAndFlush(Unpooled.wrappedBuffer((FILE_NOT_EXIST + "\n").getBytes()));
                 }
-                ctx.writeAndFlush(Unpooled.wrappedBuffer((READY_STATUS + DELIMETER + file.length() + "\n").getBytes()));
+                ctx.writeAndFlush(Unpooled.wrappedBuffer(("/download-ok" + DELIMETER + file.length() + "\n").getBytes()));
                 action = DOWNLOAD;
                 break;
             case ("/auth"):

@@ -19,6 +19,7 @@ import java.net.Socket;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.file.*;
 import java.util.*;
@@ -337,16 +338,29 @@ public class MainWindowController implements Initializable {
      * Если левое или правое окно подключены к облачному хранилищу, то вместо команды copy(), запускается метод upload*/
     public void copyAction() throws IOException {
         if (leftFiles.size() > 0) { //если выделенные файлы слева
-            if (!isRightListOnline) {
+            if (!isLeftListOnline && !isRightListOnline) {
                 prepareAndCopy(leftPath, rightPath, leftFiles, rightList);
-            } else {
-                prepareAndUpload(leftList.getSelectionModel().getSelectedItem(), rightList, rightPath);
+            }
+            if (!isLeftListOnline && isRightListOnline) {
+                prepareAndUpload(leftList.getSelectionModel().getSelectedItem(), leftPath); //дописать логику множественного копирования
+            }
+            if (isLeftListOnline && !isRightListOnline) {
+                prepareAndDownload(leftList.getSelectionModel().getSelectedItem(), leftPath);
+            }
+            if (isLeftListOnline && isRightListOnline) {
+
             }
         }
-        if (rightFiles.size() > 0 && !isLeftListOnline) { //если выделенные файлы справа
-            prepareAndCopy(rightPath, leftPath, rightFiles, leftList);
+        if (rightFiles.size() > 0) { //если выделенные файлы справа
+            if (!isRightListOnline && !isLeftListOnline) {
+                prepareAndCopy(rightPath, leftPath, rightFiles, leftList);
+            }
+            if (isRightListOnline && !isLeftListOnline) {
+                prepareAndDownload(rightList.getSelectionModel().getSelectedItem(), rightPath);
+            }
         }
     }
+
 
     /*позволяет построить пути для копирования и проверить существует ли файл, если файл существует,
      * появится окно с запросом о замене файла*/
@@ -366,31 +380,37 @@ public class MainWindowController implements Initializable {
         }
     }
 
-    public void prepareAndUpload(String fileName, ListView<String> renewableFileList, StringBuilder currentPath) {
+    public void prepareAndUpload(String fileName, StringBuilder fromPath) {
         Thread uploadThread = new Thread(() -> {
             try {
-                File file = new File(leftPath + File.separator + fileName);
-                out.write(("/upload" + DELIMETER + fileName + DELIMETER
-                        + file.length() + DELIMETER + OVERWRITE).getBytes());
-
-                while (true) {
-                String[] serverAnswer = queryStringListener();
-                    if ("/upload-ok".equals(serverAnswer[0].replace("\n", ""))) {
-                        break;
-                    } else if ("nex".equals(serverAnswer[0])) {
-                        System.out.println("Файл уже существует заменить?"); //отработать этот модуль
-                        throw new FileAlreadyExistsException(fileName);
+                File file = new File(fromPath + File.separator + fileName);
+                if (file.isFile()) {
+                    out.write(("/upload" + DELIMETER + "f" + DELIMETER + fileName + DELIMETER
+                            + file.length()).getBytes());
+                    while (true) {
+                        String[] serverAnswer = queryStringListener();
+                        if ("/upload-ok".equals(serverAnswer[0].replace("\n", ""))) {
+                            break;
+                        } else if ("nex".equals(serverAnswer[0])) {
+                            System.out.println("Файл уже существует заменить?"); //отработать этот модуль
+                            throw new FileAlreadyExistsException(fileName);
+                        }
                     }
+                } else {
+                    out.write(("/upload" + DELIMETER + "d" + DELIMETER + fileName + DELIMETER
+                            + file.length()).getBytes());
                 }
-                RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");
-                int read = 0;
-                byte[] buffer = new byte[8 * 1024];
-                while ((read = randomAccessFile.read(buffer)) != -1) {
-                    out.write(buffer, 0, read);
+                if (file.isFile() && file.length() != 0) {
+                    RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");
+                    int read = 0;
+                    byte[] buffer = new byte[8 * 1024];
+                    while ((read = randomAccessFile.read(buffer)) != -1) {
+                        out.write(buffer, 0, read);
+                    }
+                    byteBuffer.clear();
+                    randomAccessFile.close();
+                    out.flush();
                 }
-                byteBuffer.clear();
-                randomAccessFile.close();
-                out.flush();
                 while (true) {
                     String[] serverAnswer = queryStringListener();
                     if ("/status-ok".equals(serverAnswer[0].replace("\n", ""))) {
@@ -405,6 +425,51 @@ public class MainWindowController implements Initializable {
         uploadThread.interrupt();
         threadManager.execute(uploadThread);
     }
+
+    private void prepareAndDownload(String fileName, StringBuilder fromPath) {
+        Thread downloadThread = new Thread(() -> {
+            File file = new File(leftPath + File.separator + fileName.replaceAll(".:", ""));
+            long downloadFileLength = 0;
+            try {
+                out.write(("/download" + DELIMETER + fromPath + File.separator + fileName.replaceAll(".:", "")).getBytes());
+                String[] serverAnswer = queryStringListener();
+                if (!file.exists()) {
+                    file.createNewFile();
+                }
+                while (true) {
+                    if ("/download-ok".equals(serverAnswer[0])) {
+                        downloadFileLength = Long.parseLong(serverAnswer[1].replace("\n", ""));
+                        break;
+                    } else if ("nex".equals(serverAnswer[0])) {
+                        System.out.println("File not found!"); //отработать этот модуль
+                        throw new FileNotFoundException();
+                    }
+                }
+                out.write(" ".getBytes());
+                out.flush();
+                RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");
+                FileChannel fileChannel = randomAccessFile.getChannel();
+                while ((rbc.read(byteBuffer)) > 0) {
+                    byteBuffer.flip();
+                    fileChannel.position(file.length());
+                    fileChannel.write(byteBuffer);
+                    byteBuffer.compact();
+                    if (file.length() == downloadFileLength) {
+                        updateAllFilesLists();
+                        break;
+                    }
+                }
+                byteBuffer.clear();
+                fileChannel.close();
+                randomAccessFile.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+        downloadThread.interrupt();
+        threadManager.execute(downloadThread);
+    }
+
 
     public void deleteAction() throws IOException {
         if (leftFiles.size() > 0) { //если выделенные файлы слева
@@ -544,7 +609,10 @@ public class MainWindowController implements Initializable {
     }
 }
 
-/*Обнаруженныне косяки:
+/*Обнаруженные косяки:
  * 1. при вставке пути вместо имени файла (например C:\path\) выскакивает исключение
  * 2. когда у пользователя в директории ничего нет, ничего не открывается:) надо поправить
- * 3. не забыть при создании файла или папки убирать в окончании пробелы*/
+ * 3. не забыть при создании файла или папки убирать в окончании пробелы
+ * 4. При выравнивании папок (онлайн) появляется кнопка BACK
+ * 5. после переименования файла также выскакивает BACK (при этом переименование происходит в локальной директории
+ *    а обновляется онлайн директория)*/
