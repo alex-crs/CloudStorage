@@ -17,31 +17,30 @@ import static client_app.MainWindowController.*;
 public class QuestionWindowStage extends Stage {
 
     static Action action;
-    private static String markedFile;
-    Path sourcePath, targetPath;
-    StringBuilder currentPath;
-    ListView<String> fileList;
+    WorkPanel sourcePanel, targetPanel;
+    static String element;
+
+    public static String getElement() {
+        return element;
+    }
 
     public static String getMessage() {
         switch (action) {
             case COPY:
-                return markedFile + " уже существует." + "\n\r Желаете заменить?";
+                return element + " уже существует." + "\n\r Желаете заменить?";
             case DELETE:
-                return "Вы уверены что хотите удалить " + markedFile;
+                return "Вы уверены что хотите удалить " + element;
         }
         return null;
     }
 
-    public QuestionWindowStage(Path sourcePath, Path targetPath, String markedFile,
-                               StringBuilder currentPath, ListView<String> fileList, Action action) {
+    public QuestionWindowStage(WorkPanel sourcePanel, WorkPanel targetPanel, String element, Action action) {
+        QuestionWindowStage.action = action;
+        QuestionWindowStage.element = element;
+        this.sourcePanel = sourcePanel;
+        this.targetPanel = targetPanel;
         Parent root = null;
         try {
-            this.sourcePath = sourcePath;
-            this.targetPath = targetPath;
-            QuestionWindowStage.markedFile = markedFile;
-            this.currentPath = currentPath;
-            this.fileList = fileList;
-            this.action = action;
             root = FXMLLoader.load(getClass().getResource("/fxml/QuestionWindow.fxml"));
             setTitle("Warning");
             Scene scene = new Scene(root, 400, 150);

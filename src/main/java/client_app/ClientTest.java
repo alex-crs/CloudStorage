@@ -65,8 +65,6 @@ public class ClientTest extends JFrame {
     private void downloadFromServer(String fileName) { //готов для работы
         File file = new File("client" + File.separator + fileName);
         long downloadFileLength = 0;
-
-
         try {
             out.write(("d  " + fileName).getBytes());
             String[] serverAnswer = queryFileInfo();
@@ -82,7 +80,7 @@ public class ClientTest extends JFrame {
                     throw new FileNotFoundException();
                 }
             }
-            out.write(" ".getBytes());
+            out.write(" ".getBytes()); //это нужно что бы запустить процесс закачки
             byteBuffer.clear();
             RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");
             FileChannel fileChannel = randomAccessFile.getChannel();

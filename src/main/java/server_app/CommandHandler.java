@@ -232,7 +232,7 @@ public class CommandHandler {
 //        }
 //}
 
-//    private static void touchFile(String name, ChannelHandlerContext ctx, CSUser client) throws IOException {
+    //    private static void touchFile(String name, ChannelHandlerContext ctx, CSUser client) throws IOException {
 //        try {
 //            Files.createFile(Path.of(client.getCurrentPath() + File.separator + clearEmptySymbolsAfterName(name)));
 //        } catch (FileAlreadyExistsException e) {
@@ -240,13 +240,15 @@ public class CommandHandler {
 //        }
 //    }
 //
-//    private static void makeDir(String name, ChannelHandlerContext ctx, CSUser client) throws IOException {
-//        try {
-//            Files.createDirectory(Path.of(client.getCurrentPath() + File.separator + clearEmptySymbolsAfterName(name)));
-//        } catch (FileAlreadyExistsException e) {
-//            sendMessage("Error: Directory already exist!\r\n", ctx);
-//        }
-//    }
+    public static void makeDir(String name, CSUser client) {
+        try {
+            Files.createDirectory(Path.of(client.getCurrentPath() + File.separator + name));
+        } catch (FileAlreadyExistsException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 //
 //    //удаляет пробелы в конце пути (полезно при создании папки с пробелами на конце, во избежании ошибки)
 //    private static String clearEmptySymbolsAfterName(String name) {

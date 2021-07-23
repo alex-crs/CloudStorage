@@ -1,24 +1,95 @@
 package client_app;
 
 import javafx.application.Platform;
+import javafx.collections.ObservableList;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
+import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileSystemView;
 import java.awt.image.BufferedImage;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.ReadableByteChannel;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.FileAttribute;
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.regex.Matcher;
 
+
+import static client_app.Action.COPY;
+import static client_app.MainWindowController.*;
+import static client_app.RegistrationWindowController.DELIMETER;
+
 public class FileOperations {
+    public static void showLocalDirectory1(WorkPanel workPanel) {
+        try {
+            File fileDirectory = new File(workPanel.currentPath.toString());
+            String[] tokens = fileDirectory.list();
+            Platform.runLater(new Runnable() {
+                @Override
+                public void run() {
+                    workPanel.listView.getItems().clear();
+                    if (workPanel.currentPath.toString().split(Matcher.quoteReplacement(File.separator)).length >= 2) {
+                        workPanel.listView.getItems().add("BACK");
+                    }
+                    for (int i = 0; i < tokens.length; i++) {
+                        workPanel.listView.getItems().add(tokens[i]);
+                    }
+                    workPanel.setPathView();
+                }
+            });
+            workPanel.listView.setCellFactory(l -> new ListCell<String>() {
+                @Override
+                public void updateItem(String friend, boolean empty) {
+                    super.updateItem(friend, empty);
+                    try {
+                        if (empty) {
+                            setText(null);
+                            setGraphic(null);
+                        } else if ("BACK".equals(friend)) {
+                            setText(friend);
+                            setGraphic(new ImageView(new Image("/images/arrow.png")));
+                        } else if ((!friend.contains("d:")) && (!friend.contains("f:"))) {
+                            File file = new File(workPanel.currentPath.toString() + File.separator + friend);
+                            ImageIcon imageIcon = (ImageIcon) FileSystemView.getFileSystemView().getSystemIcon(file);
+                            if (imageIcon != null) {
+                                java.awt.Image imageIconView = imageIcon.getImage();
+                                BufferedImage bi = new BufferedImage(
+                                        imageIcon.getIconWidth(),
+                                        imageIcon.getIconHeight(),
+                                        BufferedImage.TYPE_INT_ARGB
+                                );
+                                imageIcon.paintIcon(null, bi.getGraphics(), 0, 0);
+                                SwingFXUtils.toFXImage(bi, null);
+                                if (file.isFile()) {
+                                    setText(friend);
+                                    setGraphic(new ImageView(SwingFXUtils.toFXImage(bi, null)));
+                                } else if (file.isDirectory()) {
+                                    setText(friend);
+                                    setGraphic(new ImageView(SwingFXUtils.toFXImage(bi, null)));
+                                }
+                            }
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+
 
     public static void showLocalDirectory(StringBuilder directory, ListView<String> fileList) {
         try {
@@ -34,6 +105,7 @@ public class FileOperations {
                     for (int i = 0; i < tokens.length; i++) {
                         fileList.getItems().add(tokens[i]);
                     }
+
                 }
             });
             fileList.setCellFactory(l -> new ListCell<String>() {
@@ -150,9 +222,26 @@ public class FileOperations {
         });
     }
 
+    //данный метод подготавливает файлы и директории для копирования,
+    public static void prepareAndCopy(WorkPanel sourcePanel, WorkPanel targetPanel) throws IOException {
+        for (String element : sourcePanel.getMarkedFileList()) {
+            Path source = sourcePanel.getPathByElement(element);
+            Path target = targetPanel.getPathByElement(element);
+            if (target.toFile().exists()) {
+                QuestionWindowStage qws = new QuestionWindowStage(sourcePanel, targetPanel, element, COPY);
+                qws.setResizable(false);
+                qws.show();
+            } else {
+                copy(source, target);
+            }
+            sourcePanel.showDirectory();
+            targetPanel.showDirectory();
+        }
+    }
+
     /*Метод для копирования по заданному пути. Необходимо передать текущую директорию для обновления списка файлов
     после копирования.*/
-    public static void copy(Path source, Path target, StringBuilder currentPath, ListView<String> fileList) throws IOException {
+    public static void copy(Path source, Path target) throws IOException {
         try {
             Files.walkFileTree(source, new SimpleFileVisitor<Path>() {
                 @Override
@@ -170,7 +259,6 @@ public class FileOperations {
                     return FileVisitResult.CONTINUE;
                 }
             });
-            showLocalDirectory(currentPath, fileList);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (FileAlreadyExistsException e) {
@@ -178,7 +266,17 @@ public class FileOperations {
         }
     }
 
-    public static void delete(StringBuilder path, String fileName, ListView<String> fileList) throws IOException {
+    public static void prepareAndDelete(WorkPanel panel) throws IOException {
+        Iterator<String> iterator = panel.getMarkedFileList().iterator();
+        while (iterator.hasNext()) {
+            String fileName = iterator.next();
+            delete(panel.currentPath, fileName);
+            updateAllFilesLists();
+        }
+
+    }
+
+    public static void delete(StringBuilder path, String fileName) throws IOException {
         Files.walkFileTree(Path.of(path + File.separator + fileName), new SimpleFileVisitor<Path>() {
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
@@ -194,5 +292,35 @@ public class FileOperations {
         });
 
     }
+
+    public static String[] receiveFileList(StringBuilder path, DataOutputStream out,
+                                           ReadableByteChannel readableByteChannel, ByteBuffer byteBuffer) {
+        try {
+            out.write(("/ls" + DELIMETER + path).getBytes());
+            out.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return queryStringListener(readableByteChannel, byteBuffer);
+    }
+
+    public static String[] queryStringListener(ReadableByteChannel readableByteChannel, ByteBuffer byteBuffer) {
+        int readNumberBytes = 0;
+        try {
+            readNumberBytes = readableByteChannel.read(byteBuffer);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        String[] queryAnswer = new String(Arrays.copyOfRange(byteBuffer.array(), 0, readNumberBytes)).split(DELIMETER);
+        byteBuffer.clear();
+        return queryAnswer;
+    }
+
+    public static void changeCurrentPath(StringBuilder currentPath, String newPath, TextField pathView) {
+        currentPath.delete(0, currentPath.length());
+        currentPath.append(newPath);
+        pathView.setText(currentPath.toString());
+    }
+
 
 }

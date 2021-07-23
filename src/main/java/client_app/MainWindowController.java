@@ -13,7 +13,6 @@ import javafx.scene.control.TextField;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
 
-import java.awt.*;
 import java.io.*;
 import java.net.Socket;
 import java.net.URL;
@@ -27,7 +26,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 
-import static client_app.Action.*;
 import static client_app.FileOperations.*;
 
 public class MainWindowController implements Initializable {
@@ -89,10 +87,10 @@ public class MainWindowController implements Initializable {
     public static final String ADDRESS = "127.0.0.1";
     public static final int PORT = 5679;
     Socket socket;
-    DataOutputStream out;
-    DataInputStream in;
-    ReadableByteChannel rbc;
-    ByteBuffer byteBuffer = ByteBuffer.allocate(8 * 1024);
+    public static DataOutputStream out;
+    public static DataInputStream in;
+    public static ReadableByteChannel rbc;
+    public static ByteBuffer byteBuffer = ByteBuffer.allocate(8 * 1024);
     private ExecutorService threadManager;
     public String DELIMETER = ";";
     private String AUTH_COMMAND = "/auth";
@@ -110,6 +108,20 @@ public class MainWindowController implements Initializable {
     MultipleSelectionModel<String> rightMarkedFiles;
     public static boolean isRightListOnline;
     public static boolean isLeftListOnline;
+
+    static WorkPanel leftWorkPanel;
+    static WorkPanel rightWorkPanel;
+    //----------------------------------------------------
+
+    //...
+
+    //управление действиями
+    //----------------------------------------------------
+    public static Action copyAction;
+    public static Action deleteAction;
+    public static Action renameAction;
+    public static Action makeDirAction;
+
     //----------------------------------------------------
 
     //...
@@ -128,18 +140,24 @@ public class MainWindowController implements Initializable {
     }
     //----------------------------------------------------
 
+
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        leftPath.append("c:\\");
-        rightPath.append("c:\\");
-        showLocalDirectory(rightPath, rightList);
-        showLocalDirectory(leftPath, leftList);
-        leftPathView.setText(leftPath.toString());
-        rightPathView.setText(rightPath.toString());
-        rightMarkedFiles = rightList.getSelectionModel();
-        rightMarkedFiles.setSelectionMode(SelectionMode.MULTIPLE);
-        leftMarkedFiles = leftList.getSelectionModel();
-        leftMarkedFiles.setSelectionMode(SelectionMode.MULTIPLE);
+//        leftPath.append("c:\\");
+//        rightPath.append("c:\\");
+        leftWorkPanel = new WorkPanel("c:\\", leftList, leftPathView);
+        rightWorkPanel = new WorkPanel("c:\\", rightList, rightPathView);
+//        showLocalDirectory(rightPath, rightList);
+        leftWorkPanel.showDirectory();
+        rightWorkPanel.showDirectory();
+//        showLocalDirectory(leftPath, leftList);
+//        showLocalDirectory1(leftWorkPanel);
+//        leftPathView.setText(leftPath.toString());
+//        rightPathView.setText(rightPath.toString());
+//        rightMarkedFiles = rightList.getSelectionModel();
+//        rightMarkedFiles.setSelectionMode(SelectionMode.MULTIPLE);
+//        leftMarkedFiles = leftList.getSelectionModel();
+//        leftMarkedFiles.setSelectionMode(SelectionMode.MULTIPLE);
         copy.setFocusTraversable(false);
         delete.setFocusTraversable(false);
         rename.setFocusTraversable(false);
@@ -184,7 +202,6 @@ public class MainWindowController implements Initializable {
             stage = (Stage) leftList.getScene().getWindow();
             threadManager = Executors.newFixedThreadPool(5);
         } catch (IOException e) {
-//            threadManager.shutdown();
             e.printStackTrace();
         }
     }
@@ -196,7 +213,7 @@ public class MainWindowController implements Initializable {
         try {
             out.write(("/auth" + DELIMETER + loginField.getText() + DELIMETER + passwordField.getText()).getBytes());
             Thread netClientThread = new Thread(() -> {
-                String[] serverAnswer = queryStringListener();
+                String[] serverAnswer = queryStringListener(rbc, byteBuffer);
                 if (!serverAnswer[0].isEmpty() && "/auth-ok".equals(serverAnswer[0])) {
                     setAuthorized(true);
                     nickname.append(serverAnswer[1].replace("\n", ""));
@@ -208,9 +225,9 @@ public class MainWindowController implements Initializable {
                         }
                     });
                     byteBuffer.clear();
-                    String[] queryAnswer = receiveFileList(out);
+                    String[] queryAnswer = receiveFileList((rightPath), out, rbc, byteBuffer);
                     try {
-                        rightList.setCellFactory(null);
+//                        rightList.setCellFactory(null);
                         isRightListOnline = true;
                         changeCurrentPath(rightPath, queryAnswer[0], rightPathView);
                         showOnlineDirectory(queryAnswer, rightList, rightPath);
@@ -236,11 +253,6 @@ public class MainWindowController implements Initializable {
         }
     }
 
-    public void changeCurrentPath(StringBuilder currentPath, String newPath, TextField pathView) {
-        currentPath.delete(0, currentPath.length());
-        currentPath.append(newPath);
-        pathView.setText(currentPath.toString());
-    }
 
     public void disconnect() {
         hideAuthFields();
@@ -252,63 +264,33 @@ public class MainWindowController implements Initializable {
      * в другом список очищается, таким образом мы работаем только с одним активным окном*/
     public void leftEvent(MouseEvent mouseEvent) {
         if (mouseEvent.getClickCount() == 1) {
-            leftFiles = leftMarkedFiles.getSelectedItems();
-            rightMarkedFiles.clearSelection();
+//            leftFiles = leftMarkedFiles.getSelectedItems();
+            rightWorkPanel.clearSelectionFiles();
+            leftWorkPanel.getSelectedFiles();
+
         }
         if (mouseEvent.getClickCount() == 2) {
-            String currentElement = leftList.getSelectionModel().getSelectedItem();
-            if (!isLeftListOnline) {
-                eventAction(currentElement, leftPath, leftList, leftPathView);
-            } else {
-                eventOnlineAction(currentElement, leftPath, leftList, leftPathView);
-            }
+            leftWorkPanel.treeMovement();
+//            if (!isLeftListOnline) {
+//                eventAction(currentElement, leftPath, leftList, leftPathView);
+//            } else {
+//                eventOnlineAction(currentElement, leftPath, leftList, leftPathView);
+//            }
         }
     }
 
     public void rightEvent(MouseEvent mouseEvent) {
         if (mouseEvent.getClickCount() == 1) {
-            rightFiles = rightMarkedFiles.getSelectedItems();
-            leftMarkedFiles.clearSelection();
+//            rightFiles = rightMarkedFiles.getSelectedItems();
+//            leftMarkedFiles.clearSelection();
+            leftWorkPanel.clearSelectionFiles();
+            rightWorkPanel.getSelectedFiles();
         }
         if (mouseEvent.getClickCount() == 2) {
-            String currentElement = rightList.getSelectionModel().getSelectedItem();
-            if (!isRightListOnline) {
-                eventAction(currentElement, rightPath, rightList, rightPathView);
-            } else {
-                eventOnlineAction(currentElement, rightPath, rightList, rightPathView);
-            }
+            rightWorkPanel.treeMovement();
         }
     }
     //--------------------------------------------------------------------------------
-
-
-    /*Данный метод строит путь как вперед так и назад, если дважды кликнуть по кнопке BACK, то данный метод
-     * возвращает в предыдущую директорию, если было передано имя директории, то метод строит путь дальше.
-     * Также в данном методе производится проверка на то, является ли файлом переданное имя, если да, то файл
-     * запускается в программе по умолчанию*/
-    private void eventAction(String element, StringBuilder currentPath, ListView<String> renewableFileList, TextField pathView) {
-        String[] tokens = currentPath.toString().split(Matcher.quoteReplacement(File.separator));
-        if ("BACK".equals(element)) {
-            currentPath.delete((currentPath.length() - tokens[tokens.length - 1].length() - 1), currentPath.length());
-            showLocalDirectory(currentPath, renewableFileList);
-            pathView.setText(currentPath.toString());
-        } else {
-            File file = new File(currentPath.toString() + File.separator + element);
-            if (file.isDirectory()) {
-                currentPath.append(element + File.separator);
-                showLocalDirectory(currentPath, renewableFileList);
-                pathView.setText(currentPath.toString());
-            } else {
-                try {
-                    Desktop desktop = Desktop.getDesktop();
-                    desktop.open(file);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-
-            }
-        }
-    }
 
     private void eventOnlineAction(String element, StringBuilder currentPath, ListView<String> renewableFileList, TextField pathView) {
         Thread eventAction = new Thread(() -> {
@@ -317,12 +299,12 @@ public class MainWindowController implements Initializable {
                     String[] tokens = currentPath.toString().split(Matcher.quoteReplacement(File.separator));
                     currentPath.delete((currentPath.length() - tokens[tokens.length - 1].length() - 1), currentPath.length());
                     out.write(("/cd" + DELIMETER + currentPath).getBytes());
-                    String[] serverAnswer = queryStringListener();
+                    String[] serverAnswer = queryStringListener(rbc, byteBuffer);
                     changeCurrentPath(currentPath, serverAnswer[0], pathView);
                     showOnlineDirectory(serverAnswer, renewableFileList, currentPath);
                 } else {
                     out.write(("/cd" + DELIMETER + currentPath + File.separator + element.replaceAll(".:", "")).getBytes());
-                    String[] serverAnswer = queryStringListener();
+                    String[] serverAnswer = queryStringListener(rbc, byteBuffer);
                     changeCurrentPath(currentPath, serverAnswer[0], pathView);
                     showOnlineDirectory(serverAnswer, renewableFileList, currentPath);
                 }
@@ -337,58 +319,40 @@ public class MainWindowController implements Initializable {
      * если выделен в левом окне, то копируем в правое окно
      * Если левое или правое окно подключены к облачному хранилищу, то вместо команды copy(), запускается метод upload*/
     public void copyAction() throws IOException {
-        if (leftFiles.size() > 0) { //если выделенные файлы слева
-            if (!isLeftListOnline && !isRightListOnline) {
-                prepareAndCopy(leftPath, rightPath, leftFiles, rightList);
-            }
-            if (!isLeftListOnline && isRightListOnline) {
-                prepareAndUpload(leftList.getSelectionModel().getSelectedItem(), leftPath); //дописать логику множественного копирования
-            }
-            if (isLeftListOnline && !isRightListOnline) {
-                prepareAndDownload(leftList.getSelectionModel().getSelectedItem(), leftPath);
-            }
-            if (isLeftListOnline && isRightListOnline) {
+        if (leftWorkPanel.getMarkedFileList().size() > 0) { //если выделенные файлы слева
+            prepareAndCopy(leftWorkPanel, rightWorkPanel);
 
-            }
+//            if (!isLeftListOnline && !isRightListOnline) {
+//                prepareAndCopy(leftPath, rightPath, leftFiles, rightList);
+//            }
+//            if (!isLeftListOnline && isRightListOnline) {
+//                prepareAndUpload(leftList.getSelectionModel().getSelectedItem(), leftPath); //дописать логику множественного копирования
+//            }
+//            if (isLeftListOnline && !isRightListOnline) {
+//                prepareAndDownload(leftList.getSelectionModel().getSelectedItem(), leftPath);
+//            }
+//            if (isLeftListOnline && isRightListOnline) {
+//
+//            }
         }
-        if (rightFiles.size() > 0) { //если выделенные файлы справа
-            if (!isRightListOnline && !isLeftListOnline) {
-                prepareAndCopy(rightPath, leftPath, rightFiles, leftList);
-            }
-            if (isRightListOnline && !isLeftListOnline) {
-                prepareAndDownload(rightList.getSelectionModel().getSelectedItem(), rightPath);
-            }
-        }
-    }
+        if (rightWorkPanel.getMarkedFileList().size() > 0) { //если выделенные файлы справа
 
-
-    /*позволяет построить пути для копирования и проверить существует ли файл, если файл существует,
-     * появится окно с запросом о замене файла*/
-    public void prepareAndCopy(StringBuilder sourcePath, StringBuilder targetPath,
-                               ObservableList<String> files, ListView<String> renewableFileList) throws IOException {
-        for (String element : files) {
-            Path source = Path.of(sourcePath + File.separator + element);
-            Path target = Path.of(targetPath + File.separator + element);
-            if (target.toFile().exists()) {
-                QuestionWindowStage qws = new QuestionWindowStage(source, target, element,
-                        targetPath, renewableFileList, COPY);
-                qws.setResizable(false);
-                qws.show();
-            } else {
-                copy(source, target, targetPath, renewableFileList);
-            }
+                prepareAndCopy(rightWorkPanel, leftWorkPanel);
+//            if (isRightListOnline && !isLeftListOnline) {
+//                prepareAndDownload(rightList.getSelectionModel().getSelectedItem(), rightPath);
+//            }
         }
     }
 
-    public void prepareAndUpload(String fileName, StringBuilder fromPath) {
+    public void prepareAndUpload(String fileName, StringBuilder sourcePath) {
         Thread uploadThread = new Thread(() -> {
             try {
-                File file = new File(fromPath + File.separator + fileName);
+                File file = new File(sourcePath + File.separator + fileName);
                 if (file.isFile()) {
                     out.write(("/upload" + DELIMETER + "f" + DELIMETER + fileName + DELIMETER
                             + file.length()).getBytes());
                     while (true) {
-                        String[] serverAnswer = queryStringListener();
+                        String[] serverAnswer = queryStringListener(rbc, byteBuffer);
                         if ("/upload-ok".equals(serverAnswer[0].replace("\n", ""))) {
                             break;
                         } else if ("nex".equals(serverAnswer[0])) {
@@ -412,7 +376,7 @@ public class MainWindowController implements Initializable {
                     out.flush();
                 }
                 while (true) {
-                    String[] serverAnswer = queryStringListener();
+                    String[] serverAnswer = queryStringListener(rbc, byteBuffer);
                     if ("/status-ok".equals(serverAnswer[0].replace("\n", ""))) {
                         updateAllFilesLists();
                         break;
@@ -432,7 +396,7 @@ public class MainWindowController implements Initializable {
             long downloadFileLength = 0;
             try {
                 out.write(("/download" + DELIMETER + fromPath + File.separator + fileName.replaceAll(".:", "")).getBytes());
-                String[] serverAnswer = queryStringListener();
+                String[] serverAnswer = queryStringListener(rbc, byteBuffer);
                 if (!file.exists()) {
                     file.createNewFile();
                 }
@@ -472,23 +436,23 @@ public class MainWindowController implements Initializable {
 
 
     public void deleteAction() throws IOException {
-        if (leftFiles.size() > 0) { //если выделенные файлы слева
-            prepareAndDelete(leftPath, leftFiles, leftList);
+        if (leftWorkPanel.getMarkedFileList().size() > 0) { //если выделенные файлы слева
+            prepareAndDelete(leftWorkPanel);
         }
-        if (rightFiles.size() > 0) { //если выделенные файлы справа
-            prepareAndDelete(rightPath, rightFiles, rightList);
+        if (rightWorkPanel.getMarkedFileList().size() > 0) { //если выделенные файлы справа
+            prepareAndDelete(rightWorkPanel);
         }
     }
 
-    private void prepareAndDelete(StringBuilder path, ObservableList<String> files,
-                                  ListView<String> renewableFileList) throws IOException {
-        Iterator<String> iterator = files.iterator();
-        while (iterator.hasNext()) {
-            String fileName = iterator.next();
-            delete(path, fileName, renewableFileList);
-        }
-        updateAllFilesLists();
-    }
+//    private void prepareAndDelete(StringBuilder path, ObservableList<String> files,
+//                                  ListView<String> renewableFileList) throws IOException {
+//        Iterator<String> iterator = files.iterator();
+//        while (iterator.hasNext()) {
+//            String fileName = iterator.next();
+//            delete(path, fileName, renewableFileList);
+//        }
+//        updateAllFilesLists();
+//    }
 
 
     public void renameAction() {
@@ -512,17 +476,19 @@ public class MainWindowController implements Initializable {
 
     public void makeDirAction() {
         if (leftList.isFocused()) { //если выделенное окно слева
-            prepareAndMakeDir(leftPath, leftList, rightPath, rightList);
+            prepareAndMakeDir(leftPath, leftList, isLeftListOnline, rightPath, rightList, isRightListOnline, out, rbc);
         }
         if (rightList.isFocused()) { //если выделенное окно слева
-            prepareAndMakeDir(rightPath, rightList, leftPath, leftList);
+            prepareAndMakeDir(rightPath, rightList, isRightListOnline, leftPath, leftList, isLeftListOnline, out, rbc);
         }
     }
 
     //создание файла/директории производится по первому пути
-    private void prepareAndMakeDir(StringBuilder firstPath, ListView<String> firstList,
-                                   StringBuilder secondPath, ListView<String> secondList) {
-        MakeFileOrDirStage mds = new MakeFileOrDirStage(firstPath, firstList, secondPath, secondList);
+    private void prepareAndMakeDir(StringBuilder firstPath, ListView<String> firstList, boolean isFirstPathOnline,
+                                   StringBuilder secondPath, ListView<String> secondList, boolean isSecondPathOnline,
+                                   DataOutputStream out, ReadableByteChannel rbc) {
+        MakeFileOrDirStage mds = new MakeFileOrDirStage(firstPath, firstList,
+                isFirstPathOnline, secondPath, secondList, isSecondPathOnline, out, rbc);
         mds.setMinWidth(480);
         mds.setMinHeight(25);
         mds.setResizable(false);
@@ -532,30 +498,35 @@ public class MainWindowController implements Initializable {
     //перемещает выбранные файлы
     public void moveAction() throws IOException {
         if (leftFiles.size() > 0) { //если выделенные файлы слева
-            prepareAndCopy(leftPath, rightPath, leftFiles, rightList);
-            prepareAndDelete(leftPath, leftFiles, leftList);
+//            prepareAndCopy(leftPath, rightPath, leftFiles, rightList);
+//            prepareAndDelete(leftPath, leftFiles, leftList);
         }
         if (rightFiles.size() > 0) { //если выделенные файлы справа
-            prepareAndCopy(rightPath, leftPath, rightFiles, leftList);
-            prepareAndDelete(rightPath, rightFiles, rightList);
+//            prepareAndCopy(rightPath, leftPath, rightFiles, leftList);
+//            prepareAndDelete(rightPath, rightFiles, rightList);
         }
     }
 
-    public void updateAllFilesLists() throws IOException {
-        if (!isLeftListOnline) {
-            showLocalDirectory(leftPath, leftList);
-            leftPathView.setText(leftPath.toString());
-        }
-        if (!isRightListOnline) {
-            showLocalDirectory(rightPath, rightList);
-            rightPathView.setText(rightPath.toString());
-        }
-        if (isRightListOnline) {
-            showOnlineDirectory(receiveFileList(out), rightList, rightPath);
-        }
-        if (isLeftListOnline) {
-            showOnlineDirectory(receiveFileList(out), leftList, leftPath);
-        }
+    public static void updateAllFilesLists() throws IOException {
+        leftWorkPanel.showDirectory();
+        rightWorkPanel.showDirectory();
+
+
+
+//        if (!isLeftListOnline) {
+//            showLocalDirectory(leftPath, leftList);
+//            leftPathView.setText(leftPath.toString());
+//        }
+//        if (!isRightListOnline) {
+//            showLocalDirectory(rightPath, rightList);
+//            rightPathView.setText(rightPath.toString());
+//        }
+//        if (isRightListOnline) {
+//            showOnlineDirectory(receiveFileList(rightPath, out, rbc, byteBuffer), rightList, rightPath);
+//        }
+//        if (isLeftListOnline) {
+//            showOnlineDirectory(receiveFileList(leftPath, out, rbc, byteBuffer), leftList, leftPath);
+//        }
     }
 
     //позволяет выставить каталог слева равный каталогу справа (для удобства работы)
@@ -578,27 +549,6 @@ public class MainWindowController implements Initializable {
         threadManager.execute(directoryUpdate);
     }
 
-    public String[] queryStringListener() {
-        int readNumberBytes = 0;
-        try {
-            readNumberBytes = rbc.read(byteBuffer);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        String[] queryAnswer = new String(Arrays.copyOfRange(byteBuffer.array(), 0, readNumberBytes)).split(DELIMETER);
-        byteBuffer.clear();
-        return queryAnswer;
-    }
-
-    public String[] receiveFileList(DataOutputStream out) {
-        try {
-            out.write("/ls".getBytes());
-            out.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return queryStringListener();
-    }
 
     public void registration(ActionEvent actionEvent) {
         RegistrationWindowStage rs = new RegistrationWindowStage(out, rbc);

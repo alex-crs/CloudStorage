@@ -6,6 +6,10 @@ public enum Action {
     WAIT,
     OVERWRITE,
     COPY,
-    DELETE
+    DELETE,
+    MOVE,
+    MKDIR,
+    TOUCH,
+
 
 }

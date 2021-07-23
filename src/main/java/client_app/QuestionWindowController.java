@@ -35,15 +35,13 @@ public class QuestionWindowController implements Initializable {
     }
 
     public void yesBtnClick() throws IOException {
-        Path sourcePath = ((QuestionWindowStage) yesBtn.getScene().getWindow()).sourcePath;
-        Path targetPath = ((QuestionWindowStage) yesBtn.getScene().getWindow()).targetPath;
-        StringBuilder currentPath = ((QuestionWindowStage) yesBtn.getScene().getWindow()).currentPath;
-        ListView<String> fileList = ((QuestionWindowStage) yesBtn.getScene().getWindow()).fileList;
         Action action = ((QuestionWindowStage) yesBtn.getScene().getWindow()).action;
+        WorkPanel sourcePanel = ((QuestionWindowStage) yesBtn.getScene().getWindow()).sourcePanel;
+        WorkPanel targetPanel = ((QuestionWindowStage) yesBtn.getScene().getWindow()).targetPanel;
 
-        switch (action){
+        switch (action) {
             case COPY:
-                copy(sourcePath, targetPath, currentPath, fileList);
+                copy(sourcePanel.getPathByElement(getElement()),targetPanel.getPathByElement(getElement()));
                 break;
             case DELETE:
 

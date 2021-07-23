@@ -105,7 +105,7 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
                     }
                 }
                 if ("d".equals(header[1])) {
-                    Files.createDirectory(Path.of(csUser.getRoot() + File.separator + header[2]));
+                    Files.createDirectory(Path.of(csUser.getCurrentPath() + File.separator + header[2]));
                     ctx.writeAndFlush(Unpooled.wrappedBuffer(("/status-ok" + "\n").getBytes()));
                 }
                 break;
@@ -124,12 +124,16 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
                 tryToReg(ctx, header);
                 break;
             case ("/ls"):
-                ctx.writeAndFlush(Unpooled.wrappedBuffer((csUser.getCurrentPath() + DELIMETER + getFilesList(csUser)).getBytes()));
+                ctx.writeAndFlush(Unpooled.wrappedBuffer((csUser.getRoot() + DELIMETER + getFilesList(csUser)).getBytes()));
                 break;
             case ("/cd"):
                 csUser.setCurrentPath(header[1]);
                 getFilesList(csUser);
                 ctx.writeAndFlush(Unpooled.wrappedBuffer((csUser.getCurrentPath() + DELIMETER + getFilesList(csUser)).getBytes()));
+                break;
+            case ("/mkdir"):
+                makeDir(header[1],csUser);
+                ctx.writeAndFlush(Unpooled.wrappedBuffer(("/status-ok").getBytes()));
                 break;
         }
     }
