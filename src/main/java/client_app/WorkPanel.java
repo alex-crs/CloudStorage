@@ -18,7 +18,7 @@ import java.nio.file.Path;
 import java.util.regex.Matcher;
 
 public class WorkPanel {
-    StringBuilder currentPath;
+    private StringBuilder currentPath;
     ObservableList<String> markedFileList;
     MultipleSelectionModel<String> markedElementsListener;
     boolean isListOnline;

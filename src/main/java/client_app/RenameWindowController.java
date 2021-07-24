@@ -8,9 +8,11 @@ import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 
+import static client_app.MainWindowController.updateAllFilesLists;
 import static client_app.RenameWindowStage.*;
 import static client_app.FileOperations.*;
 
@@ -47,23 +49,23 @@ public class RenameWindowController implements Initializable {
         }
     }
 
-    public void apply() {
-        StringBuilder renamePath = ((RenameWindowStage) apply.getScene().getWindow()).renamePath;
-        StringBuilder secondPath = ((RenameWindowStage) apply.getScene().getWindow()).secondPath;
-        ListView<String> renameList = ((RenameWindowStage) apply.getScene().getWindow()).renameList;
-        ListView<String> secondList = ((RenameWindowStage) apply.getScene().getWindow()).secondList;
-        File sourceFile = new File(renamePath + File.separator + getFileName());
-        File targetFile;
-        if (sourceFile.isFile()) {
-            targetFile = new File(renamePath + File.separator + fileName.getText() + "." + extension.getText());
-        } else {
-            targetFile = new File(renamePath + File.separator + fileName.getText());
+    public void apply() throws IOException {
+        switch (action) {
+            case RENAME:
+                WorkPanel sourcePanel = ((RenameWindowStage) apply.getScene().getWindow()).sourcePanel;
+                File sourceFile = new File(sourcePanel.getCurrentPath() + File.separator + getFileName());
+                File targetFile;
+                if (sourceFile.isFile()) {
+                    targetFile = new File(sourcePanel.getCurrentPath() + File.separator + fileName.getText() + "." + extension.getText());
+                } else {
+                    targetFile = new File(sourcePanel.getCurrentPath() + File.separator + fileName.getText());
+                }
+                sourceFile.renameTo(targetFile);
+                updateAllFilesLists();
+                stage = (Stage) apply.getScene().getWindow();
+                stage.close();
+                break;
         }
-        sourceFile.renameTo(targetFile);
-        showLocalDirectory(renamePath, renameList);
-        showLocalDirectory(secondPath, secondList);
-        stage = (Stage) apply.getScene().getWindow();
-        stage.close();
     }
 
     public void cancel() {

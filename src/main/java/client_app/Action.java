@@ -7,6 +7,7 @@ public enum Action {
     OVERWRITE,
     COPY,
     DELETE,
+    RENAME,
     MOVE,
     MKDIR,
     TOUCH,

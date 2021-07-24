@@ -26,8 +26,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 
-import static client_app.Action.COPY;
-import static client_app.Action.DELETE;
+import static client_app.Action.*;
 import static client_app.FileOperations.*;
 
 public class MainWindowController implements Initializable {
@@ -86,9 +85,9 @@ public class MainWindowController implements Initializable {
 
     //сетевое взаимодействие
     //----------------------------------------------------
+    Socket socket;
     public static final String ADDRESS = "127.0.0.1";
     public static final int PORT = 5679;
-    Socket socket;
     public static DataOutputStream out;
     public static DataInputStream in;
     public static ReadableByteChannel rbc;
@@ -123,7 +122,7 @@ public class MainWindowController implements Initializable {
     //----------------------------------------------------
     public static Action copyAction = COPY;
     public static Action deleteAction = DELETE;
-    public static Action renameAction;
+    public static Action renameAction = RENAME;
     public static Action makeDirAction;
 
     //----------------------------------------------------
@@ -147,21 +146,10 @@ public class MainWindowController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-//        leftPath.append("c:\\");
-//        rightPath.append("c:\\");
         leftWorkPanel = new WorkPanel("c:\\", leftList, leftPathView);
         rightWorkPanel = new WorkPanel("c:\\", rightList, rightPathView);
-//        showLocalDirectory(rightPath, rightList);
         leftWorkPanel.showDirectory();
         rightWorkPanel.showDirectory();
-//        showLocalDirectory(leftPath, leftList);
-//        showLocalDirectory1(leftWorkPanel);
-//        leftPathView.setText(leftPath.toString());
-//        rightPathView.setText(rightPath.toString());
-//        rightMarkedFiles = rightList.getSelectionModel();
-//        rightMarkedFiles.setSelectionMode(SelectionMode.MULTIPLE);
-//        leftMarkedFiles = leftList.getSelectionModel();
-//        leftMarkedFiles.setSelectionMode(SelectionMode.MULTIPLE);
         copy.setFocusTraversable(false);
         delete.setFocusTraversable(false);
         rename.setFocusTraversable(false);
@@ -361,12 +349,30 @@ public class MainWindowController implements Initializable {
             Iterator<String> iterator = sourcePanel.getMarkedFileList().iterator();
             while (iterator.hasNext()) {
                 String fileName = iterator.next();
-                delete(sourcePanel.currentPath, fileName);
+                delete(sourcePanel.getCurrentPath(), fileName);
                 sourcePanel.showDirectory();
                 targetPanel.showDirectory();
             }
         }
         isClarifyEveryTime = true;
+    }
+
+    public void renameAction() {
+        if (leftWorkPanel.getMarkedFileList().size() > 0) { //если выделенные файлы слева
+            prepareAndRename(leftWorkPanel, rightWorkPanel, renameAction);
+        }
+        if (rightWorkPanel.getMarkedFileList().size() > 0) { //если выделенные файлы справа
+            prepareAndRename(rightWorkPanel, leftWorkPanel, renameAction);
+        }
+    }
+
+    //переименовывает файл в отдельном окне
+    private void prepareAndRename(WorkPanel sourcePanel, WorkPanel secondPanel, Action action) {
+        RenameWindowStage rws = new RenameWindowStage(sourcePanel, secondPanel, action);
+        rws.setMinWidth(410);
+        rws.setMinHeight(25);
+        rws.setResizable(false);
+        rws.show();
     }
 
     public static boolean isFilesExist(WorkPanel sourcePanel, WorkPanel targetPanel) {
@@ -467,25 +473,6 @@ public class MainWindowController implements Initializable {
         });
         downloadThread.interrupt();
         threadManager.execute(downloadThread);
-    }
-
-    public void renameAction() {
-        if (leftFiles.size() > 0) { //если выделенные файлы слева
-            prepareAndRename(leftFiles.get(0), leftPath, leftList, rightPath, rightList);
-        }
-        if (rightFiles.size() > 0) { //если выделенные файлы справа
-            prepareAndRename(rightFiles.get(0), rightPath, rightList, leftPath, leftList);
-        }
-    }
-
-    //переименовывает файл в отдельном окне
-    private void prepareAndRename(String fileName, StringBuilder renamePath, ListView<String> renameList,
-                                  StringBuilder secondPath, ListView<String> secondList) {
-        RenameWindowStage rws = new RenameWindowStage(fileName, renamePath, renameList, secondPath, secondList);
-        rws.setMinWidth(410);
-        rws.setMinHeight(25);
-        rws.setResizable(false);
-        rws.show();
     }
 
     public void makeDirAction() {

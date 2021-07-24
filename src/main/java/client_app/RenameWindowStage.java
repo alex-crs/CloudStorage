@@ -9,23 +9,20 @@ import javafx.stage.Stage;
 import java.io.IOException;
 
 public class RenameWindowStage extends Stage {
+    public static Action action;
     private static String fileName;
-    StringBuilder renamePath;
-    StringBuilder secondPath;
-    ListView<String> renameList;
-    ListView<String> secondList;
+    WorkPanel sourcePanel;
+    WorkPanel secondPanel;
 
     public static String getFileName() {
         return fileName;
     }
 
-    public RenameWindowStage(String fileName, StringBuilder renamePath, ListView<String> renameList,
-                             StringBuilder secondPath, ListView<String> secondList) {
-        RenameWindowStage.fileName = fileName;
-        this.renamePath = renamePath;
-        this.secondPath = secondPath;
-        this.renameList = renameList;
-        this.secondList = secondList;
+    public RenameWindowStage(WorkPanel sourcePanel, WorkPanel secondPanel, Action action) {
+        this.sourcePanel = sourcePanel;
+        this.secondPanel = secondPanel;
+        fileName = sourcePanel.getMarkedFileList().get(0);
+        RenameWindowStage.action = action;
         Parent root = null;
         try {
             root = FXMLLoader.load(getClass().getResource("/fxml/RenameWindow.fxml"));
