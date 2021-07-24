@@ -377,10 +377,10 @@ public class MainWindowController implements Initializable {
     }
 
     public void makeDirAction() {
-        if (leftWorkPanel.listView.isFocused()) { //если выделенное окно слева
+        if (leftWorkPanel.getListView().isFocused()) { //если выделенное окно слева
             prepareAndMakeDir(leftWorkPanel, makeDirAction);
         }
-        if (rightWorkPanel.listView.isFocused()) { //если выделенное окно слева
+        if (rightWorkPanel.getListView().isFocused()) { //если выделенное окно слева
             prepareAndMakeDir(rightWorkPanel, makeDirAction);
         }
     }
@@ -405,6 +405,18 @@ public class MainWindowController implements Initializable {
             QuestionWindowStage qws = new QuestionWindowStage(rightWorkPanel, leftWorkPanel, MOVE);
             qws.setResizable(false);
             qws.show();
+        }
+    }
+
+    //позволяет выставить каталог слева равный каталогу справа (для удобства работы)
+    public void sourceEquallyTarget() {
+        if (leftWorkPanel.getListView().isFocused()) { //если выделенное окно слева правый==левому
+            rightWorkPanel.setCurrentPath(leftWorkPanel);
+            //если выделено левое окно, то данный метод принимает текущий путь левого окна
+        }
+        if (rightWorkPanel.getListView().isFocused()) { //если выделенное окно справа левый=правому
+            leftWorkPanel.setCurrentPath(rightWorkPanel);
+            //если выделено правое окно, то данный метод принимает текущий путь правого окна
         }
     }
 
@@ -512,27 +524,6 @@ public class MainWindowController implements Initializable {
         downloadThread.interrupt();
         threadManager.execute(downloadThread);
     }
-
-    //позволяет выставить каталог слева равный каталогу справа (для удобства работы)
-    public void sourceEquallyTarget() {
-        Thread directoryUpdate = new Thread(() -> {
-            if (leftList.isFocused()) { //если выделенное окно слева правый==левому
-                rightPath.delete(0, rightPath.length());
-                rightPath.append(leftPath);
-                isRightListOnline = isLeftListOnline;
-                showLocalDirectory(rightPath, rightList);
-            }
-            if (rightList.isFocused()) { //если выделенное окно справа левый=правому
-                leftPath.delete(0, leftPath.length());
-                leftPath.append(rightPath);
-                isLeftListOnline = isRightListOnline;
-                showLocalDirectory(leftPath, leftList);
-            }
-        });
-        directoryUpdate.interrupt();
-        threadManager.execute(directoryUpdate);
-    }
-
 
     public void registration(ActionEvent actionEvent) {
         RegistrationWindowStage rs = new RegistrationWindowStage(out, rbc);

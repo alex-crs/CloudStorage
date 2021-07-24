@@ -19,10 +19,10 @@ import java.util.regex.Matcher;
 
 public class WorkPanel {
     private StringBuilder currentPath;
-    ObservableList<String> markedFileList;
-    MultipleSelectionModel<String> markedElementsListener;
-    boolean isListOnline;
-    ListView<String> listView;
+    private ObservableList<String> markedFileList;
+    private MultipleSelectionModel<String> markedElementsListener;
+    private boolean isListOnline;
+    private ListView<String> listView;
     TextField pathView;
 
 
@@ -37,11 +37,15 @@ public class WorkPanel {
         this.markedElementsListener.setSelectionMode(SelectionMode.MULTIPLE);
     }
 
+    public ListView<String> getListView() {
+        return listView;
+    }
+
     public ObservableList<String> getMarkedFileList() {
         return markedFileList;
     }
 
-    public void setPathView() {
+    private void setPathView() {
         pathView.setText(currentPath.toString());
     }
 
@@ -106,7 +110,6 @@ public class WorkPanel {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
     }
 
     /*Данный метод строит путь как вперед так и назад, если дважды кликнуть по кнопке BACK, то данный метод
@@ -134,6 +137,12 @@ public class WorkPanel {
 
             }
         }
+    }
+
+    public void setCurrentPath(WorkPanel sourcePanel){
+        currentPath.delete(0,currentPath.length());
+        currentPath.append(sourcePanel.getCurrentPath());
+        showDirectory();
     }
 
     public void clearSelectionFiles() {
