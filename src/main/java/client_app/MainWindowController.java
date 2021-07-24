@@ -95,6 +95,7 @@ public class MainWindowController implements Initializable {
     private static ExecutorService threadManager;
     public String DELIMETER = ";";
     private String AUTH_COMMAND = "/auth";
+    private NetworkOperator networkOperator;
     //----------------------------------------------------
 
     //...
@@ -211,6 +212,7 @@ public class MainWindowController implements Initializable {
                     setAuthorized(true);
                     nickname.append(serverAnswer[1].replace("\n", ""));
                     hideAuthFields();
+                    networkOperator = new NetworkOperator(out, in, rbc, byteBuffer);
                     Platform.runLater(new Runnable() {
                         @Override
                         public void run() {
@@ -218,15 +220,18 @@ public class MainWindowController implements Initializable {
                         }
                     });
                     byteBuffer.clear();
-                    String[] queryAnswer = receiveFileList((rightPath), out, rbc, byteBuffer);
-                    try {
+//                    String[] queryAnswer = receiveFileList((rightPath), out, rbc, byteBuffer);
+//                    try {
+                        rightWorkPanel.connectToServer(networkOperator);
+                        rightWorkPanel.setOnline(true);
+                        rightWorkPanel.showDirectory();
 //                        rightList.setCellFactory(null);
-                        isRightListOnline = true;
-                        changeCurrentPath(rightPath, queryAnswer[0], rightPathView);
-                        showOnlineDirectory(queryAnswer, rightList, rightPath);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+//                        isRightListOnline = true;
+//                        changeCurrentPath(rightPath, queryAnswer[0], rightPathView);
+//                        showOnlineDirectory(queryAnswer, rightList, rightPath);
+//                    } catch (IOException e) {
+//                        e.printStackTrace();
+//                    }
                 }
                 if (!serverAnswer[0].isEmpty() && "/auth-no".equals(serverAnswer[0].replace("\n", ""))) {
                     Platform.runLater(new Runnable() {
@@ -397,14 +402,18 @@ public class MainWindowController implements Initializable {
     //перемещает выбранные файлы
     public void moveAction() {
         if (leftWorkPanel.getMarkedFileList().size() > 0) { //если выделенные файлы слева
-            QuestionWindowStage qws = new QuestionWindowStage(leftWorkPanel, rightWorkPanel, MOVE);
-            qws.setResizable(false);
-            qws.show();
+            if (!leftWorkPanel.getCurrentPath().toString().equals(rightWorkPanel.getCurrentPath().toString())) {
+                QuestionWindowStage qws = new QuestionWindowStage(leftWorkPanel, rightWorkPanel, MOVE);
+                qws.setResizable(false);
+                qws.show();
+            }
         }
         if (rightWorkPanel.getMarkedFileList().size() > 0) { //если выделенные файлы справа
-            QuestionWindowStage qws = new QuestionWindowStage(rightWorkPanel, leftWorkPanel, MOVE);
-            qws.setResizable(false);
-            qws.show();
+            if (!leftWorkPanel.getCurrentPath().toString().equals(rightWorkPanel.getCurrentPath().toString())) {
+                QuestionWindowStage qws = new QuestionWindowStage(rightWorkPanel, leftWorkPanel, MOVE);
+                qws.setResizable(false);
+                qws.show();
+            }
         }
     }
 

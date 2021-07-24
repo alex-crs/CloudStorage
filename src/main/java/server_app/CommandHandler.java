@@ -208,6 +208,7 @@ public class CommandHandler {
     }
 
 
+
 //    public static void changeDirectory(String path, ChannelHandlerContext ctx, CSUser client) {
 //        try {
 //            if (!path.equals("..")) {

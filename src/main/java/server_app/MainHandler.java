@@ -12,6 +12,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.regex.Matcher;
 
 import static server_app.Action.*;
 import static server_app.AuthService.tryToAuth;
@@ -124,12 +125,19 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
                 tryToReg(ctx, header);
                 break;
             case ("/ls"):
-                ctx.writeAndFlush(Unpooled.wrappedBuffer((csUser.getRoot() + DELIMETER + getFilesList(csUser)).getBytes()));
+                ctx.writeAndFlush(Unpooled.wrappedBuffer((csUser.getCurrentPath() + DELIMETER + getFilesList(csUser)).getBytes()));
                 break;
             case ("/cd"):
-                csUser.setCurrentPath(header[1]);
-                getFilesList(csUser);
-                ctx.writeAndFlush(Unpooled.wrappedBuffer((csUser.getCurrentPath() + DELIMETER + getFilesList(csUser)).getBytes()));
+                if (!"..".equals(header[1])) {
+                    csUser.setCurrentPath(csUser.getCurrentPath() + File.separator + header[1]);
+                } else {
+                    String[] tokens = csUser.getCurrentPath().toString().split(Matcher.quoteReplacement(File.separator));
+                    csUser.setCurrentPath((csUser.getCurrentPath().delete(
+                            csUser.getCurrentPath().length() - tokens[tokens.length - 1].length() - 1,
+                            csUser.getCurrentPath().length())).toString());
+                }
+//                getFilesList(csUser);
+                ctx.writeAndFlush(Unpooled.wrappedBuffer(("/status-ok").getBytes()));
                 break;
             case ("/mkdir"):
                 makeDir(header[1],csUser);
