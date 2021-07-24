@@ -123,7 +123,7 @@ public class MainWindowController implements Initializable {
     public static Action copyAction = COPY;
     public static Action deleteAction = DELETE;
     public static Action renameAction = RENAME;
-    public static Action makeDirAction;
+    public static Action makeDirAction = CREATE_LOCAL;
 
     //----------------------------------------------------
 
@@ -375,6 +375,24 @@ public class MainWindowController implements Initializable {
         rws.show();
     }
 
+    public void makeDirAction() {
+        if (leftWorkPanel.listView.isFocused()) { //если выделенное окно слева
+            prepareAndMakeDir(leftWorkPanel, makeDirAction);
+        }
+        if (rightWorkPanel.listView.isFocused()) { //если выделенное окно слева
+            prepareAndMakeDir(rightWorkPanel, makeDirAction);
+        }
+    }
+
+    //создание файла/директории производится по первому пути
+    private void prepareAndMakeDir(WorkPanel sourcePanel, Action action) {
+        MakeFileOrDirStage mds = new MakeFileOrDirStage(sourcePanel, action);
+        mds.setMinWidth(480);
+        mds.setMinHeight(25);
+        mds.setResizable(false);
+        mds.show();
+    }
+
     public static boolean isFilesExist(WorkPanel sourcePanel, WorkPanel targetPanel) {
         for (String element : sourcePanel.getMarkedFileList()) {
             Path target = targetPanel.getPathByElement(element);
@@ -473,27 +491,6 @@ public class MainWindowController implements Initializable {
         });
         downloadThread.interrupt();
         threadManager.execute(downloadThread);
-    }
-
-    public void makeDirAction() {
-        if (leftList.isFocused()) { //если выделенное окно слева
-            prepareAndMakeDir(leftPath, leftList, isLeftListOnline, rightPath, rightList, isRightListOnline, out, rbc);
-        }
-        if (rightList.isFocused()) { //если выделенное окно слева
-            prepareAndMakeDir(rightPath, rightList, isRightListOnline, leftPath, leftList, isLeftListOnline, out, rbc);
-        }
-    }
-
-    //создание файла/директории производится по первому пути
-    private void prepareAndMakeDir(StringBuilder firstPath, ListView<String> firstList, boolean isFirstPathOnline,
-                                   StringBuilder secondPath, ListView<String> secondList, boolean isSecondPathOnline,
-                                   DataOutputStream out, ReadableByteChannel rbc) {
-        MakeFileOrDirStage mds = new MakeFileOrDirStage(firstPath, firstList,
-                isFirstPathOnline, secondPath, secondList, isSecondPathOnline, out, rbc);
-        mds.setMinWidth(480);
-        mds.setMinHeight(25);
-        mds.setResizable(false);
-        mds.show();
     }
 
     //перемещает выбранные файлы

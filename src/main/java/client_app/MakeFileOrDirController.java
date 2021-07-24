@@ -39,20 +39,24 @@ public class MakeFileOrDirController implements Initializable {
     @FXML
     ChoiceBox<String> choiceBox;
 
-    boolean isDirectory;
+    boolean isDirectory = true;
 
     Stage stage;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        fileName.requestFocus();
+        choiceBox.setFocusTraversable(false);
         choiceBox.getItems().add("Directory");
         choiceBox.getItems().add("File");
-        choiceBox.setValue("File");
+        extension.setVisible(false);
+        choiceBox.setValue("Directory");
+
 
         choiceBox.setOnAction((event -> {
             if ("Directory".equals(choiceBox.getSelectionModel().getSelectedItem())) {
-                isDirectory = true;
                 extension.setVisible(false);
+                isDirectory = true;
                 extension.setPrefWidth(0);
                 fileName.setPrefWidth(315);
                 fileName.focusedProperty();
@@ -70,49 +74,29 @@ public class MakeFileOrDirController implements Initializable {
     public void apply() {
         stage = (Stage) apply.getScene().getWindow();
         fileName.focusedProperty();
-        ByteBuffer byteBuffer = ByteBuffer.allocate(8 * 1024);
-        StringBuilder firstPath = ((MakeFileOrDirStage) apply.getScene().getWindow()).firstPath;
-        StringBuilder secondPath = ((MakeFileOrDirStage) apply.getScene().getWindow()).secondPath;
-        ListView<String> firstList = ((MakeFileOrDirStage) apply.getScene().getWindow()).firstList;
-        ListView<String> secondList = ((MakeFileOrDirStage) apply.getScene().getWindow()).secondList;
-        boolean isFirstPathOnline = ((MakeFileOrDirStage) apply.getScene().getWindow()).isFirstPathOnline;
-        boolean isSecondPathOnline = ((MakeFileOrDirStage) apply.getScene().getWindow()).isSecondPathOnline;
-       // DataOutputStream out = ((MakeFileOrDirStage) apply.getScene().getWindow()).out;
-        ReadableByteChannel rbc = ((MakeFileOrDirStage) apply.getScene().getWindow()).rbc;
-        Path path = Path.of(firstPath + File.separator + fileName.getText()
+        WorkPanel sourcePanel = ((MakeFileOrDirStage) apply.getScene().getWindow()).sourcePanel;
+        Action action = ((MakeFileOrDirStage) apply.getScene().getWindow()).action;
+        Path path = Path.of(sourcePanel.getCurrentPath() + File.separator + fileName.getText()
                 + (!isDirectory ? "." + extension.getText() : ""));
         try {
-
-            if (!isFirstPathOnline) {
-                if (path.toFile().exists()) {
-                    stage.setTitle("Error! File or directory exist");
-                } else {
-                    if (isDirectory) {
-                        Files.createDirectory(path);
+            switch (action) {
+                case CREATE_LOCAL:
+                    if (path.toFile().exists()) {
+                        stage.setTitle("Error! File or directory exist");
                     } else {
-                        Files.createFile(path);
+                        if (isDirectory) {
+                            Files.createDirectory(path);
+                        } else {
+                            Files.createFile(path);
+                        }
+                        stage.close();
                     }
-                    stage.close();
-                }
+                    break;
+                case CREATE_REMOTE:
+
+                    break;
             }
-            if (isFirstPathOnline) {
-                out.write(("/mkdir" + DELIMETER + fileName.getText()).getBytes());
-                while (true) {
-                    String[] answer = queryStringListener(rbc, byteBuffer);
-                    if ("/status-ok".equals(answer[0]))
-                        break;
-                }
-//                String[] answer = receiveFileList(firstPath, out, rbc, byteBuffer);
-//                changeCurrentPath(firstPath,answer[0]);
-//                firstPath.delete(0,firstPath.length());
-//                firstPath.append(answer[0]);
-//                showOnlineDirectory(answer, firstList, firstPath);
-            }
-            if (isSecondPathOnline) {
-               // showOnlineDirectory(receiveFileList(out, rbc, byteBuffer), secondList, secondPath);
-            } else {
-                showLocalDirectory(secondPath, secondList);
-            }
+            updateAllFilesLists();
             stage = (Stage) apply.getScene().getWindow();
             stage.close();
         } catch (IOException e) {

@@ -9,8 +9,8 @@ public enum Action {
     DELETE,
     RENAME,
     MOVE,
-    MKDIR,
-    TOUCH,
+    CREATE_LOCAL,
+    CREATE_REMOTE,
 
 
 }

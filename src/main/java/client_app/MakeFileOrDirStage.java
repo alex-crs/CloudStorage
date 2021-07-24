@@ -12,26 +12,12 @@ import java.io.IOException;
 import java.nio.channels.ReadableByteChannel;
 
 public class MakeFileOrDirStage extends Stage {
-    StringBuilder firstPath;
-    StringBuilder secondPath;
-    ListView<String> firstList;
-    ListView<String> secondList;
-    DataOutputStream out;
-    ReadableByteChannel rbc;
-    boolean isFirstPathOnline;
-    boolean isSecondPathOnline;
+    WorkPanel sourcePanel;
+    Action action;
 
-    public MakeFileOrDirStage(StringBuilder firstPath, ListView<String> firstList, boolean isFirstPathOnline,
-                              StringBuilder secondPath, ListView<String> secondList, boolean isSecondPathOnline,
-                              DataOutputStream out, ReadableByteChannel rbc) {
-        this.firstPath = firstPath;
-        this.secondPath = secondPath;
-        this.firstList = firstList;
-        this.secondList = secondList;
-        this.out = out;
-        this.isFirstPathOnline = isFirstPathOnline;
-        this.isSecondPathOnline = isSecondPathOnline;
-        this.rbc = rbc;
+    public MakeFileOrDirStage(WorkPanel sourcePanel, Action action) {
+        this.sourcePanel = sourcePanel;
+        this.action = action;
         Parent root = null;
         try {
             root = FXMLLoader.load(getClass().getResource("/fxml/MakeFileOrDirWindow.fxml"));
