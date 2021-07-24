@@ -121,8 +121,8 @@ public class MainWindowController implements Initializable {
 
     //управление действиями
     //----------------------------------------------------
-    public static Action copyAction;
-    public static Action deleteAction;
+    public static Action copyAction = COPY;
+    public static Action deleteAction = DELETE;
     public static Action renameAction;
     public static Action makeDirAction;
 
@@ -316,17 +316,17 @@ public class MainWindowController implements Initializable {
      * Если левое или правое окно подключены к облачному хранилищу, то вместо команды copy(), запускается метод upload*/
     public void copyAction() throws IOException {
         if (leftWorkPanel.getMarkedFileList().size() > 0) { //если выделенные файлы слева
-            prepareAndCopy(leftWorkPanel, rightWorkPanel);
+            prepareAndCopy(leftWorkPanel, rightWorkPanel, copyAction);
         }
         if (rightWorkPanel.getMarkedFileList().size() > 0) { //если выделенные файлы справа
-            prepareAndCopy(rightWorkPanel, leftWorkPanel);
+            prepareAndCopy(rightWorkPanel, leftWorkPanel, copyAction);
         }
     }
 
     //данный метод подготавливает файлы и директории для копирования,
-    public static void prepareAndCopy(WorkPanel sourcePanel, WorkPanel targetPanel) throws IOException {
+    public static void prepareAndCopy(WorkPanel sourcePanel, WorkPanel targetPanel, Action action) {
         if (isFilesExist(sourcePanel, targetPanel) && isClarifyEveryTime) {
-            QuestionWindowStage qws = new QuestionWindowStage(sourcePanel, targetPanel, COPY);
+            QuestionWindowStage qws = new QuestionWindowStage(sourcePanel, targetPanel, action);
             qws.setResizable(false);
             qws.show();
         } else {
@@ -341,6 +341,32 @@ public class MainWindowController implements Initializable {
             }
             isClarifyEveryTime = true;
         }
+    }
+
+    public void deleteAction() throws IOException {
+        if (leftWorkPanel.getMarkedFileList().size() > 0) { //если выделенные файлы слева
+            prepareAndDelete(leftWorkPanel, rightWorkPanel, deleteAction);
+        }
+        if (rightWorkPanel.getMarkedFileList().size() > 0) { //если выделенные файлы справа
+            prepareAndDelete(rightWorkPanel, leftWorkPanel, deleteAction);
+        }
+    }
+
+    public static void prepareAndDelete(WorkPanel sourcePanel, WorkPanel targetPanel, Action action) throws IOException {
+        if (isClarifyEveryTime) {
+            QuestionWindowStage qws = new QuestionWindowStage(sourcePanel, targetPanel, action);
+            qws.setResizable(false);
+            qws.show();
+        } else {
+            Iterator<String> iterator = sourcePanel.getMarkedFileList().iterator();
+            while (iterator.hasNext()) {
+                String fileName = iterator.next();
+                delete(sourcePanel.currentPath, fileName);
+                sourcePanel.showDirectory();
+                targetPanel.showDirectory();
+            }
+        }
+        isClarifyEveryTime = true;
     }
 
     public static boolean isFilesExist(WorkPanel sourcePanel, WorkPanel targetPanel) {
@@ -441,31 +467,6 @@ public class MainWindowController implements Initializable {
         });
         downloadThread.interrupt();
         threadManager.execute(downloadThread);
-    }
-
-
-    public void deleteAction() throws IOException {
-        if (leftWorkPanel.getMarkedFileList().size() > 0) { //если выделенные файлы слева
-            prepareAndDelete(leftWorkPanel);
-        }
-        if (rightWorkPanel.getMarkedFileList().size() > 0) { //если выделенные файлы справа
-            prepareAndDelete(rightWorkPanel);
-        }
-    }
-
-    public static void prepareAndDelete(WorkPanel panel) throws IOException {
-        Iterator<String> iterator = panel.getMarkedFileList().iterator();
-        while (iterator.hasNext()) {
-            String fileName = iterator.next();
-//            if (isClarifyEveryTime) {
-//                QuestionWindowStage qws = new QuestionWindowStage(panel, null, fileName, DELETE);
-//                qws.setResizable(false);
-//                qws.show();
-//            } else {
-//                delete(panel.currentPath, fileName);
-//            }
-        }
-        isClarifyEveryTime = true;
     }
 
     public void renameAction() {

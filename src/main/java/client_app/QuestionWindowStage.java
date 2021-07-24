@@ -27,9 +27,9 @@ public class QuestionWindowStage extends Stage {
     public static String getMessage() {
         switch (action) {
             case COPY:
-//                return element + " уже существует." + "\n\r Желаете заменить?";
+                return "Перезаписать без подтверждения?";
             case DELETE:
-                return "Вы уверены что хотите удалить ";
+                return "Уверены, что хотите удалить файл(ы)?";
         }
         return null;
     }

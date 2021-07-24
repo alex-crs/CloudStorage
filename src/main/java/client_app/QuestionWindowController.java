@@ -13,11 +13,12 @@ import java.util.ResourceBundle;
 
 import static client_app.FileOperations.*;
 import static client_app.MainWindowController.*;
+import static client_app.QuestionWindowStage.getMessage;
 
 public class QuestionWindowController implements Initializable {
 
     @FXML
-    Button yesBtn;
+    Button actionRun;
 
     @FXML
     Button noBtn;
@@ -40,20 +41,32 @@ public class QuestionWindowController implements Initializable {
     WorkPanel targetPanel;
     Path source;
     Path target;
+    Action action;
 
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        message.setText("Перезаписать при совпадении имен?");
+        action = QuestionWindowStage.action;
+        message.setText(getMessage());
         fileNumber = -1;
-        replace.setVisible(false);
+        switch (action) {
+            case COPY:
+                replace.setVisible(false);
+                break;
+            case DELETE:
+                replace.setVisible(false);
+                replaceAll.setVisible(false);
+                actionRun.setLayoutX(50);
+                actionRun.setLayoutY(50);
+                actionRun.setText("Yes");
+                break;
+        }
     }
 
     public void actionRun() throws IOException {
         fileNumber++;
-        sourcePanel = ((QuestionWindowStage) yesBtn.getScene().getWindow()).sourcePanel;
-        targetPanel = ((QuestionWindowStage) yesBtn.getScene().getWindow()).targetPanel;
-        Action action = QuestionWindowStage.action;
+        sourcePanel = ((QuestionWindowStage) actionRun.getScene().getWindow()).sourcePanel;
+        targetPanel = ((QuestionWindowStage) actionRun.getScene().getWindow()).targetPanel;
         if (fileNumber == sourcePanel.getMarkedFileList().size()) {
             updateAllFilesLists();
             closeButton();
@@ -69,7 +82,7 @@ public class QuestionWindowController implements Initializable {
                             fileNumber++;
                         } else if (target.toFile().exists()) {
                             message.setText(element + "\r\nуже существует. Заменить?");
-                            yesBtn.setVisible(false);
+                            actionRun.setVisible(false);
                             replace.setVisible(true);
                             replaceAll.setVisible(false);
                             replace.setLayoutX(30);
@@ -79,7 +92,8 @@ public class QuestionWindowController implements Initializable {
                     }
                     break;
                 case DELETE:
-                    delete(sourcePanel.currentPath, element);
+                    isClarifyEveryTime = false;
+                    prepareAndDelete(sourcePanel, targetPanel, action);
                     closeButton();
                     break;
             }
@@ -91,17 +105,17 @@ public class QuestionWindowController implements Initializable {
         actionRun();
     }
 
-    public void replaceAll() throws IOException {
-        sourcePanel = ((QuestionWindowStage) yesBtn.getScene().getWindow()).sourcePanel;
-        targetPanel = ((QuestionWindowStage) yesBtn.getScene().getWindow()).targetPanel;
+    public void replaceAll() {
+        sourcePanel = ((QuestionWindowStage) actionRun.getScene().getWindow()).sourcePanel;
+        targetPanel = ((QuestionWindowStage) actionRun.getScene().getWindow()).targetPanel;
         isClarifyEveryTime = false;
-        prepareAndCopy(sourcePanel, targetPanel);
+        prepareAndCopy(sourcePanel, targetPanel, action);
         closeButton();
     }
 
 
     public void closeButton() {
-        stage = (Stage) yesBtn.getScene().getWindow();
+        stage = (Stage) actionRun.getScene().getWindow();
         stage.close();
     }
 
