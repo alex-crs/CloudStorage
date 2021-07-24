@@ -18,32 +18,32 @@ public class QuestionWindowStage extends Stage {
 
     static Action action;
     WorkPanel sourcePanel, targetPanel;
-    static String element;
+//    static String element;
 
-    public static String getElement() {
-        return element;
-    }
+//    public static String getElement() {
+//        return element;
+//    }
 
     public static String getMessage() {
         switch (action) {
             case COPY:
-                return element + " уже существует." + "\n\r Желаете заменить?";
+//                return element + " уже существует." + "\n\r Желаете заменить?";
             case DELETE:
-                return "Вы уверены что хотите удалить " + element;
+                return "Вы уверены что хотите удалить ";
         }
         return null;
     }
 
-    public QuestionWindowStage(WorkPanel sourcePanel, WorkPanel targetPanel, String element, Action action) {
+    public QuestionWindowStage(WorkPanel sourcePanel, WorkPanel targetPanel, Action action) {
         QuestionWindowStage.action = action;
-        QuestionWindowStage.element = element;
+//        QuestionWindowStage.element = element;
         this.sourcePanel = sourcePanel;
         this.targetPanel = targetPanel;
         Parent root = null;
         try {
             root = FXMLLoader.load(getClass().getResource("/fxml/QuestionWindow.fxml"));
             setTitle("Warning");
-            Scene scene = new Scene(root, 400, 150);
+            Scene scene = new Scene(root, 250, 100);
             setScene(scene);
         } catch (IOException e) {
             e.printStackTrace();

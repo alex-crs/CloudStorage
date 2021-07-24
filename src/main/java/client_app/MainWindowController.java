@@ -26,6 +26,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 
+import static client_app.Action.COPY;
+import static client_app.Action.DELETE;
 import static client_app.FileOperations.*;
 
 public class MainWindowController implements Initializable {
@@ -91,7 +93,7 @@ public class MainWindowController implements Initializable {
     public static DataInputStream in;
     public static ReadableByteChannel rbc;
     public static ByteBuffer byteBuffer = ByteBuffer.allocate(8 * 1024);
-    private ExecutorService threadManager;
+    private static ExecutorService threadManager;
     public String DELIMETER = ";";
     private String AUTH_COMMAND = "/auth";
     //----------------------------------------------------
@@ -109,8 +111,10 @@ public class MainWindowController implements Initializable {
     public static boolean isRightListOnline;
     public static boolean isLeftListOnline;
 
-    static WorkPanel leftWorkPanel;
-    static WorkPanel rightWorkPanel;
+    private static WorkPanel leftWorkPanel;
+    private static WorkPanel rightWorkPanel;
+    static boolean isClarifyEveryTime = true; //спрашивать каждый раз при удалении или замене файла
+    public static boolean userAnswer;
     //----------------------------------------------------
 
     //...
@@ -264,25 +268,17 @@ public class MainWindowController implements Initializable {
      * в другом список очищается, таким образом мы работаем только с одним активным окном*/
     public void leftEvent(MouseEvent mouseEvent) {
         if (mouseEvent.getClickCount() == 1) {
-//            leftFiles = leftMarkedFiles.getSelectedItems();
             rightWorkPanel.clearSelectionFiles();
             leftWorkPanel.getSelectedFiles();
 
         }
         if (mouseEvent.getClickCount() == 2) {
             leftWorkPanel.treeMovement();
-//            if (!isLeftListOnline) {
-//                eventAction(currentElement, leftPath, leftList, leftPathView);
-//            } else {
-//                eventOnlineAction(currentElement, leftPath, leftList, leftPathView);
-//            }
         }
     }
 
     public void rightEvent(MouseEvent mouseEvent) {
         if (mouseEvent.getClickCount() == 1) {
-//            rightFiles = rightMarkedFiles.getSelectedItems();
-//            leftMarkedFiles.clearSelection();
             leftWorkPanel.clearSelectionFiles();
             rightWorkPanel.getSelectedFiles();
         }
@@ -321,27 +317,40 @@ public class MainWindowController implements Initializable {
     public void copyAction() throws IOException {
         if (leftWorkPanel.getMarkedFileList().size() > 0) { //если выделенные файлы слева
             prepareAndCopy(leftWorkPanel, rightWorkPanel);
-
-//            if (!isLeftListOnline && !isRightListOnline) {
-//                prepareAndCopy(leftPath, rightPath, leftFiles, rightList);
-//            }
-//            if (!isLeftListOnline && isRightListOnline) {
-//                prepareAndUpload(leftList.getSelectionModel().getSelectedItem(), leftPath); //дописать логику множественного копирования
-//            }
-//            if (isLeftListOnline && !isRightListOnline) {
-//                prepareAndDownload(leftList.getSelectionModel().getSelectedItem(), leftPath);
-//            }
-//            if (isLeftListOnline && isRightListOnline) {
-//
-//            }
         }
         if (rightWorkPanel.getMarkedFileList().size() > 0) { //если выделенные файлы справа
-
-                prepareAndCopy(rightWorkPanel, leftWorkPanel);
-//            if (isRightListOnline && !isLeftListOnline) {
-//                prepareAndDownload(rightList.getSelectionModel().getSelectedItem(), rightPath);
-//            }
+            prepareAndCopy(rightWorkPanel, leftWorkPanel);
         }
+    }
+
+    //данный метод подготавливает файлы и директории для копирования,
+    public static void prepareAndCopy(WorkPanel sourcePanel, WorkPanel targetPanel) throws IOException {
+        if (isFilesExist(sourcePanel, targetPanel) && isClarifyEveryTime) {
+            QuestionWindowStage qws = new QuestionWindowStage(sourcePanel, targetPanel, COPY);
+            qws.setResizable(false);
+            qws.show();
+        } else {
+            for (String element : sourcePanel.getMarkedFileList()) {
+                try {
+                    copy(sourcePanel.getPathByElement(element), targetPanel.getPathByElement(element));
+                    sourcePanel.showDirectory();
+                    targetPanel.showDirectory();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            isClarifyEveryTime = true;
+        }
+    }
+
+    public static boolean isFilesExist(WorkPanel sourcePanel, WorkPanel targetPanel) {
+        for (String element : sourcePanel.getMarkedFileList()) {
+            Path target = targetPanel.getPathByElement(element);
+            if (target.toFile().exists()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void prepareAndUpload(String fileName, StringBuilder sourcePath) {
@@ -444,16 +453,20 @@ public class MainWindowController implements Initializable {
         }
     }
 
-//    private void prepareAndDelete(StringBuilder path, ObservableList<String> files,
-//                                  ListView<String> renewableFileList) throws IOException {
-//        Iterator<String> iterator = files.iterator();
-//        while (iterator.hasNext()) {
-//            String fileName = iterator.next();
-//            delete(path, fileName, renewableFileList);
-//        }
-//        updateAllFilesLists();
-//    }
-
+    public static void prepareAndDelete(WorkPanel panel) throws IOException {
+        Iterator<String> iterator = panel.getMarkedFileList().iterator();
+        while (iterator.hasNext()) {
+            String fileName = iterator.next();
+//            if (isClarifyEveryTime) {
+//                QuestionWindowStage qws = new QuestionWindowStage(panel, null, fileName, DELETE);
+//                qws.setResizable(false);
+//                qws.show();
+//            } else {
+//                delete(panel.currentPath, fileName);
+//            }
+        }
+        isClarifyEveryTime = true;
+    }
 
     public void renameAction() {
         if (leftFiles.size() > 0) { //если выделенные файлы слева
@@ -510,7 +523,6 @@ public class MainWindowController implements Initializable {
     public static void updateAllFilesLists() throws IOException {
         leftWorkPanel.showDirectory();
         rightWorkPanel.showDirectory();
-
 
 
 //        if (!isLeftListOnline) {
