@@ -124,6 +124,7 @@ public class MainWindowController implements Initializable {
     public static Action deleteAction = DELETE;
     public static Action renameAction = RENAME;
     public static Action makeDirAction = CREATE_LOCAL;
+    public static Action moveAction = MOVE;
 
     //----------------------------------------------------
 
@@ -393,6 +394,25 @@ public class MainWindowController implements Initializable {
         mds.show();
     }
 
+    //перемещает выбранные файлы
+    public void moveAction() {
+        if (leftWorkPanel.getMarkedFileList().size() > 0) { //если выделенные файлы слева
+            QuestionWindowStage qws = new QuestionWindowStage(leftWorkPanel, rightWorkPanel, MOVE);
+            qws.setResizable(false);
+            qws.show();
+        }
+        if (rightWorkPanel.getMarkedFileList().size() > 0) { //если выделенные файлы справа
+            QuestionWindowStage qws = new QuestionWindowStage(rightWorkPanel, leftWorkPanel, MOVE);
+            qws.setResizable(false);
+            qws.show();
+        }
+    }
+
+    public static void updateAllFilesLists() throws IOException {
+        leftWorkPanel.showDirectory();
+        rightWorkPanel.showDirectory();
+    }
+
     public static boolean isFilesExist(WorkPanel sourcePanel, WorkPanel targetPanel) {
         for (String element : sourcePanel.getMarkedFileList()) {
             Path target = targetPanel.getPathByElement(element);
@@ -491,39 +511,6 @@ public class MainWindowController implements Initializable {
         });
         downloadThread.interrupt();
         threadManager.execute(downloadThread);
-    }
-
-    //перемещает выбранные файлы
-    public void moveAction() throws IOException {
-        if (leftFiles.size() > 0) { //если выделенные файлы слева
-//            prepareAndCopy(leftPath, rightPath, leftFiles, rightList);
-//            prepareAndDelete(leftPath, leftFiles, leftList);
-        }
-        if (rightFiles.size() > 0) { //если выделенные файлы справа
-//            prepareAndCopy(rightPath, leftPath, rightFiles, leftList);
-//            prepareAndDelete(rightPath, rightFiles, rightList);
-        }
-    }
-
-    public static void updateAllFilesLists() throws IOException {
-        leftWorkPanel.showDirectory();
-        rightWorkPanel.showDirectory();
-
-
-//        if (!isLeftListOnline) {
-//            showLocalDirectory(leftPath, leftList);
-//            leftPathView.setText(leftPath.toString());
-//        }
-//        if (!isRightListOnline) {
-//            showLocalDirectory(rightPath, rightList);
-//            rightPathView.setText(rightPath.toString());
-//        }
-//        if (isRightListOnline) {
-//            showOnlineDirectory(receiveFileList(rightPath, out, rbc, byteBuffer), rightList, rightPath);
-//        }
-//        if (isLeftListOnline) {
-//            showOnlineDirectory(receiveFileList(leftPath, out, rbc, byteBuffer), leftList, leftPath);
-//        }
     }
 
     //позволяет выставить каталог слева равный каталогу справа (для удобства работы)

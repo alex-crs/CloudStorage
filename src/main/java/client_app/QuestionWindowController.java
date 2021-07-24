@@ -11,6 +11,7 @@ import java.net.URL;
 import java.nio.file.Path;
 import java.util.ResourceBundle;
 
+import static client_app.Action.*;
 import static client_app.FileOperations.*;
 import static client_app.MainWindowController.*;
 import static client_app.QuestionWindowStage.getMessage;
@@ -54,6 +55,7 @@ public class QuestionWindowController implements Initializable {
                 replace.setVisible(false);
                 break;
             case DELETE:
+            case MOVE:
                 replace.setVisible(false);
                 replaceAll.setVisible(false);
                 actionRun.setLayoutX(50);
@@ -94,6 +96,13 @@ public class QuestionWindowController implements Initializable {
                 case DELETE:
                     isClarifyEveryTime = false;
                     prepareAndDelete(sourcePanel, targetPanel, action);
+                    closeButton();
+                    break;
+                case MOVE:
+                    isClarifyEveryTime = false;
+                    prepareAndCopy(sourcePanel, targetPanel, COPY);
+                    isClarifyEveryTime = false;
+                    prepareAndDelete(sourcePanel, targetPanel, DELETE);
                     closeButton();
                     break;
             }

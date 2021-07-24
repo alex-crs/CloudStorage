@@ -7,8 +7,8 @@ public enum Action {
     OVERWRITE,
     COPY,
     DELETE,
-    RENAME,
     MOVE,
+    RENAME,
     CREATE_LOCAL,
     CREATE_REMOTE,
 

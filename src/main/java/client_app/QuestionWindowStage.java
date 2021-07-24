@@ -18,11 +18,6 @@ public class QuestionWindowStage extends Stage {
 
     static Action action;
     WorkPanel sourcePanel, targetPanel;
-//    static String element;
-
-//    public static String getElement() {
-//        return element;
-//    }
 
     public static String getMessage() {
         switch (action) {
@@ -30,13 +25,14 @@ public class QuestionWindowStage extends Stage {
                 return "Перезаписать без подтверждения?";
             case DELETE:
                 return "Уверены, что хотите удалить файл(ы)?";
+            case MOVE:
+                return "Хотите переместить файлы?";
         }
         return null;
     }
 
     public QuestionWindowStage(WorkPanel sourcePanel, WorkPanel targetPanel, Action action) {
         QuestionWindowStage.action = action;
-//        QuestionWindowStage.element = element;
         this.sourcePanel = sourcePanel;
         this.targetPanel = targetPanel;
         Parent root = null;
