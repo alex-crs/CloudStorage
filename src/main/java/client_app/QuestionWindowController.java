@@ -6,9 +6,11 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.stage.Stage;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Path;
+import java.util.Iterator;
 import java.util.ResourceBundle;
 
 import static client_app.Action.*;
@@ -55,6 +57,7 @@ public class QuestionWindowController implements Initializable {
                 replace.setVisible(false);
                 break;
             case DELETE:
+            case DELETE_REMOTE:
             case MOVE:
                 replace.setVisible(false);
                 replaceAll.setVisible(false);
@@ -103,6 +106,23 @@ public class QuestionWindowController implements Initializable {
                     prepareAndCopy(sourcePanel, targetPanel, COPY);
                     isClarifyEveryTime = false;
                     prepareAndDelete(sourcePanel, targetPanel, DELETE);
+                    closeButton();
+                    break;
+                case DELETE_REMOTE:
+
+                    int answer;
+                    Iterator<String> iterator = sourcePanel.getMarkedFileList().iterator();
+                    while (iterator.hasNext()) {
+                        String fileName = iterator.next();
+                        answer = sourcePanel.getNetworkManager().deleteObject(sourcePanel.getCurrentPath() + File.separator + fileName.replaceAll(".:", ""));
+                        while (true){
+                            if (answer>0){
+                                break;
+                            }
+                        }
+                        sourcePanel.showDirectory();
+                        targetPanel.showDirectory();
+                    }
                     closeButton();
                     break;
             }

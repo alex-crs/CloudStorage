@@ -140,8 +140,11 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
                 touchFile(csUser, header[1], ctx);
                 break;
             case ("/rename"):
-                renameDir(csUser,header[1], header[2], ctx);
+                renameDir(csUser, header[1], header[2]);
                 ctx.writeAndFlush(Unpooled.wrappedBuffer(("/status-ok").getBytes()));
+                break;
+            case ("/delete"):
+                removeFileOrDirectory(csUser, header[1], ctx);
                 break;
         }
     }

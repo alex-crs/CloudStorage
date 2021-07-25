@@ -112,4 +112,19 @@ public class NetworkManager {
         return -1;
     }
 
+    public int deleteObject(String name) {
+        try {
+            out.write(("/delete" + DELIMETER + name).getBytes());
+            out.flush();
+            String[] serverAnswer = queryStringListener();
+            if ("/status-ok".equals(serverAnswer[0])) {
+                LOGGER.info(String.format("Delete file: operation successfully"));
+                return 1; //возвращает 1 если ответ положительный
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return -1;
+    }
+
 }

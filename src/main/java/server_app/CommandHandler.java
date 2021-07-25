@@ -226,10 +226,27 @@ public class CommandHandler {
         ctx.writeAndFlush(Unpooled.wrappedBuffer(("/status-ok").getBytes()));
     }
 
-    public static void renameDir(CSUser user, String oldName, String newName, ChannelHandlerContext ctx) {
+    public static void renameDir(CSUser user, String oldName, String newName) {
         File oldFileName = new File(user.getRoot() + oldName);
         File newFileName = new File(user.getRoot() + newName);
         oldFileName.renameTo(newFileName);
+    }
+
+    public static void removeFileOrDirectory(CSUser user, String name, ChannelHandlerContext ctx) throws IOException {
+        Files.walkFileTree(Path.of(user.getRoot() + name), new SimpleFileVisitor<Path>() {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                Files.delete(file);
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                Files.delete(dir);
+                return FileVisitResult.CONTINUE;
+            }
+        });
+        ctx.writeAndFlush(Unpooled.wrappedBuffer(("/status-ok").getBytes()));
     }
 
 
@@ -278,21 +295,7 @@ public class CommandHandler {
 //        return string.toString();
 //    }
 //
-//    private static void removeFileOrDirectory(String name, CSUser client) throws IOException {
-//        Files.walkFileTree(Path.of(client.getCurrentPath() + File.separator + name), new SimpleFileVisitor<Path>() {
-//            @Override
-//            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-//                Files.delete(file);
-//                return FileVisitResult.CONTINUE;
-//            }
-//
-//            @Override
-//            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-//                Files.delete(dir);
-//                return FileVisitResult.CONTINUE;
-//            }
-//        });
-//    }
+
 //
 //    private static boolean checkUniqueFileOrDirectory(String path, CSUser client) {
 //        String checkDirectory = path;

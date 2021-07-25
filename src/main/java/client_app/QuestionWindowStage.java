@@ -24,6 +24,7 @@ public class QuestionWindowStage extends Stage {
             case COPY:
                 return "Перезаписать без подтверждения?";
             case DELETE:
+            case DELETE_REMOTE:
                 return "Уверены, что хотите удалить файл(ы)?";
             case MOVE:
                 return "Хотите переместить файлы?";
