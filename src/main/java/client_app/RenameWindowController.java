@@ -13,6 +13,7 @@ import java.util.ResourceBundle;
 
 import static client_app.Action.RENAME;
 import static client_app.Action.RENAME_REMOTE;
+import static client_app.FileOperations.clearEmptySymbolsAfterName;
 import static client_app.MainWindowController.updateAllFilesLists;
 import static client_app.RenameWindowStage.*;
 
@@ -64,9 +65,12 @@ public class RenameWindowController implements Initializable {
                 File sourceFile = new File(sourcePanel.getCurrentPath() + File.separator + getFileName());
                 File targetFile;
                 if (sourceFile.isFile()) {
-                    targetFile = new File(sourcePanel.getCurrentPath() + File.separator + fileName.getText() + "." + extension.getText());
+                    targetFile = new File(sourcePanel.getCurrentPath()
+                            + File.separator + clearEmptySymbolsAfterName(fileName.getText())
+                            + "." + clearEmptySymbolsAfterName(extension.getText()));
                 } else {
-                    targetFile = new File(sourcePanel.getCurrentPath() + File.separator + fileName.getText());
+                    targetFile = new File(sourcePanel.getCurrentPath()
+                            + File.separator + clearEmptySymbolsAfterName(fileName.getText()));
                 }
                 sourceFile.renameTo(targetFile);
                 updateAllFilesLists();
@@ -79,11 +83,13 @@ public class RenameWindowController implements Initializable {
                     answer = sourcePanel.getNetworkManager().renameObject(
                             (sourcePanel.getCurrentPath() + File.separator + oldName),
                             (sourcePanel.getCurrentPath() + File.separator
-                                    + fileName.getText() + "." + extension.getText()));
+                                    + clearEmptySymbolsAfterName(fileName.getText())
+                                    + "." + clearEmptySymbolsAfterName(extension.getText())));
                 } else {
                     answer = sourcePanel.getNetworkManager().renameObject(
                             (sourcePanel.getCurrentPath() + File.separator + oldName),
-                            (sourcePanel.getCurrentPath() + File.separator + fileName.getText()));
+                            (sourcePanel.getCurrentPath() + File.separator
+                                    + clearEmptySymbolsAfterName(fileName.getText())));
                 }
                 if (answer > 0) {
                     updateAllFilesLists();

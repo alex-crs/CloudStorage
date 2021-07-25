@@ -14,6 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ResourceBundle;
 
+import static client_app.FileOperations.clearEmptySymbolsAfterName;
 import static client_app.MainWindowController.*;
 
 public class MakeFileOrDirController implements Initializable {
@@ -69,8 +70,8 @@ public class MakeFileOrDirController implements Initializable {
         fileName.focusedProperty();
         WorkPanel sourcePanel = ((MakeFileOrDirStage) apply.getScene().getWindow()).sourcePanel;
         Action action = ((MakeFileOrDirStage) apply.getScene().getWindow()).action;
-        Path path = Path.of(sourcePanel.getCurrentPath() + File.separator + fileName.getText()
-                + (!isDirectory ? "." + extension.getText() : ""));
+        Path path = Path.of(sourcePanel.getCurrentPath() + File.separator + clearEmptySymbolsAfterName(fileName.getText())
+                + (!isDirectory ? "." + clearEmptySymbolsAfterName(extension.getText()) : ""));
         try {
             switch (action) {
                 case CREATE:

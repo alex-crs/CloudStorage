@@ -164,7 +164,6 @@ public class FileOperations {
     }
 
 
-
     /*Метод для копирования по заданному пути. Необходимо передать текущую директорию для обновления списка файлов
     после копирования.*/
     public static void copy(Path source, Path target) throws IOException {
@@ -236,6 +235,18 @@ public class FileOperations {
         currentPath.delete(0, currentPath.length());
         currentPath.append(newPath);
         pathView.setText(currentPath.toString());
+    }
+
+    //удаляет пробелы в конце пути (полезно при создании папки с пробелами на конце, во избежании ошибки)
+    public static String clearEmptySymbolsAfterName(String name) {
+        StringBuilder string = new StringBuilder().append(name);
+        while (true) {
+            if (!string.toString().endsWith(" ")) {
+                break;
+            }
+            string.deleteCharAt(string.length() - 1);
+        }
+        return string.toString();
     }
 
 
