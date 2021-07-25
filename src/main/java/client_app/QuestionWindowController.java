@@ -63,6 +63,7 @@ public class QuestionWindowController implements Initializable {
             case MOVE:
             case COPY_REMOTE:
             case UPLOAD:
+            case DOWNLOAD:
                 replace.setVisible(false);
                 replaceAll.setVisible(false);
                 actionRun.setLayoutX(50);
@@ -153,6 +154,10 @@ public class QuestionWindowController implements Initializable {
                         targetPanel.showDirectory();
                     }
                     updateAllFilesLists();
+                    closeButton();
+                    break;
+                case DOWNLOAD:
+                    download(sourcePanel,targetPanel);
                     closeButton();
                     break;
             }

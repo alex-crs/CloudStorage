@@ -14,6 +14,7 @@ import javax.swing.filechooser.FileSystemView;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -30,7 +31,6 @@ import static client_app.RegistrationWindowController.DELIMETER;
 public class FileOperations {
 
     public static void upload(String source, String target, WorkPanel sourcePanel) {
-//        Thread uploadThread = new Thread(() -> {
         try {
             File sourceObject = new File(source);
             File targetObject = new File(target);
@@ -42,7 +42,7 @@ public class FileOperations {
                     if ("/upload-ok".equals(serverAnswer[0].replace("\n", ""))) {
                         break;
                     } else {
-//                        throw new FileAlreadyExistsException(element);
+                        throw new IOException();
                     }
                 }
             } else {
@@ -70,54 +70,46 @@ public class FileOperations {
         } catch (IOException e) {
             e.printStackTrace();
         }
-//        });
-//        uploadThread.interrupt();
-//        sourcePanel.getNetworkManager().threadManager.execute(uploadThread);
     }
 
-//    private void download(String fileName, StringBuilder fromPath) {
-//        Thread downloadThread = new Thread(() -> {
-//            File file = new File(leftPath + File.separator + fileName.replaceAll(".:", ""));
-//            long downloadFileLength = 0;
-//            try {
-//                out.write(("/download" + DELIMETER + fromPath + File.separator + fileName.replaceAll(".:", "")).getBytes());
-//                String[] serverAnswer = queryStringListener(rbc, byteBuffer);
-//                if (!file.exists()) {
-//                    file.createNewFile();
-//                }
-//                while (true) {
-//                    if ("/download-ok".equals(serverAnswer[0])) {
-//                        downloadFileLength = Long.parseLong(serverAnswer[1].replace("\n", ""));
-//                        break;
-//                    } else if ("nex".equals(serverAnswer[0])) {
-//                        System.out.println("File not found!"); //отработать этот модуль
-//                        throw new FileNotFoundException();
-//                    }
-//                }
-//                out.write(" ".getBytes());
-//                out.flush();
-//                RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");
-//                FileChannel fileChannel = randomAccessFile.getChannel();
-//                while ((rbc.read(byteBuffer)) > 0) {
-//                    byteBuffer.flip();
-//                    fileChannel.position(file.length());
-//                    fileChannel.write(byteBuffer);
-//                    byteBuffer.compact();
-//                    if (file.length() == downloadFileLength) {
-//                        updateAllFilesLists();
-//                        break;
-//                    }
-//                }
-//                byteBuffer.clear();
-//                fileChannel.close();
-//                randomAccessFile.close();
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
-//        });
-//        downloadThread.interrupt();
-//        threadManager.execute(downloadThread);
-//    }
+    public static void download(WorkPanel sourcePanel, WorkPanel targetPanel) {
+            File file = new File(targetPanel.getCurrentPath() + File.separator
+                    + sourcePanel.getMarkedFileList().get(0).replaceAll(".:", ""));
+            long downloadFileLength = 0;
+            try {
+                out.write(("/download" + DELIMETER + sourcePanel.getCurrentPath() + File.separator
+                        + sourcePanel.getMarkedFileList().get(0).replaceAll(".:", "")).getBytes());
+                String[] serverAnswer = sourcePanel.getNetworkManager().queryStringListener();
+                if (!file.exists()) {
+                    file.createNewFile();
+                }
+                while (true) {
+                    if ("/download-ok".equals(serverAnswer[0])) {
+                        downloadFileLength = Long.parseLong(serverAnswer[1]);
+                        break;
+                    }
+                }
+                out.write(" ".getBytes());
+                out.flush();
+                RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");
+                FileChannel fileChannel = randomAccessFile.getChannel();
+                while ((rbc.read(byteBuffer)) > 0) {
+                    byteBuffer.flip();
+                    fileChannel.position(file.length());
+                    fileChannel.write(byteBuffer);
+                    byteBuffer.compact();
+                    if (file.length() == downloadFileLength) {
+                        updateAllFilesLists();
+                        break;
+                    }
+                }
+                byteBuffer.clear();
+                fileChannel.close();
+                randomAccessFile.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+    }
 
     public static void multipleElementCopy(WorkPanel sourcePanel, WorkPanel targetPanel, String element) throws IOException {
         Path source = Path.of(sourcePanel.getCurrentPath() + File.separator + element);

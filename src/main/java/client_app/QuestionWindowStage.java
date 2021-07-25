@@ -32,6 +32,8 @@ public class QuestionWindowStage extends Stage {
                 return "Скопировать удаленные объекты?";
             case UPLOAD:
                 return "Загрузить файлы на сервер?";
+            case DOWNLOAD:
+                return "Загрузить файл с сервера?";
         }
         return null;
     }
