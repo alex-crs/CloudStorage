@@ -62,6 +62,7 @@ public class QuestionWindowController implements Initializable {
             case DELETE_REMOTE:
             case MOVE:
             case COPY_REMOTE:
+            case UPLOAD:
                 replace.setVisible(false);
                 replaceAll.setVisible(false);
                 actionRun.setLayoutX(50);
@@ -132,7 +133,8 @@ public class QuestionWindowController implements Initializable {
                     Iterator<String> iterator = sourcePanel.getMarkedFileList().iterator();
                     while (iterator.hasNext()) {
                         fileName = iterator.next();
-                        answer = sourcePanel.getNetworkManager().deleteObject(sourcePanel.getCurrentPath() + File.separator + fileName.replaceAll(".:", ""));
+                        answer = sourcePanel.getNetworkManager().deleteObject(sourcePanel.getCurrentPath()
+                                + File.separator + fileName.replaceAll(".:", ""));
                         while (true) {
                             if (answer > 0) {
                                 break;
@@ -141,6 +143,16 @@ public class QuestionWindowController implements Initializable {
                         sourcePanel.showDirectory();
                         targetPanel.showDirectory();
                     }
+                    closeButton();
+                    break;
+                case UPLOAD:
+
+                    for (String element : sourcePanel.getMarkedFileList()) {
+                        multipleElementCopy(sourcePanel, targetPanel, element);
+                        sourcePanel.showDirectory();
+                        targetPanel.showDirectory();
+                    }
+                    updateAllFilesLists();
                     closeButton();
                     break;
             }

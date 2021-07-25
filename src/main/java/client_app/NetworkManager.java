@@ -3,15 +3,16 @@ package client_app;
 import org.apache.log4j.Logger;
 import server_app.MainHandler;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileAlreadyExistsException;
 import java.util.Arrays;
+import java.util.concurrent.ExecutorService;
 
+import static client_app.MainWindowController.updateAllFilesLists;
 import static client_app.RegistrationWindowController.DELIMETER;
 
 
@@ -21,12 +22,17 @@ public class NetworkManager {
     DataInputStream in;
     ReadableByteChannel rbc;
     ByteBuffer byteBuffer;
+    ExecutorService threadManager;
 
-    public NetworkManager(DataOutputStream out, DataInputStream in, ReadableByteChannel rbc, ByteBuffer byteBuffer) {
+
+
+    public NetworkManager(DataOutputStream out, DataInputStream in, ReadableByteChannel rbc,
+                          ByteBuffer byteBuffer, ExecutorService threadManager) {
         this.out = out;
         this.in = in;
         this.rbc = rbc;
         this.byteBuffer = byteBuffer;
+        this.threadManager = threadManager;
     }
 
     public synchronized String[] receiveFileList(StringBuilder path) {
@@ -141,5 +147,7 @@ public class NetworkManager {
         }
         return -1;
     }
+
+
 
 }

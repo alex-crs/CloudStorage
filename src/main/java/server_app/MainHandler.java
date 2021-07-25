@@ -35,8 +35,6 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
     private static long transferFileLength;
     private static Action transferOptions;
     private static final String READY_STATUS = "/upload-ok";
-    private static final String FILE_EXIST = "ex";
-    private static final String FILE_NOT_EXIST = "nex";
     public static String DELIMETER = ";";
     private static CSUser csUser;
     private static final Logger LOGGER = Logger.getLogger(MainHandler.class);
@@ -86,16 +84,10 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
         switch (header[0]) {
             case ("/upload"):
                 if ("f".equals(header[1])) {
-                    file = new File(csUser.getCurrentPath() + File.separator + header[2]);
+                    file = new File(csUser.getRoot() + header[2]);
                     transferFileLength = Long.parseLong(header[3]);
 //                    transferOptions = (header[4].equals("OVERWRITE") ? OVERWRITE : null); //логика не реализована
                     if (!file.exists()) {
-                        file.createNewFile();
-                    } else if (file.exists() && transferOptions == null) {
-                        //ctx.writeAndFlush(Unpooled.wrappedBuffer((FILE_EXIST + "\n").getBytes()));
-                        break;
-                    } else {
-                        //написать логику удаления файла (добавить из коммандера)
                         file.createNewFile();
                     }
                     ctx.writeAndFlush(Unpooled.wrappedBuffer((READY_STATUS + "\n").getBytes()));

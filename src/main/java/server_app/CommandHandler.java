@@ -144,23 +144,6 @@ public class CommandHandler {
 //
     public static void copy(CSUser user, String source, String target, ChannelHandlerContext ctx) throws IOException {
         try {
-//            StringBuilder validSourcePath = new StringBuilder();
-//            String[] paths = source.split(" ");
-//            if (paths.length > 2) { //если в пути пробелы, если нет то можно копировать и так
-//                paths = source.split("\" \""); //пробуем использовать кавычки
-//                if (paths.length > 2 || paths.length == 1) {
-//                    throw new FileNotFoundException(); //если без кавычек путь и с пробелами то ошибка
-//                }
-//            }
-//            //получаем путь и сразу чистим от ненужных кавычек
-//            validSourcePath.append(paths[0].replace("\"", ""));
-//            //сегментируем полученный путь для дальнейшего извлечения имени файла
-//            String[] dirStructure = validSourcePath.toString().split(Matcher.quoteReplacement(File.separator));
-//            //забираем имя файла из пути
-//            String filename = dirStructure[dirStructure.length - 1];
-//            //получаем путь куда копировать и чистим от кавычек
-//            String targetPath = paths[1].replace("\"", "");
-//            //пути готовы начинаем копировать
             Path fromPath = Path.of(user.getRoot() + source);
             Path toPath = Path.of(user.getRoot() + target);
             Files.walkFileTree(fromPath, new SimpleFileVisitor<Path>() {
@@ -186,15 +169,7 @@ public class CommandHandler {
         }
         ctx.writeAndFlush(Unpooled.wrappedBuffer(("/status-ok").getBytes()));
     }
-//
-//    private static void sendMessage(String message, ChannelHandlerContext ctx) {
-//        ctx.writeAndFlush(message);
-//    }
-//
-//    private static String getFilesList(CSUser client) {
-//        String[] servers = new File(client.getCurrentPath().toString()).list();
-//        return String.join("\r\n", servers);
-//    }
+
     public static String getFilesList(CSUser client, String path) {
         String[] directoryElements = new File(client.getRoot() + path).list();
         for (int i = 0; i < directoryElements.length; i++) {

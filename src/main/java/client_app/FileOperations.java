@@ -12,10 +12,7 @@ import javafx.scene.image.ImageView;
 import javax.swing.*;
 import javax.swing.filechooser.FileSystemView;
 import java.awt.image.BufferedImage;
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.file.*;
@@ -32,136 +29,121 @@ import static client_app.RegistrationWindowController.DELIMETER;
 
 public class FileOperations {
 
-    public static void showLocalDirectory(StringBuilder directory, ListView<String> fileList) {
+    public static void upload(String source, String target, WorkPanel sourcePanel) {
+//        Thread uploadThread = new Thread(() -> {
         try {
-            File fileDirectory = new File(directory.toString());
-            String[] tokens = fileDirectory.list();
-            Platform.runLater(new Runnable() {
-                @Override
-                public void run() {
-                    fileList.getItems().clear();
-                    if (directory.toString().split(Matcher.quoteReplacement(File.separator)).length >= 2) {
-                        fileList.getItems().add("BACK");
-                    }
-                    for (int i = 0; i < tokens.length; i++) {
-                        fileList.getItems().add(tokens[i]);
-                    }
-
-                }
-            });
-            fileList.setCellFactory(l -> new ListCell<String>() {
-                @Override
-                public void updateItem(String friend, boolean empty) {
-                    super.updateItem(friend, empty);
-                    try {
-                        if (empty) {
-                            setText(null);
-                            setGraphic(null);
-                        } else if ("BACK".equals(friend)) {
-                            setText(friend);
-                            setGraphic(new ImageView(new Image("/images/arrow.png")));
-                        } else if ((!friend.contains("d:")) && (!friend.contains("f:"))) {
-                            File file = new File(directory + File.separator + friend);
-                            ImageIcon imageIcon = (ImageIcon) FileSystemView.getFileSystemView().getSystemIcon(file);
-                            if (imageIcon != null) {
-                                java.awt.Image imageIconView = imageIcon.getImage();
-                                BufferedImage bi = new BufferedImage(
-                                        imageIcon.getIconWidth(),
-                                        imageIcon.getIconHeight(),
-                                        BufferedImage.TYPE_INT_ARGB
-                                );
-                                imageIcon.paintIcon(null, bi.getGraphics(), 0, 0);
-                                SwingFXUtils.toFXImage(bi, null);
-                                if (file.isFile()) {
-                                    setText(friend);
-                                    setGraphic(new ImageView(SwingFXUtils.toFXImage(bi, null)));
-                                } else if (file.isDirectory()) {
-                                    setText(friend);
-                                    setGraphic(new ImageView(SwingFXUtils.toFXImage(bi, null)));
-                                }
-                            }
-                        }
-                    } catch (Exception e) {
-                        e.printStackTrace();
+            File sourceObject = new File(source);
+            File targetObject = new File(target);
+            if (sourceObject.isFile()) {
+                out.write(("/upload" + DELIMETER + "f" + DELIMETER + targetObject + DELIMETER
+                        + sourceObject.length()).getBytes());
+                while (true) {
+                    String[] serverAnswer = sourcePanel.getNetworkManager().queryStringListener();
+                    if ("/upload-ok".equals(serverAnswer[0].replace("\n", ""))) {
+                        break;
+                    } else {
+//                        throw new FileAlreadyExistsException(element);
                     }
                 }
-            });
-        } catch (Exception e) {
+            } else {
+                out.write(("/upload" + DELIMETER + "d" + DELIMETER + targetObject + DELIMETER
+                        + sourceObject.length()).getBytes());
+            }
+            if (sourceObject.isFile() && sourceObject.length() != 0) {
+                RandomAccessFile randomAccessFile = new RandomAccessFile(sourceObject, "rw");
+                int read = 0;
+                byte[] buffer = new byte[8 * 1024];
+                while ((read = randomAccessFile.read(buffer)) != -1) {
+                    out.write(buffer, 0, read);
+                }
+                byteBuffer.clear();
+                randomAccessFile.close();
+                out.flush();
+            }
+            while (true) {
+                String[] serverAnswer = sourcePanel.getNetworkManager().queryStringListener();
+                if ("/status-ok".equals(serverAnswer[0].replace("\n", ""))) {
+                    updateAllFilesLists();
+                    break;
+                }
+            }
+        } catch (IOException e) {
             e.printStackTrace();
         }
-
+//        });
+//        uploadThread.interrupt();
+//        sourcePanel.getNetworkManager().threadManager.execute(uploadThread);
     }
 
-    public static void showOnlineDirectory(String[] onlineFileList, ListView<String> fileList, StringBuilder currentPath) throws IOException {
-        Platform.runLater(new Runnable() {
-            @Override
-            public void run() {
-                fileList.getItems().clear();
-                if (currentPath.toString().split(Matcher.quoteReplacement(File.separator)).length > 2) {
-                    fileList.getItems().add("BACK");
+//    private void download(String fileName, StringBuilder fromPath) {
+//        Thread downloadThread = new Thread(() -> {
+//            File file = new File(leftPath + File.separator + fileName.replaceAll(".:", ""));
+//            long downloadFileLength = 0;
+//            try {
+//                out.write(("/download" + DELIMETER + fromPath + File.separator + fileName.replaceAll(".:", "")).getBytes());
+//                String[] serverAnswer = queryStringListener(rbc, byteBuffer);
+//                if (!file.exists()) {
+//                    file.createNewFile();
+//                }
+//                while (true) {
+//                    if ("/download-ok".equals(serverAnswer[0])) {
+//                        downloadFileLength = Long.parseLong(serverAnswer[1].replace("\n", ""));
+//                        break;
+//                    } else if ("nex".equals(serverAnswer[0])) {
+//                        System.out.println("File not found!"); //отработать этот модуль
+//                        throw new FileNotFoundException();
+//                    }
+//                }
+//                out.write(" ".getBytes());
+//                out.flush();
+//                RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");
+//                FileChannel fileChannel = randomAccessFile.getChannel();
+//                while ((rbc.read(byteBuffer)) > 0) {
+//                    byteBuffer.flip();
+//                    fileChannel.position(file.length());
+//                    fileChannel.write(byteBuffer);
+//                    byteBuffer.compact();
+//                    if (file.length() == downloadFileLength) {
+//                        updateAllFilesLists();
+//                        break;
+//                    }
+//                }
+//                byteBuffer.clear();
+//                fileChannel.close();
+//                randomAccessFile.close();
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//        });
+//        downloadThread.interrupt();
+//        threadManager.execute(downloadThread);
+//    }
+
+    public static void multipleElementCopy(WorkPanel sourcePanel, WorkPanel targetPanel, String element) throws IOException {
+        Path source = Path.of(sourcePanel.getCurrentPath() + File.separator + element);
+        Path target = Path.of(targetPanel.getCurrentPath() + File.separator + element);
+        try {
+            Files.walkFileTree(source, new SimpleFileVisitor<Path>() {
+                @Override
+                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                    Path targetPath = target.resolve(source.relativize(dir));
+                    sourcePanel.getNetworkManager().makeDir(targetPath.toString());
+                    return FileVisitResult.CONTINUE;
                 }
-                for (int i = 1; i < onlineFileList.length; i++) {
-                    fileList.getItems().add(onlineFileList[i]);
+
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    upload(file.toString(), target.resolve(source.relativize(file)).toString(),sourcePanel);
+                    return FileVisitResult.CONTINUE;
                 }
-            }
-        });
-        //создаем Temp директорию
-        Path tempPath = Files.createTempDirectory(Path.of("c:\\temp\\"), "");
-        if (!tempPath.toFile().exists()) {
-            tempPath.toFile().createNewFile();
+            });
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (FileAlreadyExistsException e) {
+            e.printStackTrace();
         }
-        tempPath.toFile().deleteOnExit();
-        fileList.setCellFactory(l -> new ListCell<String>() {
-            @Override
-            public void updateItem(String friend, boolean empty) {
-                super.updateItem(friend, empty);
-                try {
-                    if (empty) {
-                        setText(null);
-                        setGraphic(null);
-                    } else if ("BACK".equals(friend)) {
-                        setText(friend);
-                        setGraphic(new ImageView(new Image("/images/arrow.png")));
-                    } else {
-                        String[] friendPath = friend.split(":");
-                        Path tempElement = null;
-                        if ("d".equals(friendPath[0])) {
-                            tempElement = Files.createTempDirectory(tempPath, friendPath[1].replace("\n", ""));
-                        }
-                        if ("f".equals(friendPath[0])) {
-                            tempElement = Files.createTempFile(tempPath, "", (friendPath[1].replace("\n", "")));
-                        }
-
-                        ImageIcon imageIcon = null;
-                        if (tempElement != null) {
-                            imageIcon = (ImageIcon) FileSystemView.getFileSystemView().getSystemIcon(tempElement.toFile());
-                        }
-                        if (imageIcon != null) {
-                            java.awt.Image imageIconView = imageIcon.getImage();
-                            BufferedImage bi = new BufferedImage(
-                                    imageIcon.getIconWidth(),
-                                    imageIcon.getIconHeight(),
-                                    BufferedImage.TYPE_INT_ARGB
-                            );
-                            imageIcon.paintIcon(null, bi.getGraphics(), 0, 0);
-                            SwingFXUtils.toFXImage(bi, null);
-                            if (tempElement.toFile().isFile()) {
-                                setText(friendPath[1]);
-                                setGraphic(new ImageView(SwingFXUtils.toFXImage(bi, null)));
-                            } else if (tempElement.toFile().isDirectory()) {
-                                setText(friendPath[1]);
-                                setGraphic(new ImageView(SwingFXUtils.toFXImage(bi, null)));
-                            }
-                        }
-                        tempElement.toFile().delete();
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-//                    showLocalDirectory(directory, fileList);
-                }
-            }
-        });
     }
+
 
 
     /*Метод для копирования по заданному пути. Необходимо передать текущую директорию для обновления списка файлов
@@ -206,35 +188,6 @@ public class FileOperations {
             }
         });
         updateAllFilesLists();
-    }
-
-    public static String[] receiveFileList(StringBuilder path, DataOutputStream out,
-                                           ReadableByteChannel readableByteChannel, ByteBuffer byteBuffer) {
-        try {
-            out.write(("/ls" + DELIMETER + path).getBytes());
-            out.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return queryStringListener(readableByteChannel, byteBuffer);
-    }
-
-    public static String[] queryStringListener(ReadableByteChannel readableByteChannel, ByteBuffer byteBuffer) {
-        int readNumberBytes = 0;
-        try {
-            readNumberBytes = readableByteChannel.read(byteBuffer);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        String[] queryAnswer = new String(Arrays.copyOfRange(byteBuffer.array(), 0, readNumberBytes)).split(DELIMETER);
-        byteBuffer.clear();
-        return queryAnswer;
-    }
-
-    public static void changeCurrentPath(StringBuilder currentPath, String newPath, TextField pathView) {
-        currentPath.delete(0, currentPath.length());
-        currentPath.append(newPath);
-        pathView.setText(currentPath.toString());
     }
 
     //удаляет пробелы в конце пути (полезно при создании папки с пробелами на конце, во избежании ошибки)

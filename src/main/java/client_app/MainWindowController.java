@@ -95,7 +95,7 @@ public class MainWindowController implements Initializable {
     private static ExecutorService threadManager;
     public String DELIMETER = ";";
     private String AUTH_COMMAND = "/auth";
-    private NetworkManager networkManager;
+    public NetworkManager networkManager;
     //----------------------------------------------------
 
     //...
@@ -239,6 +239,7 @@ public class MainWindowController implements Initializable {
             rbc = Channels.newChannel(in);
             stage = (Stage) leftList.getScene().getWindow();
             threadManager = Executors.newFixedThreadPool(5);
+            networkManager = new NetworkManager(out, in, rbc, byteBuffer, threadManager);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -251,12 +252,12 @@ public class MainWindowController implements Initializable {
         try {
             out.write(("/auth" + DELIMETER + loginField.getText() + DELIMETER + passwordField.getText()).getBytes());
             Thread netClientThread = new Thread(() -> {
-                String[] serverAnswer = queryStringListener(rbc, byteBuffer);
+                String[] serverAnswer = networkManager.queryStringListener();
                 if (!serverAnswer[0].isEmpty() && "/auth-ok".equals(serverAnswer[0])) {
                     setAuthorized(true);
                     nickname.append(serverAnswer[1].replace("\n", ""));
                     hideAuthFields();
-                    networkManager = new NetworkManager(out, in, rbc, byteBuffer);
+
                     Platform.runLater(new Runnable() {
                         @Override
                         public void run() {
@@ -320,29 +321,6 @@ public class MainWindowController implements Initializable {
     }
     //--------------------------------------------------------------------------------
 
-    private void eventOnlineAction(String element, StringBuilder currentPath, ListView<String> renewableFileList, TextField pathView) {
-        Thread eventAction = new Thread(() -> {
-            try {
-                if ("BACK".equals(element)) {
-                    String[] tokens = currentPath.toString().split(Matcher.quoteReplacement(File.separator));
-                    currentPath.delete((currentPath.length() - tokens[tokens.length - 1].length() - 1), currentPath.length());
-                    out.write(("/cd" + DELIMETER + currentPath).getBytes());
-                    String[] serverAnswer = queryStringListener(rbc, byteBuffer);
-                    changeCurrentPath(currentPath, serverAnswer[0], pathView);
-                    showOnlineDirectory(serverAnswer, renewableFileList, currentPath);
-                } else {
-                    out.write(("/cd" + DELIMETER + currentPath + File.separator + element.replaceAll(".:", "")).getBytes());
-                    String[] serverAnswer = queryStringListener(rbc, byteBuffer);
-                    changeCurrentPath(currentPath, serverAnswer[0], pathView);
-                    showOnlineDirectory(serverAnswer, renewableFileList, currentPath);
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        });
-        threadManager.execute(eventAction);
-    }
-
     /*Проверяем текущий выделенный файл в окне (если например выделен файл в правом окне, то копируем в левый
      * если выделен в левом окне, то копируем в правое окно
      * Если левое или правое окно подключены к облачному хранилищу, то вместо команды copy(), запускается метод upload*/
@@ -357,22 +335,36 @@ public class MainWindowController implements Initializable {
 
     //данный метод подготавливает файлы и директории для копирования,
     public static void prepareAndCopy(WorkPanel sourcePanel, WorkPanel targetPanel, Action action) {
-        if (action == COPY_REMOTE || isFilesExist(sourcePanel, targetPanel) && isClarifyEveryTime) {
-            QuestionWindowStage qws = new QuestionWindowStage(sourcePanel, targetPanel, action);
-            qws.setResizable(false);
-            qws.show();
-        } else {
-            for (String element : sourcePanel.getMarkedFileList()) {
-                try {
-                    copy(sourcePanel.getPathByElement(element), targetPanel.getPathByElement(element));
-                    sourcePanel.showDirectory();
-                    targetPanel.showDirectory();
-                } catch (IOException e) {
-                    e.printStackTrace();
+        QuestionWindowStage qws;
+        switch (action) {
+            case COPY:
+                if (isFilesExist(sourcePanel, targetPanel) && isClarifyEveryTime) {
+                    qws = new QuestionWindowStage(sourcePanel, targetPanel, action);
+                    qws.setResizable(false);
+                    qws.show();
+                } else {
+                    for (String element : sourcePanel.getMarkedFileList()) {
+                        try {
+                            copy(sourcePanel.getPathByElement(element), targetPanel.getPathByElement(element));
+                            sourcePanel.showDirectory();
+                            targetPanel.showDirectory();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    isClarifyEveryTime = true;
                 }
-            }
-            isClarifyEveryTime = true;
+                break;
+            case COPY_REMOTE:
+            case DOWNLOAD:
+            case UPLOAD:
+                qws = new QuestionWindowStage(sourcePanel, targetPanel, action);
+                qws.setResizable(false);
+                qws.show();
+                break;
         }
+
+
     }
 
     public void deleteAction() throws IOException {
@@ -482,95 +474,6 @@ public class MainWindowController implements Initializable {
         return false;
     }
 
-    public void upload(String fileName, StringBuilder sourcePath) {
-        Thread uploadThread = new Thread(() -> {
-            try {
-                File file = new File(sourcePath + File.separator + fileName);
-                if (file.isFile()) {
-                    out.write(("/upload" + DELIMETER + "f" + DELIMETER + fileName + DELIMETER
-                            + file.length()).getBytes());
-                    while (true) {
-                        String[] serverAnswer = queryStringListener(rbc, byteBuffer);
-                        if ("/upload-ok".equals(serverAnswer[0].replace("\n", ""))) {
-                            break;
-                        } else if ("nex".equals(serverAnswer[0])) {
-                            System.out.println("Файл уже существует заменить?"); //отработать этот модуль
-                            throw new FileAlreadyExistsException(fileName);
-                        }
-                    }
-                } else {
-                    out.write(("/upload" + DELIMETER + "d" + DELIMETER + fileName + DELIMETER
-                            + file.length()).getBytes());
-                }
-                if (file.isFile() && file.length() != 0) {
-                    RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");
-                    int read = 0;
-                    byte[] buffer = new byte[8 * 1024];
-                    while ((read = randomAccessFile.read(buffer)) != -1) {
-                        out.write(buffer, 0, read);
-                    }
-                    byteBuffer.clear();
-                    randomAccessFile.close();
-                    out.flush();
-                }
-                while (true) {
-                    String[] serverAnswer = queryStringListener(rbc, byteBuffer);
-                    if ("/status-ok".equals(serverAnswer[0].replace("\n", ""))) {
-                        updateAllFilesLists();
-                        break;
-                    }
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        });
-        uploadThread.interrupt();
-        threadManager.execute(uploadThread);
-    }
-
-    private void download(String fileName, StringBuilder fromPath) {
-        Thread downloadThread = new Thread(() -> {
-            File file = new File(leftPath + File.separator + fileName.replaceAll(".:", ""));
-            long downloadFileLength = 0;
-            try {
-                out.write(("/download" + DELIMETER + fromPath + File.separator + fileName.replaceAll(".:", "")).getBytes());
-                String[] serverAnswer = queryStringListener(rbc, byteBuffer);
-                if (!file.exists()) {
-                    file.createNewFile();
-                }
-                while (true) {
-                    if ("/download-ok".equals(serverAnswer[0])) {
-                        downloadFileLength = Long.parseLong(serverAnswer[1].replace("\n", ""));
-                        break;
-                    } else if ("nex".equals(serverAnswer[0])) {
-                        System.out.println("File not found!"); //отработать этот модуль
-                        throw new FileNotFoundException();
-                    }
-                }
-                out.write(" ".getBytes());
-                out.flush();
-                RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");
-                FileChannel fileChannel = randomAccessFile.getChannel();
-                while ((rbc.read(byteBuffer)) > 0) {
-                    byteBuffer.flip();
-                    fileChannel.position(file.length());
-                    fileChannel.write(byteBuffer);
-                    byteBuffer.compact();
-                    if (file.length() == downloadFileLength) {
-                        updateAllFilesLists();
-                        break;
-                    }
-                }
-                byteBuffer.clear();
-                fileChannel.close();
-                randomAccessFile.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        });
-        downloadThread.interrupt();
-        threadManager.execute(downloadThread);
-    }
 
     public void registration(ActionEvent actionEvent) {
         RegistrationWindowStage rs = new RegistrationWindowStage(out, rbc);
