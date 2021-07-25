@@ -194,10 +194,10 @@ public class CommandHandler {
 //        String[] servers = new File(client.getCurrentPath().toString()).list();
 //        return String.join("\r\n", servers);
 //    }
-    public static String getFilesList(CSUser client) {
-        String[] directoryElements = new File(client.getCurrentPath() + File.separator).list();
+    public static String getFilesList(CSUser client, String path) {
+        String[] directoryElements = new File(client.getRoot() + path).list();
         for (int i = 0; i < directoryElements.length; i++) {
-            File file = new File(client.getCurrentPath() + File.separator + directoryElements[i]);
+            File file = new File(client.getRoot() + path + directoryElements[i]);
             if (file.isDirectory()) {
                 directoryElements[i] = "d:" + directoryElements[i];
             } else if (file.isFile()) {
@@ -207,6 +207,12 @@ public class CommandHandler {
         return String.join(DELIMETER, directoryElements);
     }
 
+    public static String pathHider(CSUser user) {
+        StringBuilder hidePath = new StringBuilder();
+        hidePath.append(user.getCurrentPath());
+        hidePath.replace(0, user.getRoot().length(), "\\");
+        return hidePath.toString();
+    }
 
 
 //    public static void changeDirectory(String path, ChannelHandlerContext ctx, CSUser client) {

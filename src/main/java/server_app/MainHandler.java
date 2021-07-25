@@ -125,22 +125,26 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
                 tryToReg(ctx, header);
                 break;
             case ("/ls"):
-                ctx.writeAndFlush(Unpooled.wrappedBuffer((csUser.getCurrentPath() + DELIMETER + getFilesList(csUser)).getBytes()));
+                ctx.writeAndFlush(Unpooled.wrappedBuffer((getFilesList(csUser, header[1])).getBytes()));
                 break;
             case ("/cd"):
-                if (!"..".equals(header[1])) {
-                    csUser.setCurrentPath(csUser.getCurrentPath() + File.separator + header[1]);
-                } else {
-                    String[] tokens = csUser.getCurrentPath().toString().split(Matcher.quoteReplacement(File.separator));
-                    csUser.setCurrentPath((csUser.getCurrentPath().delete(
-                            csUser.getCurrentPath().length() - tokens[tokens.length - 1].length() - 1,
-                            csUser.getCurrentPath().length())).toString());
+                File file = new File(csUser.getRoot() + header[1]);
+                if (file.exists()){
+                    ctx.writeAndFlush(Unpooled.wrappedBuffer(("/status-ok").getBytes()));
                 }
+//                if (!"..".equals(header[1])) {
+//                    csUser.setCurrentPath(csUser.getCurrentPath() + File.separator + header[1]);
+//                } else {
+//                    String[] tokens = csUser.getCurrentPath().toString().split(Matcher.quoteReplacement(File.separator));
+//                    csUser.setCurrentPath((csUser.getCurrentPath().delete(
+//                            csUser.getCurrentPath().length() - tokens[tokens.length - 1].length() - 1,
+//                            csUser.getCurrentPath().length())).toString());
+//                }
 //                getFilesList(csUser);
-                ctx.writeAndFlush(Unpooled.wrappedBuffer(("/status-ok").getBytes()));
+
                 break;
             case ("/mkdir"):
-                makeDir(header[1],csUser);
+                makeDir(header[1], csUser);
                 ctx.writeAndFlush(Unpooled.wrappedBuffer(("/status-ok").getBytes()));
                 break;
         }

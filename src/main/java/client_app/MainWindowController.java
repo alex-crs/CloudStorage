@@ -95,7 +95,7 @@ public class MainWindowController implements Initializable {
     private static ExecutorService threadManager;
     public String DELIMETER = ";";
     private String AUTH_COMMAND = "/auth";
-    private NetworkOperator networkOperator;
+    private NetworkManager networkManager;
     //----------------------------------------------------
 
     //...
@@ -124,7 +124,7 @@ public class MainWindowController implements Initializable {
     public static Action copyAction = COPY;
     public static Action deleteAction = DELETE;
     public static Action renameAction = RENAME;
-    public static Action makeDirAction = CREATE_LOCAL;
+    public static Action makeDirAction = CREATE_REMOTE;
     public static Action moveAction = MOVE;
 
     //----------------------------------------------------
@@ -212,7 +212,7 @@ public class MainWindowController implements Initializable {
                     setAuthorized(true);
                     nickname.append(serverAnswer[1].replace("\n", ""));
                     hideAuthFields();
-                    networkOperator = new NetworkOperator(out, in, rbc, byteBuffer);
+                    networkManager = new NetworkManager(out, in, rbc, byteBuffer);
                     Platform.runLater(new Runnable() {
                         @Override
                         public void run() {
@@ -222,9 +222,10 @@ public class MainWindowController implements Initializable {
                     byteBuffer.clear();
 //                    String[] queryAnswer = receiveFileList((rightPath), out, rbc, byteBuffer);
 //                    try {
-                        rightWorkPanel.connectToServer(networkOperator);
-                        rightWorkPanel.setOnline(true);
-                        rightWorkPanel.showDirectory();
+                    rightWorkPanel.connectToServer(networkManager);
+                    leftWorkPanel.connectToServer(networkManager);
+                    rightWorkPanel.setOnline(true);
+                    rightWorkPanel.showDirectory();
 //                        rightList.setCellFactory(null);
 //                        isRightListOnline = true;
 //                        changeCurrentPath(rightPath, queryAnswer[0], rightPathView);
@@ -420,11 +421,13 @@ public class MainWindowController implements Initializable {
     //позволяет выставить каталог слева равный каталогу справа (для удобства работы)
     public void sourceEquallyTarget() {
         if (leftWorkPanel.getListView().isFocused()) { //если выделенное окно слева правый==левому
-            rightWorkPanel.setCurrentPath(leftWorkPanel);
+//            rightWorkPanel.setCurrentPath(leftWorkPanel);
+            rightWorkPanel.takePropertyFrom(leftWorkPanel);
             //если выделено левое окно, то данный метод принимает текущий путь левого окна
         }
         if (rightWorkPanel.getListView().isFocused()) { //если выделенное окно справа левый=правому
-            leftWorkPanel.setCurrentPath(rightWorkPanel);
+//            leftWorkPanel.setCurrentPath(rightWorkPanel);
+            leftWorkPanel.takePropertyFrom(rightWorkPanel);
             //если выделено правое окно, то данный метод принимает текущий путь правого окна
         }
     }
@@ -444,7 +447,7 @@ public class MainWindowController implements Initializable {
         return false;
     }
 
-    public void prepareAndUpload(String fileName, StringBuilder sourcePath) {
+    public void upload(String fileName, StringBuilder sourcePath) {
         Thread uploadThread = new Thread(() -> {
             try {
                 File file = new File(sourcePath + File.separator + fileName);
@@ -490,7 +493,7 @@ public class MainWindowController implements Initializable {
         threadManager.execute(uploadThread);
     }
 
-    private void prepareAndDownload(String fileName, StringBuilder fromPath) {
+    private void download(String fileName, StringBuilder fromPath) {
         Thread downloadThread = new Thread(() -> {
             File file = new File(leftPath + File.separator + fileName.replaceAll(".:", ""));
             long downloadFileLength = 0;

@@ -19,18 +19,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.regex.Matcher;
 
-import static client_app.FileOperations.*;
-import static client_app.FileOperations.showOnlineDirectory;
-import static client_app.RegistrationWindowController.DELIMETER;
-
 public class WorkPanel {
-    private StringBuilder currentPath;
-    private ObservableList<String> markedFileList;
-    private MultipleSelectionModel<String> markedElementsListener;
+    private StringBuilder currentPath;  //текущий локальный путь
+    private ObservableList<String> markedFileList; //список выделенных элементов
+    private MultipleSelectionModel<String> markedElementsListener; //список выделенных строк
     private boolean isOnline;
     private ListView<String> listView;
     TextField pathView;
-    NetworkOperator networkOperator;
+    NetworkManager networkManager;
     Path tempPath;
 
 
@@ -58,8 +54,12 @@ public class WorkPanel {
         return markedFileList;
     }
 
-    private void setPathView() {
+    private void setLocalPathView() {
         pathView.setText(currentPath.toString());
+    }
+
+    private void setOnlinePathView() {
+        pathView.setText("cloud:" + currentPath);
     }
 
     public StringBuilder getCurrentPath() {
@@ -68,6 +68,11 @@ public class WorkPanel {
 
     public void setOnline(boolean online) {
         isOnline = online;
+        setCurrentPath("");
+    }
+
+    public boolean isOnline() {
+        return isOnline;
     }
 
     public void showDirectory() {
@@ -92,7 +97,7 @@ public class WorkPanel {
                     for (int i = 0; i < tokens.length; i++) {
                         listView.getItems().add(tokens[i]);
                     }
-                    setPathView();
+                    setLocalPathView();
                 }
             });
             listView.setCellFactory(l -> new ListCell<String>() {
@@ -137,21 +142,25 @@ public class WorkPanel {
         }
     }
 
+    private void showOnlineDirectory(String path) {
+        setCurrentPath(path);
+        showOnlineDirectory();
+    }
+
     private void showOnlineDirectory() {
         try {
 
-            String[] serverAnswer = networkOperator.receiveFileList(currentPath);
-            setCurrentPath(serverAnswer[0]);
-            setPathView();
+            String[] serverAnswer = networkManager.receiveFileList(currentPath);
+            setOnlinePathView();
 
             Platform.runLater(new Runnable() {
                 @Override
                 public void run() {
                     listView.getItems().clear();
-                    if (currentPath.toString().split(Matcher.quoteReplacement(File.separator)).length > 2) {
+                    if (currentPath.toString().split(Matcher.quoteReplacement(File.separator)).length >= 2) {
                         listView.getItems().add("BACK");
                     }
-                    for (int index = 1; index < serverAnswer.length; index++) {
+                    for (int index = 0; index < serverAnswer.length; index++) {
                         listView.getItems().add(serverAnswer[index]);
                     }
                 }
@@ -216,8 +225,8 @@ public class WorkPanel {
     }
 
 
-    public void connectToServer(NetworkOperator networkOperator) {
-        this.networkOperator = networkOperator;
+    public void connectToServer(NetworkManager networkManager) {
+        this.networkManager = networkManager;
     }
 
     /*Данный метод строит путь как вперед так и назад, если дважды кликнуть по кнопке BACK, то данный метод
@@ -246,27 +255,25 @@ public class WorkPanel {
                 }
             }
         } else {
-//            try {
-                if ("BACK".equals(markedElementsListener.getSelectedItems().get(0))) {
-                    networkOperator.outFromDirectory();
-                    showDirectory();
-//                    String[] tokens = currentPath.toString().split(Matcher.quoteReplacement(File.separator));
-//                    currentPath.delete((currentPath.length() - tokens[tokens.length - 1].length() - 1), currentPath.length());
-//                    networkOperator.out.write(("/cd" + DELIMETER + currentPath).getBytes());
-//                    String[] serverAnswer = queryStringListener(networkOperator);
-//                    changeCurrentPath(currentPath, serverAnswer[0], pathView);
-//                    showOnlineDirectory(serverAnswer, renewableFileList, currentPath);
+            if ("BACK".equals(markedElementsListener.getSelectedItems().get(0))) {
+                String[] tokens = currentPath.toString().split(Matcher.quoteReplacement(File.separator));
+                showOnlineDirectory(currentPath.delete(
+                        currentPath.length() - tokens[tokens.length - 1].length() - 1,
+                        currentPath.length()).toString());
+            } else {
+                String newPath = currentPath + File.separator +
+                        markedElementsListener.getSelectedItems().get(0).replaceAll(".:", "");
+                if (networkManager.enterToDirectory(newPath) > 0) {
+                    showOnlineDirectory(newPath);
                 } else {
-                    networkOperator.enterToDirectory(markedElementsListener.getSelectedItems().get(0).replaceAll(".:",""));
-showDirectory();
-//                    out.write(("/cd" + DELIMETER + currentPath + File.separator + element.replaceAll(".:", "")).getBytes());
-//                    String[] serverAnswer = queryStringListener(rbc, byteBuffer);
-//                    changeCurrentPath(currentPath, serverAnswer[0], pathView);
-//                    showOnlineDirectory(serverAnswer, renewableFileList, currentPath);
+                    System.out.println(String.format("Директория [%s] не найдена!", newPath));
                 }
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
+//                String[] tokens = currentPath.toString().split(Matcher.quoteReplacement(File.separator));
+//                setCurrentPath((currentPath.delete(
+//                        currentPath.length() - tokens[tokens.length - 1].length() - 1,
+//                        currentPath.length())).toString());
+//                showDirectory();
+            }
         }
     }
 
@@ -292,6 +299,12 @@ showDirectory();
 
     public Path getPathByElement(String element) {
         return Path.of(currentPath + File.separator + element);
+    }
+
+    public void takePropertyFrom(WorkPanel sourcePanel) {
+        setCurrentPath(sourcePanel);
+        isOnline = sourcePanel.isOnline();
+        showDirectory();
     }
 
 }
