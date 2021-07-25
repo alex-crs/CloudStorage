@@ -97,7 +97,9 @@ public class WorkPanel {
                         listView.getItems().add("BACK");
                     }
                     for (int i = 0; i < tokens.length; i++) {
-                        listView.getItems().add(tokens[i]);
+                        if (!tokens[i].isEmpty()) {
+                            listView.getItems().add(tokens[i]);
+                        }
                     }
                 } catch (NullPointerException e) {
                     System.out.println("Переключение на online список");
@@ -298,9 +300,8 @@ public class WorkPanel {
     }
 
     public void takePropertyFrom(WorkPanel sourcePanel) {
-        setCurrentPath(sourcePanel);
         isOnline = sourcePanel.isOnline();
-        showDirectory();
+        setCurrentPath(sourcePanel);
     }
 
 }

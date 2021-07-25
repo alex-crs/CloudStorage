@@ -124,7 +124,7 @@ public class MainWindowController implements Initializable {
     public static Action copyAction = COPY;
     public static Action deleteAction = DELETE;
     public static Action renameAction = RENAME;
-    public static Action makeDirAction = CREATE_REMOTE;
+    public static Action makeDirAction = CREATE;
     public static Action moveAction = MOVE;
 
     //----------------------------------------------------
@@ -185,6 +185,50 @@ public class MainWindowController implements Initializable {
         passwordField.setVisible(false);
         authEnterButton.setVisible(false);
         authCancelButton.setVisible(false);
+    }
+
+    /*переопределяет действия на кнопки при определенном состоянии панелей.*/
+    private void getCurrentActionCondition(WorkPanel firstPanel, WorkPanel secondPanel) {
+        //Если слева и справа OFFLINE
+        //Паттерн 1
+        if (!firstPanel.isOnline() && !secondPanel.isOnline()) {
+            copyAction = COPY;
+            deleteAction = DELETE;
+            renameAction = RENAME;
+            makeDirAction = CREATE;
+            moveAction = MOVE;
+            move.setDisable(false);
+        }
+        //Если слева и справа ONLINE
+        //Паттерн 2
+        if (firstPanel.isOnline() && secondPanel.isOnline()) {
+            copyAction = COPY_REMOTE;
+            deleteAction = DELETE_REMOTE;
+            renameAction = RENAME_REMOTE;
+            makeDirAction = CREATE_REMOTE;
+            moveAction = null;
+            move.setDisable(true);
+        }
+        //Если слева ONLINE и справа OFFLINE
+        //Паттерн 3
+        if (firstPanel.isOnline() && !secondPanel.isOnline()) {
+            copyAction = DOWNLOAD;
+            deleteAction = DELETE_REMOTE;
+            renameAction = RENAME_REMOTE;
+            makeDirAction = CREATE_REMOTE;
+            moveAction = null;
+            move.setDisable(true);
+        }
+        //Если слева OFFLINE и справа ONLINE
+        //Паттерн 4
+        if (!firstPanel.isOnline() && secondPanel.isOnline()) {
+            copyAction = UPLOAD;
+            deleteAction = DELETE;
+            renameAction = RENAME;
+            makeDirAction = CREATE;
+            moveAction = null;
+            move.setDisable(true);
+        }
     }
 
     public void connect() {
@@ -254,6 +298,7 @@ public class MainWindowController implements Initializable {
      * в другом список очищается, таким образом мы работаем только с одним активным окном*/
     public void leftEvent(MouseEvent mouseEvent) {
         if (mouseEvent.getClickCount() == 1) {
+            getCurrentActionCondition(leftWorkPanel, rightWorkPanel);
             rightWorkPanel.clearSelectionFiles();
             leftWorkPanel.getSelectedFiles();
 
@@ -265,6 +310,7 @@ public class MainWindowController implements Initializable {
 
     public void rightEvent(MouseEvent mouseEvent) {
         if (mouseEvent.getClickCount() == 1) {
+            getCurrentActionCondition(rightWorkPanel,leftWorkPanel);
             leftWorkPanel.clearSelectionFiles();
             rightWorkPanel.getSelectedFiles();
         }
@@ -395,14 +441,14 @@ public class MainWindowController implements Initializable {
     public void moveAction() {
         if (leftWorkPanel.getMarkedFileList().size() > 0) { //если выделенные файлы слева
             if (!leftWorkPanel.getCurrentPath().toString().equals(rightWorkPanel.getCurrentPath().toString())) {
-                QuestionWindowStage qws = new QuestionWindowStage(leftWorkPanel, rightWorkPanel, MOVE);
+                QuestionWindowStage qws = new QuestionWindowStage(leftWorkPanel, rightWorkPanel, moveAction);
                 qws.setResizable(false);
                 qws.show();
             }
         }
         if (rightWorkPanel.getMarkedFileList().size() > 0) { //если выделенные файлы справа
             if (!leftWorkPanel.getCurrentPath().toString().equals(rightWorkPanel.getCurrentPath().toString())) {
-                QuestionWindowStage qws = new QuestionWindowStage(rightWorkPanel, leftWorkPanel, MOVE);
+                QuestionWindowStage qws = new QuestionWindowStage(rightWorkPanel, leftWorkPanel, moveAction);
                 qws.setResizable(false);
                 qws.show();
             }
@@ -412,12 +458,10 @@ public class MainWindowController implements Initializable {
     //позволяет выставить каталог слева равный каталогу справа (для удобства работы)
     public void sourceEquallyTarget() {
         if (leftWorkPanel.getListView().isFocused()) { //если выделенное окно слева правый==левому
-//            rightWorkPanel.setCurrentPath(leftWorkPanel);
             rightWorkPanel.takePropertyFrom(leftWorkPanel);
             //если выделено левое окно, то данный метод принимает текущий путь левого окна
         }
         if (rightWorkPanel.getListView().isFocused()) { //если выделенное окно справа левый=правому
-//            leftWorkPanel.setCurrentPath(rightWorkPanel);
             leftWorkPanel.takePropertyFrom(rightWorkPanel);
             //если выделено правое окно, то данный метод принимает текущий путь правого окна
         }

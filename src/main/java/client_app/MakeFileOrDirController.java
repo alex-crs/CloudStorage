@@ -1,26 +1,19 @@
 package client_app;
 
-import io.netty.buffer.Unpooled;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
-import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 
-import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.nio.ByteBuffer;
-import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ResourceBundle;
 
-import static client_app.FileOperations.*;
-import static client_app.RegistrationWindowController.DELIMETER;
 import static client_app.MainWindowController.*;
 
 public class MakeFileOrDirController implements Initializable {
@@ -80,7 +73,7 @@ public class MakeFileOrDirController implements Initializable {
                 + (!isDirectory ? "." + extension.getText() : ""));
         try {
             switch (action) {
-                case CREATE_LOCAL:
+                case CREATE:
                     if (path.toFile().exists()) {
                         stage.setTitle("Error! File or directory exist");
                     } else {

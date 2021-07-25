@@ -1,5 +1,6 @@
 package server_app;
 
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 
 import java.io.File;
@@ -207,11 +208,28 @@ public class CommandHandler {
         return String.join(DELIMETER, directoryElements);
     }
 
-    public static String pathHider(CSUser user) {
-        StringBuilder hidePath = new StringBuilder();
-        hidePath.append(user.getCurrentPath());
-        hidePath.replace(0, user.getRoot().length(), "\\");
-        return hidePath.toString();
+    public static void makeDir(CSUser user, String fileName, ChannelHandlerContext ctx) {
+        try {
+            Files.createDirectory(Path.of(user.getRoot() + fileName));
+        } catch (IOException e) {
+            ctx.writeAndFlush(Unpooled.wrappedBuffer(("/status-bad").getBytes()));
+        }
+        ctx.writeAndFlush(Unpooled.wrappedBuffer(("/status-ok").getBytes()));
+    }
+
+    public static void touchFile(CSUser user, String fileName, ChannelHandlerContext ctx) {
+        try {
+            Files.createFile(Path.of(user.getRoot() + fileName));
+        } catch (IOException e) {
+            ctx.writeAndFlush(Unpooled.wrappedBuffer(("/status-bad").getBytes()));
+        }
+        ctx.writeAndFlush(Unpooled.wrappedBuffer(("/status-ok").getBytes()));
+    }
+
+    public static void renameDir(CSUser user, String oldName, String newName, ChannelHandlerContext ctx) {
+        File oldFileName = new File(user.getRoot() + oldName);
+        File newFileName = new File(user.getRoot() + newName);
+        oldFileName.renameTo(newFileName);
     }
 
 

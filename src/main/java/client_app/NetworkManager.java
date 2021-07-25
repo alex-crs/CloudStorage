@@ -69,7 +69,7 @@ public class NetworkManager {
 
     public int makeDir(String name) {
         try {
-            out.write(("/mkdir" + DELIMETER  + name).getBytes());
+            out.write(("/mkdir" + DELIMETER + name).getBytes());
             out.flush();
             String[] serverAnswer = queryStringListener();
             if ("/status-ok".equals(serverAnswer[0])) {
@@ -84,11 +84,26 @@ public class NetworkManager {
 
     public int touchFile(String name) {
         try {
-            out.write(("/touch" + DELIMETER  + name).getBytes());
+            out.write(("/touch" + DELIMETER + name).getBytes());
             out.flush();
             String[] serverAnswer = queryStringListener();
             if ("/status-ok".equals(serverAnswer[0])) {
                 LOGGER.info(String.format("Create file: operation successfully"));
+                return 1; //возвращает 1 если ответ положительный
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return -1;
+    }
+
+    public int renameObject(String oldName, String newName) {
+        try {
+            out.write(("/rename" + DELIMETER + oldName + DELIMETER + newName).getBytes());
+            out.flush();
+            String[] serverAnswer = queryStringListener();
+            if ("/status-ok".equals(serverAnswer[0])) {
+                LOGGER.info(String.format("Rename file: operation successfully"));
                 return 1; //возвращает 1 если ответ положительный
             }
         } catch (IOException e) {

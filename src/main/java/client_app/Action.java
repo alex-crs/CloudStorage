@@ -6,10 +6,13 @@ public enum Action {
     WAIT,
     OVERWRITE,
     COPY,
+    COPY_REMOTE,
     DELETE,
+    DELETE_REMOTE,
     MOVE,
     RENAME,
-    CREATE_LOCAL,
+    RENAME_REMOTE,
+    CREATE,
     CREATE_REMOTE,
 
 

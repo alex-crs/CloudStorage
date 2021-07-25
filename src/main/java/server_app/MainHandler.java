@@ -125,7 +125,7 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
                 tryToReg(ctx, header);
                 break;
             case ("/ls"):
-                ctx.writeAndFlush(Unpooled.wrappedBuffer((getFilesList(csUser, header[1])).getBytes()));
+                ctx.writeAndFlush(Unpooled.wrappedBuffer((DELIMETER + getFilesList(csUser, header[1])).getBytes()));
                 break;
             case ("/cd"):
                 File file = new File(csUser.getRoot() + header[1]);
@@ -134,19 +134,13 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
                 }
                 break;
             case ("/mkdir"):
-                try {
-                    Files.createDirectory(Path.of(csUser.getRoot() + header[1]));
-                } catch (IOException e) {
-                    ctx.writeAndFlush(Unpooled.wrappedBuffer(("/status-bad").getBytes()));
-                }
-                ctx.writeAndFlush(Unpooled.wrappedBuffer(("/status-ok").getBytes()));
+                makeDir(csUser, header[1], ctx);
                 break;
             case ("/touch"):
-                try {
-                    Files.createFile(Path.of(csUser.getRoot() + header[1]));
-                } catch (IOException e) {
-                    ctx.writeAndFlush(Unpooled.wrappedBuffer(("/status-bad").getBytes()));
-                }
+                touchFile(csUser, header[1], ctx);
+                break;
+            case ("/rename"):
+                renameDir(csUser,header[1], header[2], ctx);
                 ctx.writeAndFlush(Unpooled.wrappedBuffer(("/status-ok").getBytes()));
                 break;
         }
