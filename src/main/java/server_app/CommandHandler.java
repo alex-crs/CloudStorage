@@ -142,8 +142,8 @@ public class CommandHandler {
 //        }
 //    }
 //
-//    private static void copy(String source, ChannelHandlerContext ctx, CopyOption copyOption, CSUser client) throws IOException {
-//        try {
+    public static void copy(CSUser user, String source, String target, ChannelHandlerContext ctx) throws IOException {
+        try {
 //            StringBuilder validSourcePath = new StringBuilder();
 //            String[] paths = source.split(" ");
 //            if (paths.length > 2) { //если в пути пробелы, если нет то можно копировать и так
@@ -161,31 +161,31 @@ public class CommandHandler {
 //            //получаем путь куда копировать и чистим от кавычек
 //            String targetPath = paths[1].replace("\"", "");
 //            //пути готовы начинаем копировать
-//            Path fromPath = Path.of(client.getCurrentPath() + File.separator + validSourcePath.toString());
-//            Path toPath = Path.of(client.getCurrentPath().toString() + File.separator
-//                    + targetPath + File.separator + filename);
-//            Files.walkFileTree(fromPath, new SimpleFileVisitor<Path>() {
-//                @Override
-//                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-//                    Path targetPath = toPath.resolve(fromPath.relativize(dir));
-//                    if (!Files.exists(targetPath)) {
-//                        Files.createDirectory(targetPath);
-//                    }
-//                    return FileVisitResult.CONTINUE;
-//                }
-//
-//                @Override
-//                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-//                    Files.copy(file, toPath.resolve(fromPath.relativize(file)), copyOption);
-//                    return FileVisitResult.CONTINUE;
-//                }
-//            });
-//        } catch (FileNotFoundException e) {
-//            sendMessage("Error: File or directory not found!\r\n", ctx);
-//        } catch (FileAlreadyExistsException e) {
-//            sendMessage("Error: File already exist!\r\n", ctx);
-//        }
-//    }
+            Path fromPath = Path.of(user.getRoot() + source);
+            Path toPath = Path.of(user.getRoot() + target);
+            Files.walkFileTree(fromPath, new SimpleFileVisitor<Path>() {
+                @Override
+                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                    Path targetPath = toPath.resolve(fromPath.relativize(dir));
+                    if (!Files.exists(targetPath)) {
+                        Files.createDirectory(targetPath);
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    Files.copy(file, toPath.resolve(fromPath.relativize(file)), StandardCopyOption.REPLACE_EXISTING);
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (FileAlreadyExistsException e) {
+            e.printStackTrace();
+        }
+        ctx.writeAndFlush(Unpooled.wrappedBuffer(("/status-ok").getBytes()));
+    }
 //
 //    private static void sendMessage(String message, ChannelHandlerContext ctx) {
 //        ctx.writeAndFlush(message);

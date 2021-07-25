@@ -146,6 +146,9 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
             case ("/delete"):
                 removeFileOrDirectory(csUser, header[1], ctx);
                 break;
+            case ("/copy"):
+                copy(csUser, header[1], header[2], ctx);
+                break;
         }
     }
 

@@ -28,6 +28,8 @@ public class QuestionWindowStage extends Stage {
                 return "Уверены, что хотите удалить файл(ы)?";
             case MOVE:
                 return "Хотите переместить файлы?";
+            case COPY_REMOTE:
+                return "Скопировать удаленные объекты?";
         }
         return null;
     }

@@ -127,4 +127,19 @@ public class NetworkManager {
         return -1;
     }
 
+    public int copyObject(String source, String target) {
+        try {
+            out.write(("/copy" + DELIMETER + source + DELIMETER + target).getBytes());
+            out.flush();
+            String[] serverAnswer = queryStringListener();
+            if ("/status-ok".equals(serverAnswer[0])) {
+                LOGGER.info(String.format("Copy file: operation successfully"));
+                return 1; //возвращает 1 если ответ положительный
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return -1;
+    }
+
 }

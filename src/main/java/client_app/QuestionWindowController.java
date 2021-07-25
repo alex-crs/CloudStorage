@@ -45,6 +45,8 @@ public class QuestionWindowController implements Initializable {
     Path source;
     Path target;
     Action action;
+    int answer;
+    String fileName;
 
 
     @Override
@@ -59,6 +61,7 @@ public class QuestionWindowController implements Initializable {
             case DELETE:
             case DELETE_REMOTE:
             case MOVE:
+            case COPY_REMOTE:
                 replace.setVisible(false);
                 replaceAll.setVisible(false);
                 actionRun.setLayoutX(50);
@@ -96,6 +99,23 @@ public class QuestionWindowController implements Initializable {
                         }
                     }
                     break;
+                case COPY_REMOTE:
+                    String fileName;
+                    for (String element : sourcePanel.getMarkedFileList()) {
+                        fileName = element.replaceAll(".:", "");
+                        answer = sourcePanel.getNetworkManager().copyObject(
+                                (sourcePanel.getCurrentPath() + File.separator + fileName),
+                                (targetPanel.getCurrentPath() + File.separator + fileName));
+                        while (true) {
+                            if (answer > 0) {
+                                break;
+                            }
+                        }
+                        sourcePanel.showDirectory();
+                        targetPanel.showDirectory();
+                    }
+                    closeButton();
+                    break;
                 case DELETE:
                     isClarifyEveryTime = false;
                     prepareAndDelete(sourcePanel, targetPanel, action);
@@ -109,14 +129,12 @@ public class QuestionWindowController implements Initializable {
                     closeButton();
                     break;
                 case DELETE_REMOTE:
-
-                    int answer;
                     Iterator<String> iterator = sourcePanel.getMarkedFileList().iterator();
                     while (iterator.hasNext()) {
-                        String fileName = iterator.next();
+                        fileName = iterator.next();
                         answer = sourcePanel.getNetworkManager().deleteObject(sourcePanel.getCurrentPath() + File.separator + fileName.replaceAll(".:", ""));
-                        while (true){
-                            if (answer>0){
+                        while (true) {
+                            if (answer > 0) {
                                 break;
                             }
                         }

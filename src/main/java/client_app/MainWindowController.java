@@ -310,7 +310,7 @@ public class MainWindowController implements Initializable {
 
     public void rightEvent(MouseEvent mouseEvent) {
         if (mouseEvent.getClickCount() == 1) {
-            getCurrentActionCondition(rightWorkPanel,leftWorkPanel);
+            getCurrentActionCondition(rightWorkPanel, leftWorkPanel);
             leftWorkPanel.clearSelectionFiles();
             rightWorkPanel.getSelectedFiles();
         }
@@ -357,7 +357,7 @@ public class MainWindowController implements Initializable {
 
     //данный метод подготавливает файлы и директории для копирования,
     public static void prepareAndCopy(WorkPanel sourcePanel, WorkPanel targetPanel, Action action) {
-        if (isFilesExist(sourcePanel, targetPanel) && isClarifyEveryTime) {
+        if (action == COPY_REMOTE || isFilesExist(sourcePanel, targetPanel) && isClarifyEveryTime) {
             QuestionWindowStage qws = new QuestionWindowStage(sourcePanel, targetPanel, action);
             qws.setResizable(false);
             qws.show();
