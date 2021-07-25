@@ -247,15 +247,6 @@ public class CommandHandler {
 //        }
 //    }
 //
-    public static void makeDir(String name, CSUser client) {
-        try {
-            Files.createDirectory(Path.of(client.getCurrentPath() + File.separator + name));
-        } catch (FileAlreadyExistsException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
 //
 //    //удаляет пробелы в конце пути (полезно при создании папки с пробелами на конце, во избежании ошибки)
 //    private static String clearEmptySymbolsAfterName(String name) {

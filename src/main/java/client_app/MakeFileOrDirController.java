@@ -93,7 +93,15 @@ public class MakeFileOrDirController implements Initializable {
                     }
                     break;
                 case CREATE_REMOTE:
-
+                    int i;
+                    if (isDirectory) {
+                        i = sourcePanel.getNetworkManager().makeDir(path.toString());
+                    } else {
+                        i = sourcePanel.getNetworkManager().touchFile(path.toString());
+                    }
+                    if (i > 0) {
+                        updateAllFilesLists();
+                    }
                     break;
             }
             updateAllFilesLists();

@@ -129,22 +129,24 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
                 break;
             case ("/cd"):
                 File file = new File(csUser.getRoot() + header[1]);
-                if (file.exists()){
+                if (file.exists()) {
                     ctx.writeAndFlush(Unpooled.wrappedBuffer(("/status-ok").getBytes()));
                 }
-//                if (!"..".equals(header[1])) {
-//                    csUser.setCurrentPath(csUser.getCurrentPath() + File.separator + header[1]);
-//                } else {
-//                    String[] tokens = csUser.getCurrentPath().toString().split(Matcher.quoteReplacement(File.separator));
-//                    csUser.setCurrentPath((csUser.getCurrentPath().delete(
-//                            csUser.getCurrentPath().length() - tokens[tokens.length - 1].length() - 1,
-//                            csUser.getCurrentPath().length())).toString());
-//                }
-//                getFilesList(csUser);
-
                 break;
             case ("/mkdir"):
-                makeDir(header[1], csUser);
+                try {
+                    Files.createDirectory(Path.of(csUser.getRoot() + header[1]));
+                } catch (IOException e) {
+                    ctx.writeAndFlush(Unpooled.wrappedBuffer(("/status-bad").getBytes()));
+                }
+                ctx.writeAndFlush(Unpooled.wrappedBuffer(("/status-ok").getBytes()));
+                break;
+            case ("/touch"):
+                try {
+                    Files.createFile(Path.of(csUser.getRoot() + header[1]));
+                } catch (IOException e) {
+                    ctx.writeAndFlush(Unpooled.wrappedBuffer(("/status-bad").getBytes()));
+                }
                 ctx.writeAndFlush(Unpooled.wrappedBuffer(("/status-ok").getBytes()));
                 break;
         }

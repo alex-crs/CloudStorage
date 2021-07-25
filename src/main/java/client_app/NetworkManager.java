@@ -29,7 +29,7 @@ public class NetworkManager {
         this.byteBuffer = byteBuffer;
     }
 
-    public String[] receiveFileList(StringBuilder path) {
+    public synchronized String[] receiveFileList(StringBuilder path) {
         try {
             out.write(("/ls" + DELIMETER + path + File.separator).getBytes());
             out.flush();
@@ -39,7 +39,7 @@ public class NetworkManager {
         return queryStringListener();
     }
 
-    public String[] queryStringListener() {
+    public synchronized String[] queryStringListener() {
         int readNumberBytes = 0;
         try {
             readNumberBytes = rbc.read(byteBuffer);
@@ -67,25 +67,34 @@ public class NetworkManager {
         return -1; //возвращает -1 если ответ отрицательный
     }
 
-    public void outFromDirectory() {
+    public int makeDir(String name) {
         try {
-            out.write(("/cd" + DELIMETER + "..").getBytes());
+            out.write(("/mkdir" + DELIMETER  + name).getBytes());
             out.flush();
             String[] serverAnswer = queryStringListener();
             if ("/status-ok".equals(serverAnswer[0])) {
-                LOGGER.info(String.format("Out from directory: operation successfully"));
+                LOGGER.info(String.format("Create dir: operation successfully"));
+                return 1; //возвращает 1 если ответ положительный
             }
         } catch (IOException e) {
-            LOGGER.error(String.format("Out from directory error"));
+            e.printStackTrace();
         }
+        return -1;
     }
 
-    public void makeDir(){
-
-    }
-
-    public void touchFile(){
-
+    public int touchFile(String name) {
+        try {
+            out.write(("/touch" + DELIMETER  + name).getBytes());
+            out.flush();
+            String[] serverAnswer = queryStringListener();
+            if ("/status-ok".equals(serverAnswer[0])) {
+                LOGGER.info(String.format("Create file: operation successfully"));
+                return 1; //возвращает 1 если ответ положительный
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return -1;
     }
 
 }

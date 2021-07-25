@@ -26,7 +26,7 @@ public class WorkPanel {
     private boolean isOnline;
     private ListView<String> listView;
     TextField pathView;
-    NetworkManager networkManager;
+    private NetworkManager networkManager;
     Path tempPath;
 
 
@@ -44,6 +44,10 @@ public class WorkPanel {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public NetworkManager getNetworkManager() {
+        return networkManager;
     }
 
     public ListView<String> getListView() {
