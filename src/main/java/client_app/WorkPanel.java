@@ -83,13 +83,11 @@ public class WorkPanel {
         }
     }
 
-    private void showLocalDirectory() {
-        try {
-            File fileDirectory = new File(currentPath.toString());
-            String[] tokens = fileDirectory.list();
-            Platform.runLater(new Runnable() {
-                @Override
-                public void run() {
+    private void listViewInitialise(String[] tokens) {
+        Platform.runLater(new Runnable() {
+            @Override
+            public void run() {
+                try {
                     listView.getItems().clear();
                     if (currentPath.toString().split(Matcher.quoteReplacement(File.separator)).length >= 2) {
                         listView.getItems().add("BACK");
@@ -97,9 +95,19 @@ public class WorkPanel {
                     for (int i = 0; i < tokens.length; i++) {
                         listView.getItems().add(tokens[i]);
                     }
-                    setLocalPathView();
+                } catch (NullPointerException e) {
+                    System.out.println("Переключение на online список");
                 }
-            });
+            }
+        });
+    }
+
+    private void showLocalDirectory() {
+        try {
+            File fileDirectory = new File(currentPath.toString());
+            String[] tokens = fileDirectory.list();
+            listViewInitialise(tokens);
+            setLocalPathView();
             listView.setCellFactory(l -> new ListCell<String>() {
                 @Override
                 public void updateItem(String friend, boolean empty) {
@@ -149,22 +157,9 @@ public class WorkPanel {
 
     private void showOnlineDirectory() {
         try {
-
             String[] serverAnswer = networkManager.receiveFileList(currentPath);
             setOnlinePathView();
-
-            Platform.runLater(new Runnable() {
-                @Override
-                public void run() {
-                    listView.getItems().clear();
-                    if (currentPath.toString().split(Matcher.quoteReplacement(File.separator)).length >= 2) {
-                        listView.getItems().add("BACK");
-                    }
-                    for (int index = 0; index < serverAnswer.length; index++) {
-                        listView.getItems().add(serverAnswer[index]);
-                    }
-                }
-            });
+            listViewInitialise(serverAnswer);
             if (!tempPath.toFile().exists()) {
                 tempPath.toFile().createNewFile();
             }
