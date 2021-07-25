@@ -210,7 +210,6 @@ public class WorkPanel {
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
-//                    showLocalDirectory(directory, fileList);
                     }
                 }
             });
@@ -256,18 +255,16 @@ public class WorkPanel {
                         currentPath.length() - tokens[tokens.length - 1].length() - 1,
                         currentPath.length()).toString());
             } else {
-                String newPath = currentPath + File.separator +
-                        markedElementsListener.getSelectedItems().get(0).replaceAll(".:", "");
-                if (networkManager.enterToDirectory(newPath) > 0) {
-                    showOnlineDirectory(newPath);
-                } else {
-                    System.out.println(String.format("Директория [%s] не найдена!", newPath));
+                String markedElement = markedElementsListener.getSelectedItems().get(0);
+                if (!markedElement.contains("f:")) {
+                    String newPath = currentPath + File.separator +
+                            markedElement.replaceAll(".:", "");
+                    if (networkManager.enterToDirectory(newPath) > 0) {
+                        showOnlineDirectory(newPath);
+                    } else {
+                        System.out.println(String.format("Директория [%s] не найдена!", newPath));
+                    }
                 }
-//                String[] tokens = currentPath.toString().split(Matcher.quoteReplacement(File.separator));
-//                setCurrentPath((currentPath.delete(
-//                        currentPath.length() - tokens[tokens.length - 1].length() - 1,
-//                        currentPath.length())).toString());
-//                showDirectory();
             }
         }
     }

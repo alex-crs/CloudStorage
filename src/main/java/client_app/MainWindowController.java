@@ -220,19 +220,10 @@ public class MainWindowController implements Initializable {
                         }
                     });
                     byteBuffer.clear();
-//                    String[] queryAnswer = receiveFileList((rightPath), out, rbc, byteBuffer);
-//                    try {
                     rightWorkPanel.connectToServer(networkManager);
                     leftWorkPanel.connectToServer(networkManager);
                     rightWorkPanel.setOnline(true);
                     rightWorkPanel.showDirectory();
-//                        rightList.setCellFactory(null);
-//                        isRightListOnline = true;
-//                        changeCurrentPath(rightPath, queryAnswer[0], rightPathView);
-//                        showOnlineDirectory(queryAnswer, rightList, rightPath);
-//                    } catch (IOException e) {
-//                        e.printStackTrace();
-//                    }
                 }
                 if (!serverAnswer[0].isEmpty() && "/auth-no".equals(serverAnswer[0].replace("\n", ""))) {
                     Platform.runLater(new Runnable() {
