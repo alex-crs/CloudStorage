@@ -32,7 +32,7 @@ public class CommandManager {
             }
 
             if (transferFileLength == file.length()) {
-                ctx.writeAndFlush(Unpooled.wrappedBuffer(("/status-ok" + "\n").getBytes()));
+                ctx.writeAndFlush(Unpooled.wrappedBuffer(("/status-ok").getBytes()));
                 MainHandler.setWaitAction();
             }
 
@@ -134,7 +134,7 @@ public class CommandManager {
                 return FileVisitResult.CONTINUE;
             }
         });
-        ctx.writeAndFlush(Unpooled.wrappedBuffer(("/status-ok").getBytes()));
+
     }
 
 }

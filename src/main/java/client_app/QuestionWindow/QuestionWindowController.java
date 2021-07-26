@@ -14,6 +14,7 @@ import java.net.URL;
 import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.ResourceBundle;
+import java.util.concurrent.Semaphore;
 
 import static client_app.Resources.Action.*;
 import static client_app.Main_Functional.FileOperations.*;
@@ -150,6 +151,15 @@ public class QuestionWindowController implements Initializable {
                     break;
                 case UPLOAD:
                     for (String uploadElements : sourcePanel.getMarkedFileList()) {
+                        if (targetPanel.isObjectExistInList(uploadElements)) {
+                            answer = targetPanel.getNetworkManager().deleteObject(targetPanel.getCurrentPath()
+                                    + File.separator + uploadElements.replaceAll(".:", ""));
+                            while (true) {
+                                if (answer > 0) {
+                                    break;
+                                }
+                            }
+                        }
                         multipleElementUpload(sourcePanel, targetPanel, uploadElements);
                         sourcePanel.showDirectory();
                         targetPanel.showDirectory();

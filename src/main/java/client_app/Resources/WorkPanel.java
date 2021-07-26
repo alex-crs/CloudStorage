@@ -18,6 +18,9 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.regex.Matcher;
 
 public class WorkPanel {
@@ -26,15 +29,18 @@ public class WorkPanel {
     private MultipleSelectionModel<String> markedElementsListener; //список выделенных строк
     private boolean isOnline;
     private ListView<String> listView;
+    ChoiceBox<String> sortBox;
     TextField pathView;
     private NetworkManager networkManager;
     Path tempPath;
+    int sortType = 1;
 
 
-    public WorkPanel(String path, ListView<String> listView, TextField pathView) {
+    public WorkPanel(String path, ListView<String> listView, TextField pathView, ChoiceBox<String> sortBox) {
         this.isOnline = false;
         this.pathView = pathView;
         this.listView = listView;
+        this.sortBox = sortBox;
         this.currentPath = new StringBuilder();
         currentPath.append(path);
         this.markedFileList = FXCollections.emptyObservableList();
@@ -45,6 +51,30 @@ public class WorkPanel {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        sortBox.getItems().add("Прямая по имени");  //Тип 1
+        sortBox.getItems().add("Обратная по имени"); //Тип 2
+        sortBox.getItems().add("Прямая по типу объекта"); //Тип 3
+        sortBox.getItems().add("Обратная по типу объекта"); //Тип 4
+        sortBox.setValue("Прямая по имени");
+
+        sortBox.setOnAction((event -> {
+            if ("Прямая по имени".equals(sortBox.getSelectionModel().getSelectedItem())) {
+                sortType = 1;
+                showDirectory();
+            }
+            if ("Обратная по имени".equals(sortBox.getSelectionModel().getSelectedItem())) {
+                sortType = 2;
+                showDirectory();
+            }
+            if ("Прямая по типу объекта".equals(sortBox.getSelectionModel().getSelectedItem())) {
+                sortType = 3;
+                showDirectory();
+            }
+            if ("Обратная по типу объекта".equals(sortBox.getSelectionModel().getSelectedItem())) {
+                sortType = 4;
+                showDirectory();
+            }
+        }));
     }
 
     public NetworkManager getNetworkManager() {
@@ -109,10 +139,55 @@ public class WorkPanel {
         });
     }
 
+    private void directorySort(String[] fileArray) {
+        if (!isOnline) {
+            if (sortType == 2) {
+                Arrays.sort(fileArray, Collections.reverseOrder());
+            }
+            if (sortType == 3) {
+                sortByFolders(fileArray);
+            }
+            if (sortType == 4) {
+                Arrays.sort(fileArray, Collections.reverseOrder());
+                sortByFolders(fileArray);
+            }
+        } else {
+            if (sortType == 2) {
+                Arrays.sort(fileArray, Collections.reverseOrder());
+            }
+            if (sortType == 3) {
+                sortByFolders(fileArray);
+            }
+            if (sortType == 4) {
+                Arrays.sort(fileArray, Collections.reverseOrder());
+                sortByFolders(fileArray);
+            }
+        }
+    }
+
+    private void sortByFolders(String[] fileArray) {
+        ArrayList<String> folders = new ArrayList<>();
+        ArrayList<String> files = new ArrayList<>();
+        File file;
+        for (String element : fileArray) {
+            file = new File(getCurrentPath() + element);
+            if (file.isFile()) {
+                files.add(element);
+            } else {
+                folders.add(element);
+            }
+        }
+        folders.addAll(files);
+        for (int i = 0; i < fileArray.length; i++) {
+            fileArray[i] = folders.get(i);
+        }
+    }
+
     private void showLocalDirectory() {
         try {
             File fileDirectory = new File(currentPath.toString());
             String[] tokens = fileDirectory.list();
+            directorySort(tokens);
             listViewInitialise(tokens);
             setLocalPathView();
             listView.setCellFactory(l -> new ListCell<String>() {
@@ -274,6 +349,15 @@ public class WorkPanel {
                 }
             }
         }
+    }
+
+    public boolean isObjectExistInList(String fileName) {
+        for (String elements : listView.getItems()) {
+            if ((elements.replaceAll(".:", "")).equals(fileName)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void setCurrentPath(WorkPanel sourcePanel) {

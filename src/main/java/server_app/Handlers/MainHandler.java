@@ -83,26 +83,26 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
                 if ("f".equals(header[1])) {
                     file = new File(csUser.getRoot() + header[2]);
                     transferFileLength = Long.parseLong(header[3]);
-//                    transferOptions = (header[4].equals("OVERWRITE") ? OVERWRITE : null); //логика не реализована
+                    if (file.exists()) {
+                        removeFileOrDirectory(csUser, header[2], ctx);
+                    }
                     if (!file.exists()) {
                         file.createNewFile();
+                        ctx.writeAndFlush(Unpooled.wrappedBuffer(("/status-ok").getBytes()));
                     }
-                    ctx.writeAndFlush(Unpooled.wrappedBuffer((READY_STATUS + "\n").getBytes()));
                     if (transferFileLength != 0) {
                         action = UPLOAD;
-                    } else {
-                        ctx.writeAndFlush(Unpooled.wrappedBuffer(("/status-ok" + "\n").getBytes()));
                     }
                 }
                 if ("d".equals(header[1])) {
                     Files.createDirectory(Path.of(csUser.getCurrentPath() + File.separator + header[2]));
-                    ctx.writeAndFlush(Unpooled.wrappedBuffer(("/status-ok" + "\n").getBytes()));
+                    ctx.writeAndFlush(Unpooled.wrappedBuffer(("/status-ok").getBytes()));
                 }
                 break;
             case ("/download"):
                 file = new File(csUser.getRoot() + header[1]);
-                if (!file.exists()) {
-//                    ctx.writeAndFlush(Unpooled.wrappedBuffer((FILE_NOT_EXIST + "\n").getBytes()));
+                if (file.exists()) {
+
                 }
                 ctx.writeAndFlush(Unpooled.wrappedBuffer(("/download-ok" + DELIMETER + file.length()).getBytes()));
                 action = DOWNLOAD;
@@ -134,6 +134,7 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
                 break;
             case ("/delete"):
                 removeFileOrDirectory(csUser, header[1], ctx);
+                ctx.writeAndFlush(Unpooled.wrappedBuffer(("/status-ok").getBytes()));
                 break;
             case ("/copy"):
                 copy(csUser, header[1], header[2], ctx);

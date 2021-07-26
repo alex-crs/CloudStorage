@@ -63,10 +63,8 @@ public class FileOperations {
                         + sourceObject.length()).getBytes());
                 while (true) {
                     String[] serverAnswer = sourcePanel.getNetworkManager().queryStringListener();
-                    if ("/upload-ok".equals(serverAnswer[0].replace("\n", ""))) {
+                    if ("/status-ok".equals(serverAnswer[0])) {
                         break;
-                    } else {
-                        throw new IOException();
                     }
                 }
             } else {
@@ -86,7 +84,7 @@ public class FileOperations {
             }
             while (true) {
                 String[] serverAnswer = sourcePanel.getNetworkManager().queryStringListener();
-                if ("/status-ok".equals(serverAnswer[0].replace("\n", ""))) {
+                if ("/status-ok".equals(serverAnswer[0])) {
                     break;
                 }
             }

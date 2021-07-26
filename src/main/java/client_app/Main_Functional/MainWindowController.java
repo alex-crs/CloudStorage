@@ -27,6 +27,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.file.*;
+import java.text.NumberFormat;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -83,6 +84,15 @@ public class MainWindowController implements Initializable {
     @FXML
     TextField rightPathView;
 
+    @FXML
+    ChoiceBox<String> leftSortBox;
+
+    @FXML
+    ChoiceBox<String> rightSortBox;
+
+    @FXML
+    Label spaceCalc;
+
     Stage stage;
     //----------------------------------------------------
 
@@ -105,21 +115,13 @@ public class MainWindowController implements Initializable {
 
     //...
 
-    //управление ListView и текущими путями
+    //управление WorkPanels и текущими задачами
     //----------------------------------------------------
-    StringBuilder rightPath = new StringBuilder();
-    StringBuilder leftPath = new StringBuilder();
-    ObservableList<String> leftFiles = FXCollections.emptyObservableList();
-    ObservableList<String> rightFiles = FXCollections.emptyObservableList();
-    MultipleSelectionModel<String> leftMarkedFiles;
-    MultipleSelectionModel<String> rightMarkedFiles;
-    public static boolean isRightListOnline;
-    public static boolean isLeftListOnline;
-
     private static WorkPanel leftWorkPanel;
     private static WorkPanel rightWorkPanel;
-    public static boolean isClarifyEveryTime = true; //спрашивать каждый раз при удалении или замене файла
-    public static boolean userAnswer;
+    public static NumberFormat nf = NumberFormat.getNumberInstance();
+    //спрашивать каждый раз при удалении или замене файла
+    public static boolean isClarifyEveryTime = true;
     //----------------------------------------------------
 
     //...
@@ -153,8 +155,13 @@ public class MainWindowController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        leftWorkPanel = new WorkPanel("c:\\", leftList, leftPathView);
-        rightWorkPanel = new WorkPanel("c:\\", rightList, rightPathView);
+        try {
+            spaceCalc.setText(nf.format(Files.getFileStore(Path.of("c:\\")).getTotalSpace()));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        leftWorkPanel = new WorkPanel("c:\\", leftList, leftPathView, leftSortBox);
+        rightWorkPanel = new WorkPanel("c:\\", rightList, rightPathView, rightSortBox);
         leftWorkPanel.showDirectory();
         rightWorkPanel.showDirectory();
         copy.setFocusTraversable(false);
@@ -326,6 +333,10 @@ public class MainWindowController implements Initializable {
     }
     //--------------------------------------------------------------------------------
 
+    public void fileLengthView(WorkPanel workPanel){
+
+    }
+
     /*Проверяем текущий выделенный файл в окне (если например выделен файл в правом окне, то копируем в левый
      * если выделен в левом окне, то копируем в правое окно
      * Если левое или правое окно подключены к облачному хранилищу, то вместо команды copy(), запускается метод upload*/
@@ -479,7 +490,6 @@ public class MainWindowController implements Initializable {
         return false;
     }
 
-
     public void registration(ActionEvent actionEvent) {
         RegistrationWindowStage rs = new RegistrationWindowStage(out, rbc);
         rs.setMinWidth(400);
@@ -496,3 +506,9 @@ public class MainWindowController implements Initializable {
  * 4. При выравнивании папок (онлайн) появляется кнопка BACK
  * 5. после переименования файла также выскакивает BACK (при этом переименование происходит в локальной директории
  *    а обновляется онлайн директория)*/
+
+/*Что доделать:
+ * 1. Размер файла на диске
+ * 2. Доступное место на диске
+ * 3. Сортировка
+ * 4. Ограничить место на диске*/
