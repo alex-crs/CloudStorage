@@ -1,5 +1,7 @@
-package client_app;
+package client_app.QuestionWindow;
 
+import client_app.Resources.Action;
+import client_app.Resources.WorkPanel;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
@@ -13,10 +15,10 @@ import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.ResourceBundle;
 
-import static client_app.Action.*;
-import static client_app.FileOperations.*;
-import static client_app.MainWindowController.*;
-import static client_app.QuestionWindowStage.getMessage;
+import static client_app.Resources.Action.*;
+import static client_app.Main_Functional.FileOperations.*;
+import static client_app.Main_Functional.MainWindowController.*;
+import static client_app.QuestionWindow.QuestionWindowStage.getMessage;
 
 public class QuestionWindowController implements Initializable {
 

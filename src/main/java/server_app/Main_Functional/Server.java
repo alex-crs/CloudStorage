@@ -1,4 +1,4 @@
-package server_app;
+package server_app.Main_Functional;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;

@@ -1,5 +1,6 @@
-package client_app;
+package client_app.ObjectEditors;
 
+import client_app.Resources.WorkPanel;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
@@ -11,11 +12,11 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 
-import static client_app.Action.RENAME;
-import static client_app.Action.RENAME_REMOTE;
-import static client_app.FileOperations.clearEmptySymbolsAfterName;
-import static client_app.MainWindowController.updateAllFilesLists;
-import static client_app.RenameWindowStage.*;
+import static client_app.Resources.Action.RENAME;
+import static client_app.Resources.Action.RENAME_REMOTE;
+import static client_app.Main_Functional.FileOperations.clearEmptySymbolsAfterName;
+import static client_app.Main_Functional.MainWindowController.updateAllFilesLists;
+import static client_app.ObjectEditors.RenameWindowStage.*;
 
 public class RenameWindowController implements Initializable {
     @FXML

@@ -1,15 +1,13 @@
-package client_app;
+package client_app.ObjectMakers;
 
+import client_app.Resources.Action;
+import client_app.Resources.WorkPanel;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.ListView;
 import javafx.stage.Stage;
 
-import java.io.DataOutput;
-import java.io.DataOutputStream;
 import java.io.IOException;
-import java.nio.channels.ReadableByteChannel;
 
 public class MakeFileOrDirStage extends Stage {
     WorkPanel sourcePanel;

@@ -1,5 +1,7 @@
-package client_app;
+package client_app.ObjectMakers;
 
+import client_app.Resources.Action;
+import client_app.Resources.WorkPanel;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
@@ -14,8 +16,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ResourceBundle;
 
-import static client_app.FileOperations.clearEmptySymbolsAfterName;
-import static client_app.MainWindowController.*;
+import static client_app.Main_Functional.FileOperations.clearEmptySymbolsAfterName;
+import static client_app.Main_Functional.MainWindowController.*;
 
 public class MakeFileOrDirController implements Initializable {
     @FXML

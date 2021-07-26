@@ -1,18 +1,13 @@
-package client_app;
+package client_app.QuestionWindow;
 
-import javafx.fxml.FXML;
+import client_app.Resources.Action;
+import client_app.Resources.WorkPanel;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.ListView;
 import javafx.stage.Stage;
 
 import java.io.IOException;
-import java.nio.file.Path;
-
-import static client_app.MainWindowController.*;
 
 public class QuestionWindowStage extends Stage {
 

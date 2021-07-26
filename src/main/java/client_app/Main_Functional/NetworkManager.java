@@ -1,4 +1,4 @@
-package client_app;
+package client_app.Main_Functional;
 
 import org.apache.log4j.Logger;
 
@@ -8,7 +8,7 @@ import java.nio.channels.ReadableByteChannel;
 import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 
-import static client_app.RegistrationWindowController.DELIMETER;
+import static client_app.Registration.RegistrationWindowController.DELIMETER;
 
 
 public class NetworkManager {

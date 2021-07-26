@@ -1,9 +1,10 @@
-package client_app;
+package client_app.ObjectEditors;
 
+import client_app.Resources.Action;
+import client_app.Resources.WorkPanel;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.ListView;
 import javafx.stage.Stage;
 
 import java.io.IOException;

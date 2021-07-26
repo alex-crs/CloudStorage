@@ -1,4 +1,6 @@
-package client_app;
+package client_app.Main_Functional;
+
+import client_app.Resources.WorkPanel;
 
 import java.io.*;
 import java.nio.channels.FileChannel;
@@ -6,8 +8,8 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 
 
-import static client_app.MainWindowController.*;
-import static client_app.RegistrationWindowController.DELIMETER;
+import static client_app.Main_Functional.MainWindowController.*;
+import static client_app.Registration.RegistrationWindowController.DELIMETER;
 
 public class FileOperations {
 

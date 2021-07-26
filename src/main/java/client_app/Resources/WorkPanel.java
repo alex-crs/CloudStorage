@@ -1,5 +1,6 @@
-package client_app;
+package client_app.Resources;
 
+import client_app.Main_Functional.NetworkManager;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;

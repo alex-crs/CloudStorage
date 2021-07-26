@@ -1,4 +1,4 @@
-package client_app;
+package client_app.Registration;
 
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;

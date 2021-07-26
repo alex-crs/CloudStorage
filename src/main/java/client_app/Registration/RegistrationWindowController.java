@@ -1,5 +1,6 @@
-package client_app;
+package client_app.Registration;
 
+import client_app.Main_Functional.MainWindowController;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;

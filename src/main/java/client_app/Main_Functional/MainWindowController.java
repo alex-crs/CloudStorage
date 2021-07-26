@@ -1,5 +1,12 @@
-package client_app;
+package client_app.Main_Functional;
 
+import client_app.Main_Functional.NetworkManager;
+import client_app.ObjectEditors.RenameWindowStage;
+import client_app.ObjectMakers.MakeFileOrDirStage;
+import client_app.QuestionWindow.QuestionWindowStage;
+import client_app.Registration.RegistrationWindowStage;
+import client_app.Resources.Action;
+import client_app.Resources.WorkPanel;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -18,16 +25,14 @@ import java.net.Socket;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
-import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.regex.Matcher;
 
-import static client_app.Action.*;
-import static client_app.FileOperations.*;
+import static client_app.Resources.Action.*;
+import static client_app.Main_Functional.FileOperations.*;
 
 public class MainWindowController implements Initializable {
 
@@ -113,7 +118,7 @@ public class MainWindowController implements Initializable {
 
     private static WorkPanel leftWorkPanel;
     private static WorkPanel rightWorkPanel;
-    static boolean isClarifyEveryTime = true; //спрашивать каждый раз при удалении или замене файла
+    public static boolean isClarifyEveryTime = true; //спрашивать каждый раз при удалении или замене файла
     public static boolean userAnswer;
     //----------------------------------------------------
 
