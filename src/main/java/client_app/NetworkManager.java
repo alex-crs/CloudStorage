@@ -1,18 +1,13 @@
 package client_app;
 
 import org.apache.log4j.Logger;
-import server_app.MainHandler;
 
 import java.io.*;
 import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.FileAlreadyExistsException;
 import java.util.Arrays;
 import java.util.concurrent.ExecutorService;
 
-import static client_app.MainWindowController.updateAllFilesLists;
 import static client_app.RegistrationWindowController.DELIMETER;
 
 

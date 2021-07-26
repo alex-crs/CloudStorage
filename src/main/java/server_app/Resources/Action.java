@@ -1,9 +1,7 @@
-package server_app;
+package server_app.Resources;
 
 public enum Action {
     DOWNLOAD,
     UPLOAD,
-    WAIT,
-    OVERWRITE
-
+    WAIT
 }

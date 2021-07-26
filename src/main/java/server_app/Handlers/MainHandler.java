@@ -1,25 +1,22 @@
-package server_app;
+package server_app.Handlers;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import org.apache.log4j.Logger;
+import server_app.Resources.Action;
+import server_app.Resources.CSUser;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.regex.Matcher;
 
-import static server_app.Action.*;
-import static server_app.AuthService.tryToAuth;
-import static server_app.AuthService.tryToReg;
-import static server_app.CommandHandler.*;
-import static server_app.FileTransfer.downloadFile;
-import static server_app.FileTransfer.uploadFile;
+import static server_app.Resources.Action.*;
+import static server_app.SQL_Controllers.AuthService.tryToAuth;
+import static server_app.SQL_Controllers.AuthService.tryToReg;
+import static server_app.Main_Functional.CommandManager.*;
 
 public class MainHandler extends ChannelInboundHandlerAdapter {
     /*  Фиксирует текущеее состояния MainHandler

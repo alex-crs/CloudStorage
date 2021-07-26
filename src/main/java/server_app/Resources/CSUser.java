@@ -1,10 +1,12 @@
-package server_app;
+package server_app.Resources;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+
+//данный класс хранит настройки пользователя и управляет корневыми путями,
 public class CSUser {
     private String root;
     private String userName;
@@ -46,3 +48,4 @@ public class CSUser {
         return currentPath;
     }
 }
+

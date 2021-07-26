@@ -1,4 +1,4 @@
-package server_app;
+package server_app.SQL_Controllers;
 
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
@@ -6,8 +6,8 @@ import org.apache.log4j.Logger;
 
 import java.sql.*;
 
-import static server_app.MainHandler.DELIMETER;
-import static server_app.MainHandler.setCsUser;
+import static server_app.Handlers.MainHandler.DELIMETER;
+import static server_app.Handlers.MainHandler.setCsUser;
 
 public class AuthService {
     private static Connection connection;
