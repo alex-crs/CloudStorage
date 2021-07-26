@@ -112,11 +112,12 @@ public class FileOperations {
         }
     }
 
-    public static void downloadElement(String source, String target, WorkPanel sourcePanel) {
-        File file = new File(target);
+    public static void downloadElement(String source, String target, String element, WorkPanel sourcePanel) {
+        String filename = element.replaceAll(".:","");
+        File file = new File(target + filename);
         long downloadFileLength = 0;
         try {
-            out.write(("/download" + DELIMETER + source).getBytes());
+            out.write(("/download" + DELIMETER + (source + File.separator + filename)).getBytes());
             String[] serverAnswer = sourcePanel.getNetworkManager().queryStringListener();
             if (!file.exists()) {
                 file.createNewFile();
@@ -149,8 +150,7 @@ public class FileOperations {
         }
     }
 
-    //C:\program\folder       //server\program
-//    public static void multipleDownload(WorkPanel sourcePanel, WorkPanel targetPanel, String sourcePath, String targetPath, String element) throws IOException {
+//    public static void multipleDownload(WorkPanel sourcePanel, String sourcePath, String targetPath) throws IOException {
 //        if (element.contains("f:")) {
 //            Path source = Path.of(sourcePath + File.separator + element.replaceAll(".:", ""));
 //            download(sourcePanel, targetPanel);

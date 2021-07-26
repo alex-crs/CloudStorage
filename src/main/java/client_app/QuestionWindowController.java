@@ -157,10 +157,8 @@ public class QuestionWindowController implements Initializable {
                     closeButton();
                     break;
                 case DOWNLOAD:
-                    downloadElement((sourcePanel.getCurrentPath() + File.separator
-                                    + sourcePanel.getMarkedFileList().get(0).replaceAll(".:", "")),
-                            (targetPanel.getCurrentPath().toString()
-                                    + sourcePanel.getMarkedFileList().get(0).replaceAll(".:", "")), sourcePanel);
+                    downloadElement(sourcePanel.getCurrentPath().toString(), targetPanel.getCurrentPath().toString(),
+                            sourcePanel.getMarkedFileList().get(0), sourcePanel);
 //                    download(sourcePanel,targetPanel);
                     closeButton();
                     break;
