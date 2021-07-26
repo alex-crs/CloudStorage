@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.Menu?>
+<?import javafx.scene.control.MenuBar?>
+<?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.ProgressBar?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+
+<AnchorPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="client_app.MainWindowController">
+   <children>
+      <SplitPane dividerPositions="0.9020100502512562" layoutX="246.0" layoutY="94.0" orientation="VERTICAL" prefHeight="400.0" prefWidth="600.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="25.0">
+        <items>
+          <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="100.0" prefWidth="160.0">
+               <children>
+                  <SplitPane dividerPositions="0.4848993288590604" layoutX="199.0" layoutY="69.0" prefHeight="356.0" prefWidth="598.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                    <items>
+                      <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="160.0" prefWidth="100.0">
+                           <children>
+                              <ListView fx:id="leftList" layoutX="43.0" layoutY="59.0" onMouseClicked="#leftEvent" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="25.0" />
+                              <TextField fx:id="leftPathView" editable="false" layoutY="2.0" prefHeight="25.0" prefWidth="286.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                           </children>
+                        </AnchorPane>
+                      <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="238.0" prefWidth="304.0">
+                           <opaqueInsets>
+                              <Insets />
+                           </opaqueInsets>
+                           <children>
+                              <ListView fx:id="rightList" layoutX="35.0" layoutY="61.0" onMouseClicked="#rightEvent" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="25.0" />
+                              <TextField fx:id="rightPathView" editable="false" layoutX="3.0" layoutY="2.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                              <TextField fx:id="loginField" layoutX="28.0" layoutY="93.0" onAction="#authorisation" promptText="login" AnchorPane.leftAnchor="30.0" AnchorPane.rightAnchor="30.0" AnchorPane.topAnchor="90.0" />
+                              <PasswordField fx:id="passwordField" layoutX="28.0" layoutY="131.0" onAction="#authorisation" promptText="password" AnchorPane.leftAnchor="30.0" AnchorPane.rightAnchor="30.0" AnchorPane.topAnchor="130.0" />
+                              <Label fx:id="authInfo" layoutX="28.0" layoutY="68.0" text="Enter login and password" AnchorPane.leftAnchor="30.0" AnchorPane.topAnchor="65.0" />
+                              <Button fx:id="authEnterButton" layoutX="28.0" layoutY="166.0" mnemonicParsing="false" onAction="#authorisation" prefHeight="25.0" prefWidth="149.0" text="Enter" AnchorPane.leftAnchor="30.0" AnchorPane.rightAnchor="30.0" AnchorPane.topAnchor="170.0" />
+                              <Button fx:id="authCancelButton" layoutX="28.0" layoutY="204.0" mnemonicParsing="false" onAction="#disconnect" prefHeight="25.0" prefWidth="149.0" text="Cancel" AnchorPane.leftAnchor="30.0" AnchorPane.rightAnchor="30.0" AnchorPane.topAnchor="210.0" />
+                           </children>
+                        </AnchorPane>
+                    </items>
+                     <opaqueInsets>
+                        <Insets />
+                     </opaqueInsets>
+                  </SplitPane>
+               </children>
+            </AnchorPane>
+          <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="100.0" prefWidth="160.0">
+               <children>
+                  <Button fx:id="copy" layoutY="2.0" mnemonicParsing="false" onAction="#copyAction" text="copy" />
+                  <Button fx:id="delete" layoutX="42.0" layoutY="2.0" mnemonicParsing="false" onAction="#deleteAction" text="delete" />
+                  <Button fx:id="rename" layoutX="91.0" layoutY="2.0" mnemonicParsing="false" onAction="#renameAction" text="rename" />
+                  <Button fx:id="newButton" layoutX="147.0" layoutY="2.0" mnemonicParsing="false" onAction="#makeDirAction" text="new" />
+                  <Button fx:id="move" layoutX="185.0" layoutY="2.0" mnemonicParsing="false" onAction="#moveAction" text="move" />
+                  <ProgressBar layoutX="385.0" layoutY="6.0" prefHeight="18.0" prefWidth="206.0" progress="0.0" />
+                  <Button fx:id="sourceTarget" layoutX="231.0" layoutY="2.0" mnemonicParsing="false" onAction="#sourceEquallyTarget" text="source=target" />
+               </children></AnchorPane>
+        </items>
+      </SplitPane>
+      <MenuBar layoutY="2.0" maxHeight="-Infinity" minHeight="-Infinity" prefHeight="25.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+        <menus>
+          <Menu mnemonicParsing="false" text="File">
+            <items>
+              <MenuItem mnemonicParsing="false" text="Close" />
+            </items>
+          </Menu>
+          <Menu mnemonicParsing="false" text="Connect">
+            <items>
+              <MenuItem fx:id="connectToServer" mnemonicParsing="false" onAction="#showAuthFields" text="Connect to server" />
+                  <MenuItem mnemonicParsing="false" onAction="#registration" text="Registration" />
+            </items>
+          </Menu>
+          <Menu mnemonicParsing="false" text="Help">
+            <items>
+              <MenuItem mnemonicParsing="false" text="About" />
+            </items>
+          </Menu>
+        </menus>
+      </MenuBar>
+   </children>
+</AnchorPane>
