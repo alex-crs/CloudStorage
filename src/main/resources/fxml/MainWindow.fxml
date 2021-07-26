@@ -12,7 +12,6 @@
 <?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.AnchorPane?>
-<?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
 <AnchorPane prefHeight="500.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="client_app.Main_Functional.MainWindowController">
@@ -58,26 +57,21 @@
                            <children>
                               <AnchorPane prefHeight="89.0" prefWidth="598.0">
                                  <children>
-                                    <Label fx:id="spaceCalc" layoutX="20.0" layoutY="3.0" prefHeight="32.0" prefWidth="598.0" text="Label" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                                    <Label fx:id="spaceCalc" layoutX="20.0" layoutY="3.0" prefHeight="74.0" prefWidth="598.0" text="Label" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
                                  </children>
                               </AnchorPane>
-                              <AnchorPane prefHeight="28.0" prefWidth="598.0">
+                              <AnchorPane prefHeight="117.0" prefWidth="598.0">
                                  <children>
                                     <ChoiceBox fx:id="leftSortBox" layoutY="1.0" prefWidth="150.0" />
                                     <ChoiceBox fx:id="rightSortBox" prefWidth="150.0" AnchorPane.rightAnchor="0.0" />
+                                    <Button fx:id="copy" layoutY="26.0" mnemonicParsing="false" onAction="#copyAction" prefHeight="25.0" prefWidth="114.0" text="Copy F5" AnchorPane.leftAnchor="0.0" />
+                                    <Button fx:id="delete" layoutX="280.0" layoutY="26.0" mnemonicParsing="false" onAction="#deleteAction" text="Delete F8" />
+                                    <Button fx:id="rename" layoutX="113.0" layoutY="26.0" mnemonicParsing="false" onAction="#renameAction" text="Rename F6" />
+                                    <Button fx:id="newButton" layoutX="188.0" layoutY="26.0" mnemonicParsing="false" onAction="#makeDirAction" text="New object F7" />
+                                    <Button fx:id="move" layoutX="429.0" layoutY="26.0" mnemonicParsing="false" onAction="#moveAction" text="Move F9" />
+                                    <Button fx:id="sourceTarget" layoutX="408.0" layoutY="26.0" mnemonicParsing="false" onAction="#sourceEquallyTarget" text="source=target F2" AnchorPane.rightAnchor="0.0" />
                                  </children>
                               </AnchorPane>
-                              <HBox prefHeight="37.0" prefWidth="598.0" />
-                              <HBox prefHeight="100.0" prefWidth="200.0">
-                                 <children>
-                                    <Button fx:id="copy" mnemonicParsing="false" onAction="#copyAction" text="copy" />
-                                    <Button fx:id="delete" mnemonicParsing="false" onAction="#deleteAction" text="delete" />
-                                    <Button fx:id="rename" mnemonicParsing="false" onAction="#renameAction" text="rename" />
-                                    <Button fx:id="newButton" mnemonicParsing="false" onAction="#makeDirAction" text="new" />
-                                    <Button fx:id="move" mnemonicParsing="false" onAction="#moveAction" text="move" />
-                                    <Button fx:id="sourceTarget" mnemonicParsing="false" onAction="#sourceEquallyTarget" text="source=target" />
-                                 </children>
-                              </HBox>
                            </children>
                         </VBox>
                      </children>

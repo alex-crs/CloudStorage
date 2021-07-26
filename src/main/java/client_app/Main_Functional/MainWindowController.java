@@ -1,6 +1,5 @@
 package client_app.Main_Functional;
 
-import client_app.Main_Functional.NetworkManager;
 import client_app.ObjectEditors.RenameWindowStage;
 import client_app.ObjectMakers.MakeFileOrDirStage;
 import client_app.QuestionWindow.QuestionWindowStage;
@@ -8,8 +7,6 @@ import client_app.Registration.RegistrationWindowStage;
 import client_app.Resources.Action;
 import client_app.Resources.WorkPanel;
 import javafx.application.Platform;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -122,7 +119,7 @@ public class MainWindowController implements Initializable {
     public static NumberFormat nf = NumberFormat.getNumberInstance();
     //спрашивать каждый раз при удалении или замене файла
     public static boolean isClarifyEveryTime = true;
-    float totalSpace;
+    private String root = "c:\\";
     //----------------------------------------------------
 
     //...
@@ -156,16 +153,8 @@ public class MainWindowController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        try {
-            String totalSpaceString = nf.format(Files.getFileStore(Path.of("c:\\")).getUnallocatedSpace());
-            totalSpace = Files.getFileStore(Path.of("c:\\")).getUnallocatedSpace();
-
-//            totalSpace = Float.parseFloat(total.toString());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        leftWorkPanel = new WorkPanel("c:\\", leftList, leftPathView, leftSortBox);
-        rightWorkPanel = new WorkPanel("c:\\", rightList, rightPathView, rightSortBox);
+        leftWorkPanel = new WorkPanel(root, leftList, leftPathView, leftSortBox);
+        rightWorkPanel = new WorkPanel(root, rightList, rightPathView, rightSortBox);
         leftWorkPanel.showDirectory();
         rightWorkPanel.showDirectory();
         copy.setFocusTraversable(false);
@@ -317,8 +306,8 @@ public class MainWindowController implements Initializable {
         if (mouseEvent.getClickCount() == 1) {
             getCurrentActionCondition(leftWorkPanel, rightWorkPanel);
             rightWorkPanel.clearSelectionFiles();
+            leftWorkPanel.addElementsToWorkPanel();
             fileLengthView(leftWorkPanel);
-//            leftWorkPanel.getSelectedFiles();
 
         }
         if (mouseEvent.getClickCount() == 2) {
@@ -330,8 +319,8 @@ public class MainWindowController implements Initializable {
         if (mouseEvent.getClickCount() == 1) {
             getCurrentActionCondition(rightWorkPanel, leftWorkPanel);
             leftWorkPanel.clearSelectionFiles();
+            rightWorkPanel.addElementsToWorkPanel();
             fileLengthView(rightWorkPanel);
-//            rightWorkPanel.getSelectedFiles();
         }
         if (mouseEvent.getClickCount() == 2) {
             rightWorkPanel.treeMovement();
@@ -350,9 +339,21 @@ public class MainWindowController implements Initializable {
                 fileChoice++;
             }
         }
-        spaceCalc.setText("Выделено файлов " + fileChoice +
-                " Размер файла(ов) на диске " + String.format("%.2f", sumLength / 1000000) + " mb."
-                + "Доступно " + String.format("%.2f", totalSpace / 1000000) + " mb");
+        String markedFilesLength = "";
+        if (sumLength < 1000) {
+            markedFilesLength = String.format("%.0f byte", sumLength);
+        } else if (sumLength < 1000000) {
+            markedFilesLength = String.format("%.0f kb", sumLength / 1000);
+        } else if (sumLength < 1000000000) {
+            markedFilesLength = String.format("%.2f mb", sumLength / 1000000);
+        } else if (sumLength < 1000000000000L) {
+            markedFilesLength = String.format("%.2f Gb", sumLength / 1000000000L);
+        }
+
+        String availableSpace = String.format("%.0f", workPanel.getTotalSpace() / 1000000000);
+
+        spaceCalc.setText("Выделено объектов " + fileChoice + "." +
+                " Размер файла(ов) на диске " + markedFilesLength + "." + " Доступно " + availableSpace + " Gb");
     }
 
 

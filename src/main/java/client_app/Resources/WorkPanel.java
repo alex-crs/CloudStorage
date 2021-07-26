@@ -24,9 +24,9 @@ import java.util.Collections;
 import java.util.regex.Matcher;
 
 public class WorkPanel {
-    private StringBuilder currentPath;  //текущий локальный путь
+    private final StringBuilder currentPath;  //текущий локальный путь
     private ObservableList<String> markedFileList; //список выделенных элементов
-    private MultipleSelectionModel<String> markedElementsListener; //список выделенных строк
+    private final MultipleSelectionModel<String> markedElementsListener; //список выделенных строк
     private boolean isOnline;
     private ListView<String> listView;
     ChoiceBox<String> sortBox;
@@ -34,9 +34,12 @@ public class WorkPanel {
     private NetworkManager networkManager;
     Path tempPath;
     int sortType = 1;
+    float totalSpace;
+    private String root;
 
 
     public WorkPanel(String path, ListView<String> listView, TextField pathView, ChoiceBox<String> sortBox) {
+        this.root = path;
         this.isOnline = false;
         this.pathView = pathView;
         this.listView = listView;
@@ -47,7 +50,8 @@ public class WorkPanel {
         this.markedElementsListener = listView.getSelectionModel();
         this.markedElementsListener.setSelectionMode(SelectionMode.MULTIPLE);
         try {
-            tempPath = Files.createTempDirectory(Path.of("c:\\" + File.separator + "temp"), "");
+            totalSpace = Files.getFileStore(Path.of(path)).getUnallocatedSpace();
+            tempPath = Files.createTempDirectory(Path.of(path + File.separator + "temp"), "");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -71,6 +75,10 @@ public class WorkPanel {
                 setSortType(4);
             }
         }));
+    }
+
+    public float getTotalSpace() {
+        return totalSpace;
     }
 
     public NetworkManager getNetworkManager() {
@@ -175,11 +183,11 @@ public class WorkPanel {
                 folders.add(element);
             }
         }
-        if (sortType==3) {
+        if (sortType == 3) {
             folders.addAll(files);
-        for (int i = 0; i < fileArray.length; i++) {
-            fileArray[i] = folders.get(i);
-        }
+            for (int i = 0; i < fileArray.length; i++) {
+                fileArray[i] = folders.get(i);
+            }
         } else {
             files.addAll(folders);
             for (int i = 0; i < fileArray.length; i++) {
@@ -379,6 +387,10 @@ public class WorkPanel {
 
     public void clearSelectionFiles() {
         markedElementsListener.clearSelection();
+    }
+
+    public void addElementsToWorkPanel() {
+        markedFileList = markedElementsListener.getSelectedItems();
     }
 
     public ObservableList<String> getSelectedFiles() {
