@@ -1,35 +1,56 @@
 package client_app;
 
-import javafx.application.Platform;
-import javafx.collections.ObservableList;
-import javafx.embed.swing.SwingFXUtils;
-import javafx.scene.control.ListCell;
-import javafx.scene.control.ListView;
-import javafx.scene.control.TextField;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-
-import javax.swing.*;
-import javax.swing.filechooser.FileSystemView;
-import java.awt.image.BufferedImage;
 import java.io.*;
-import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.nio.channels.ReadableByteChannel;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.regex.Matcher;
 
 
-import static client_app.Action.COPY;
-import static client_app.Action.DELETE;
 import static client_app.MainWindowController.*;
 import static client_app.RegistrationWindowController.DELIMETER;
 
 public class FileOperations {
 
+    public static void multipleElementDownload(String sourcePath, String targetPath, String element, WorkPanel sourcePanel) throws IOException {
+        if (element.contains("f:")) {
+            download(sourcePath, targetPath, element, sourcePanel);
+        }
+        if (element.contains("d:")) {
+            String elementWithoutHead = element.replaceAll(".:","");
+            Path newTargetPath = Path.of(targetPath + elementWithoutHead);
+            Files.createDirectory(newTargetPath);
+            for (String files : sourcePanel.getNetworkManager().receiveFileList(sourcePath + File.separator + elementWithoutHead)) {
+                if (!files.isEmpty()) {
+                    multipleElementDownload((sourcePath + File.separator + elementWithoutHead), newTargetPath + File.separator, files, sourcePanel);
+                }
+            }
+        }
+    }
+
+    public static void multipleElementUpload(WorkPanel sourcePanel, WorkPanel targetPanel, String element) throws IOException {
+        Path source = Path.of(sourcePanel.getCurrentPath() + File.separator + element);
+        Path target = Path.of(targetPanel.getCurrentPath() + File.separator + element);
+        try {
+            Files.walkFileTree(source, new SimpleFileVisitor<Path>() {
+                @Override
+                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                    Path targetPath = target.resolve(source.relativize(dir));
+                    sourcePanel.getNetworkManager().makeDir(targetPath.toString());
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    upload(file.toString(), target.resolve(source.relativize(file)).toString(), sourcePanel);
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (FileAlreadyExistsException e) {
+            e.printStackTrace();
+        }
+    }
 
     public static void upload(String source, String target, WorkPanel sourcePanel) {
         try {
@@ -64,7 +85,6 @@ public class FileOperations {
             while (true) {
                 String[] serverAnswer = sourcePanel.getNetworkManager().queryStringListener();
                 if ("/status-ok".equals(serverAnswer[0].replace("\n", ""))) {
-                    updateAllFilesLists();
                     break;
                 }
             }
@@ -73,47 +93,8 @@ public class FileOperations {
         }
     }
 
-    public static void download(WorkPanel sourcePanel, WorkPanel targetPanel) {
-        File file = new File(targetPanel.getCurrentPath() + File.separator
-                + sourcePanel.getMarkedFileList().get(0).replaceAll(".:", ""));
-        long downloadFileLength = 0;
-        try {
-            out.write(("/download" + DELIMETER + sourcePanel.getCurrentPath() + File.separator
-                    + sourcePanel.getMarkedFileList().get(0).replaceAll(".:", "")).getBytes());
-            String[] serverAnswer = sourcePanel.getNetworkManager().queryStringListener();
-            if (!file.exists()) {
-                file.createNewFile();
-            }
-            while (true) {
-                if ("/download-ok".equals(serverAnswer[0])) {
-                    downloadFileLength = Long.parseLong(serverAnswer[1]);
-                    break;
-                }
-            }
-            out.write(" ".getBytes()); //отправляем для запуска процесса закачки, сервер готов, просто ждет сигнала
-            out.flush();
-            RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");
-            FileChannel fileChannel = randomAccessFile.getChannel();
-            while ((rbc.read(byteBuffer)) > 0) {
-                byteBuffer.flip();
-                fileChannel.position(file.length());
-                fileChannel.write(byteBuffer);
-                byteBuffer.compact();
-                if (file.length() == downloadFileLength) {
-                    updateAllFilesLists();
-                    break;
-                }
-            }
-            byteBuffer.clear();
-            fileChannel.close();
-            randomAccessFile.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public static void downloadElement(String source, String target, String element, WorkPanel sourcePanel) {
-        String filename = element.replaceAll(".:","");
+    public static void download(String source, String target, String element, WorkPanel sourcePanel) {
+        String filename = element.replaceAll(".:", "");
         File file = new File(target + filename);
         long downloadFileLength = 0;
         try {
@@ -138,7 +119,6 @@ public class FileOperations {
                 fileChannel.write(byteBuffer);
                 byteBuffer.compact();
                 if (file.length() == downloadFileLength) {
-                    updateAllFilesLists();
                     break;
                 }
             }
@@ -146,53 +126,6 @@ public class FileOperations {
             fileChannel.close();
             randomAccessFile.close();
         } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-//    public static void multipleDownload(WorkPanel sourcePanel, String sourcePath, String targetPath) throws IOException {
-//        if (element.contains("f:")) {
-//            Path source = Path.of(sourcePath + File.separator + element.replaceAll(".:", ""));
-//            download(sourcePanel, targetPanel);
-//        }
-//        if (sourcePath.contains("d:")) {
-//            Path directoryPath = Path.of(targetElement + File.separator + sourcePath.replaceAll(".:", ""));
-//            Files.createFile(directoryPath);
-//            for (String files : sourcePanel.getNetworkManager().receiveFileList(sourcePath + File.separator +)) {
-//
-//            }
-//        }
-
-
-//        for (String element: sourcePanel.getMarkedFileList()){
-//            if (element.contains("d:")){
-//                Files.createDirectory(Path.of(targetPath + File.separator + element.replaceAll(".:", "")));
-//                sourcePanel.getNetworkManager().receiveFileList(sourcePath.toString());
-//            }
-//        }
-//    }
-
-    public static void multipleElementUpload(WorkPanel sourcePanel, WorkPanel targetPanel, String element) throws IOException {
-        Path source = Path.of(sourcePanel.getCurrentPath() + File.separator + element);
-        Path target = Path.of(targetPanel.getCurrentPath() + File.separator + element);
-        try {
-            Files.walkFileTree(source, new SimpleFileVisitor<Path>() {
-                @Override
-                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-                    Path targetPath = target.resolve(source.relativize(dir));
-                    sourcePanel.getNetworkManager().makeDir(targetPath.toString());
-                    return FileVisitResult.CONTINUE;
-                }
-
-                @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                    upload(file.toString(), target.resolve(source.relativize(file)).toString(), sourcePanel);
-                    return FileVisitResult.CONTINUE;
-                }
-            });
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (FileAlreadyExistsException e) {
             e.printStackTrace();
         }
     }

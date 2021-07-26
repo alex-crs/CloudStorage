@@ -33,7 +33,7 @@ public class QuestionWindowStage extends Stage {
             case UPLOAD:
                 return "Загрузить файлы на сервер?";
             case DOWNLOAD:
-                return "Загрузить файл с сервера?";
+                return "Загрузить объект(ы) с сервера?";
         }
         return null;
     }
