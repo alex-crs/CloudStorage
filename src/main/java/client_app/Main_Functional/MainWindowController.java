@@ -122,6 +122,7 @@ public class MainWindowController implements Initializable {
     public static NumberFormat nf = NumberFormat.getNumberInstance();
     //спрашивать каждый раз при удалении или замене файла
     public static boolean isClarifyEveryTime = true;
+    float totalSpace;
     //----------------------------------------------------
 
     //...
@@ -156,7 +157,10 @@ public class MainWindowController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         try {
-            spaceCalc.setText(nf.format(Files.getFileStore(Path.of("c:\\")).getTotalSpace()));
+            String totalSpaceString = nf.format(Files.getFileStore(Path.of("c:\\")).getUnallocatedSpace());
+            totalSpace = Files.getFileStore(Path.of("c:\\")).getUnallocatedSpace();
+
+//            totalSpace = Float.parseFloat(total.toString());
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -313,7 +317,8 @@ public class MainWindowController implements Initializable {
         if (mouseEvent.getClickCount() == 1) {
             getCurrentActionCondition(leftWorkPanel, rightWorkPanel);
             rightWorkPanel.clearSelectionFiles();
-            leftWorkPanel.getSelectedFiles();
+            fileLengthView(leftWorkPanel);
+//            leftWorkPanel.getSelectedFiles();
 
         }
         if (mouseEvent.getClickCount() == 2) {
@@ -325,7 +330,8 @@ public class MainWindowController implements Initializable {
         if (mouseEvent.getClickCount() == 1) {
             getCurrentActionCondition(rightWorkPanel, leftWorkPanel);
             leftWorkPanel.clearSelectionFiles();
-            rightWorkPanel.getSelectedFiles();
+            fileLengthView(rightWorkPanel);
+//            rightWorkPanel.getSelectedFiles();
         }
         if (mouseEvent.getClickCount() == 2) {
             rightWorkPanel.treeMovement();
@@ -333,9 +339,22 @@ public class MainWindowController implements Initializable {
     }
     //--------------------------------------------------------------------------------
 
-    public void fileLengthView(WorkPanel workPanel){
-
+    public void fileLengthView(WorkPanel workPanel) {
+        float sumLength = 0;
+        File file;
+        int fileChoice = 0;
+        for (String elements : workPanel.getSelectedFiles()) {
+            file = new File(workPanel.getCurrentPath() + File.separator + elements);
+            if (file.exists()) {
+                sumLength = sumLength + file.length();
+                fileChoice++;
+            }
+        }
+        spaceCalc.setText("Выделено файлов " + fileChoice +
+                " Размер файла(ов) на диске " + String.format("%.2f", sumLength / 1000000) + " mb."
+                + "Доступно " + String.format("%.2f", totalSpace / 1000000) + " mb");
     }
+
 
     /*Проверяем текущий выделенный файл в окне (если например выделен файл в правом окне, то копируем в левый
      * если выделен в левом окне, то копируем в правое окно
@@ -379,8 +398,6 @@ public class MainWindowController implements Initializable {
                 qws.show();
                 break;
         }
-
-
     }
 
     public void deleteAction() throws IOException {
@@ -510,5 +527,5 @@ public class MainWindowController implements Initializable {
 /*Что доделать:
  * 1. Размер файла на диске
  * 2. Доступное место на диске
- * 3. Сортировка
+ * 3. Сортировка (готово)
  * 4. Ограничить место на диске*/

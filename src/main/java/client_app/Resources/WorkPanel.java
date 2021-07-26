@@ -381,8 +381,8 @@ public class WorkPanel {
         markedElementsListener.clearSelection();
     }
 
-    public void getSelectedFiles() {
-        markedFileList = markedElementsListener.getSelectedItems();
+    public ObservableList<String> getSelectedFiles() {
+        return markedElementsListener.getSelectedItems();
     }
 
     public Path getPathByElement(String element) {

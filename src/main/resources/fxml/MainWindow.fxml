@@ -56,14 +56,19 @@
                      <children>
                         <VBox prefHeight="200.0" prefWidth="200.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                            <children>
-                              <AnchorPane prefHeight="28.0" prefWidth="598.0">
+                              <AnchorPane prefHeight="89.0" prefWidth="598.0">
                                  <children>
-                                    <ChoiceBox fx:id="leftSortBox" prefWidth="150.0" />
-                                    <ChoiceBox fx:id="rightSortBox" prefWidth="150.0" AnchorPane.rightAnchor="0.0" />
-                                    <Label fx:id="spaceCalc" layoutX="292.0" layoutY="-1.0" prefHeight="28.0" prefWidth="298.0" text="Label" AnchorPane.leftAnchor="150.0" AnchorPane.rightAnchor="150.0" />
+                                    <Label fx:id="spaceCalc" layoutX="20.0" layoutY="3.0" prefHeight="32.0" prefWidth="598.0" text="Label" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
                                  </children>
                               </AnchorPane>
-                              <HBox prefHeight="37.0" prefWidth="598.0">
+                              <AnchorPane prefHeight="28.0" prefWidth="598.0">
+                                 <children>
+                                    <ChoiceBox fx:id="leftSortBox" layoutY="1.0" prefWidth="150.0" />
+                                    <ChoiceBox fx:id="rightSortBox" prefWidth="150.0" AnchorPane.rightAnchor="0.0" />
+                                 </children>
+                              </AnchorPane>
+                              <HBox prefHeight="37.0" prefWidth="598.0" />
+                              <HBox prefHeight="100.0" prefWidth="200.0">
                                  <children>
                                     <Button fx:id="copy" mnemonicParsing="false" onAction="#copyAction" text="copy" />
                                     <Button fx:id="delete" mnemonicParsing="false" onAction="#deleteAction" text="delete" />
