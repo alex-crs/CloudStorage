@@ -101,11 +101,10 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
                 break;
             case ("/download"):
                 file = new File(csUser.getRoot() + header[1]);
-                if (file.exists()) {
-
+                    ctx.writeAndFlush(Unpooled.wrappedBuffer(("/download-ok" + DELIMETER + file.length()).getBytes()));
+                if (file.length() > 0) {
+                    action = DOWNLOAD;
                 }
-                ctx.writeAndFlush(Unpooled.wrappedBuffer(("/download-ok" + DELIMETER + file.length()).getBytes()));
-                action = DOWNLOAD;
                 break;
             case ("/auth"):
                 tryToAuth(ctx, header);

@@ -18,9 +18,14 @@ public class FileOperations {
             download(sourcePath, targetPath, element, sourcePanel);
         }
         if (element.contains("d:")) {
-            String elementWithoutHead = element.replaceAll(".:","");
+            String elementWithoutHead = element.replaceAll(".:", "");
             Path newTargetPath = Path.of(targetPath + elementWithoutHead);
-            Files.createDirectory(newTargetPath);
+            if (!newTargetPath.toFile().exists()) {
+                Files.createDirectory(newTargetPath);
+            } else {
+                delete(new StringBuilder().append(targetPath), elementWithoutHead);
+                Files.createDirectory(newTargetPath);
+            }
             for (String files : sourcePanel.getNetworkManager().receiveFileList(sourcePath + File.separator + elementWithoutHead)) {
                 if (!files.isEmpty()) {
                     multipleElementDownload((sourcePath + File.separator + elementWithoutHead), newTargetPath + File.separator, files, sourcePanel);
@@ -81,11 +86,11 @@ public class FileOperations {
                 byteBuffer.clear();
                 randomAccessFile.close();
                 out.flush();
-            }
-            while (true) {
-                String[] serverAnswer = sourcePanel.getNetworkManager().queryStringListener();
-                if ("/status-ok".equals(serverAnswer[0])) {
-                    break;
+                while (true) {
+                    String[] serverAnswer = sourcePanel.getNetworkManager().queryStringListener();
+                    if ("/status-ok".equals(serverAnswer[0])) {
+                        break;
+                    }
                 }
             }
         } catch (IOException e) {
@@ -100,7 +105,10 @@ public class FileOperations {
         try {
             out.write(("/download" + DELIMETER + (source + File.separator + filename)).getBytes());
             String[] serverAnswer = sourcePanel.getNetworkManager().queryStringListener();
-            if (!file.exists()) {
+            if (file.exists()) {
+                delete(new StringBuilder().append(target), filename);
+                file.createNewFile();
+            } else {
                 file.createNewFile();
             }
             while (true) {
@@ -109,22 +117,26 @@ public class FileOperations {
                     break;
                 }
             }
-            out.write(" ".getBytes()); //отправляем для запуска процесса закачки, сервер готов, просто ждет сигнала
-            out.flush();
-            RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");
-            FileChannel fileChannel = randomAccessFile.getChannel();
-            while ((rbc.read(byteBuffer)) > 0) {
-                byteBuffer.flip();
-                fileChannel.position(file.length());
-                fileChannel.write(byteBuffer);
-                byteBuffer.compact();
-                if (file.length() == downloadFileLength) {
-                    break;
+            RandomAccessFile randomAccessFile = null;
+            FileChannel fileChannel = null;
+            if (downloadFileLength > 0) {
+                out.write(" ".getBytes()); //отправляем для запуска процесса закачки, сервер готов, просто ждет сигнала
+                out.flush();
+                randomAccessFile = new RandomAccessFile(file, "rw");
+                fileChannel = randomAccessFile.getChannel();
+                while ((rbc.read(byteBuffer)) > 0) {
+                    byteBuffer.flip();
+                    fileChannel.position(file.length());
+                    fileChannel.write(byteBuffer);
+                    byteBuffer.compact();
+                    if (file.length() == downloadFileLength) {
+                        break;
+                    }
                 }
+                fileChannel.close();
+                randomAccessFile.close();
             }
             byteBuffer.clear();
-            fileChannel.close();
-            randomAccessFile.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
