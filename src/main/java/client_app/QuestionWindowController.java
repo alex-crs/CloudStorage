@@ -149,7 +149,7 @@ public class QuestionWindowController implements Initializable {
                 case UPLOAD:
 
                     for (String element : sourcePanel.getMarkedFileList()) {
-                        multipleElementCopy(sourcePanel, targetPanel, element);
+                        multipleElementUpload(sourcePanel, targetPanel, element);
                         sourcePanel.showDirectory();
                         targetPanel.showDirectory();
                     }
@@ -157,7 +157,11 @@ public class QuestionWindowController implements Initializable {
                     closeButton();
                     break;
                 case DOWNLOAD:
-                    download(sourcePanel,targetPanel);
+                    downloadElement((sourcePanel.getCurrentPath() + File.separator
+                                    + sourcePanel.getMarkedFileList().get(0).replaceAll(".:", "")),
+                            (targetPanel.getCurrentPath().toString()
+                                    + sourcePanel.getMarkedFileList().get(0).replaceAll(".:", "")), sourcePanel);
+//                    download(sourcePanel,targetPanel);
                     closeButton();
                     break;
             }

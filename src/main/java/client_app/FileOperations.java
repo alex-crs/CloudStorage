@@ -30,6 +30,7 @@ import static client_app.RegistrationWindowController.DELIMETER;
 
 public class FileOperations {
 
+
     public static void upload(String source, String target, WorkPanel sourcePanel) {
         try {
             File sourceObject = new File(source);
@@ -73,45 +74,105 @@ public class FileOperations {
     }
 
     public static void download(WorkPanel sourcePanel, WorkPanel targetPanel) {
-            File file = new File(targetPanel.getCurrentPath() + File.separator
-                    + sourcePanel.getMarkedFileList().get(0).replaceAll(".:", ""));
-            long downloadFileLength = 0;
-            try {
-                out.write(("/download" + DELIMETER + sourcePanel.getCurrentPath() + File.separator
-                        + sourcePanel.getMarkedFileList().get(0).replaceAll(".:", "")).getBytes());
-                String[] serverAnswer = sourcePanel.getNetworkManager().queryStringListener();
-                if (!file.exists()) {
-                    file.createNewFile();
-                }
-                while (true) {
-                    if ("/download-ok".equals(serverAnswer[0])) {
-                        downloadFileLength = Long.parseLong(serverAnswer[1]);
-                        break;
-                    }
-                }
-                out.write(" ".getBytes());
-                out.flush();
-                RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");
-                FileChannel fileChannel = randomAccessFile.getChannel();
-                while ((rbc.read(byteBuffer)) > 0) {
-                    byteBuffer.flip();
-                    fileChannel.position(file.length());
-                    fileChannel.write(byteBuffer);
-                    byteBuffer.compact();
-                    if (file.length() == downloadFileLength) {
-                        updateAllFilesLists();
-                        break;
-                    }
-                }
-                byteBuffer.clear();
-                fileChannel.close();
-                randomAccessFile.close();
-            } catch (IOException e) {
-                e.printStackTrace();
+        File file = new File(targetPanel.getCurrentPath() + File.separator
+                + sourcePanel.getMarkedFileList().get(0).replaceAll(".:", ""));
+        long downloadFileLength = 0;
+        try {
+            out.write(("/download" + DELIMETER + sourcePanel.getCurrentPath() + File.separator
+                    + sourcePanel.getMarkedFileList().get(0).replaceAll(".:", "")).getBytes());
+            String[] serverAnswer = sourcePanel.getNetworkManager().queryStringListener();
+            if (!file.exists()) {
+                file.createNewFile();
             }
+            while (true) {
+                if ("/download-ok".equals(serverAnswer[0])) {
+                    downloadFileLength = Long.parseLong(serverAnswer[1]);
+                    break;
+                }
+            }
+            out.write(" ".getBytes()); //отправляем для запуска процесса закачки, сервер готов, просто ждет сигнала
+            out.flush();
+            RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");
+            FileChannel fileChannel = randomAccessFile.getChannel();
+            while ((rbc.read(byteBuffer)) > 0) {
+                byteBuffer.flip();
+                fileChannel.position(file.length());
+                fileChannel.write(byteBuffer);
+                byteBuffer.compact();
+                if (file.length() == downloadFileLength) {
+                    updateAllFilesLists();
+                    break;
+                }
+            }
+            byteBuffer.clear();
+            fileChannel.close();
+            randomAccessFile.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
-    public static void multipleElementCopy(WorkPanel sourcePanel, WorkPanel targetPanel, String element) throws IOException {
+    public static void downloadElement(String source, String target, WorkPanel sourcePanel) {
+        File file = new File(target);
+        long downloadFileLength = 0;
+        try {
+            out.write(("/download" + DELIMETER + source).getBytes());
+            String[] serverAnswer = sourcePanel.getNetworkManager().queryStringListener();
+            if (!file.exists()) {
+                file.createNewFile();
+            }
+            while (true) {
+                if ("/download-ok".equals(serverAnswer[0])) {
+                    downloadFileLength = Long.parseLong(serverAnswer[1]);
+                    break;
+                }
+            }
+            out.write(" ".getBytes()); //отправляем для запуска процесса закачки, сервер готов, просто ждет сигнала
+            out.flush();
+            RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");
+            FileChannel fileChannel = randomAccessFile.getChannel();
+            while ((rbc.read(byteBuffer)) > 0) {
+                byteBuffer.flip();
+                fileChannel.position(file.length());
+                fileChannel.write(byteBuffer);
+                byteBuffer.compact();
+                if (file.length() == downloadFileLength) {
+                    updateAllFilesLists();
+                    break;
+                }
+            }
+            byteBuffer.clear();
+            fileChannel.close();
+            randomAccessFile.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    //C:\program\folder       //server\program
+//    public static void multipleDownload(WorkPanel sourcePanel, WorkPanel targetPanel, String sourcePath, String targetPath, String element) throws IOException {
+//        if (element.contains("f:")) {
+//            Path source = Path.of(sourcePath + File.separator + element.replaceAll(".:", ""));
+//            download(sourcePanel, targetPanel);
+//        }
+//        if (sourcePath.contains("d:")) {
+//            Path directoryPath = Path.of(targetElement + File.separator + sourcePath.replaceAll(".:", ""));
+//            Files.createFile(directoryPath);
+//            for (String files : sourcePanel.getNetworkManager().receiveFileList(sourcePath + File.separator +)) {
+//
+//            }
+//        }
+
+
+//        for (String element: sourcePanel.getMarkedFileList()){
+//            if (element.contains("d:")){
+//                Files.createDirectory(Path.of(targetPath + File.separator + element.replaceAll(".:", "")));
+//                sourcePanel.getNetworkManager().receiveFileList(sourcePath.toString());
+//            }
+//        }
+//    }
+
+    public static void multipleElementUpload(WorkPanel sourcePanel, WorkPanel targetPanel, String element) throws IOException {
         Path source = Path.of(sourcePanel.getCurrentPath() + File.separator + element);
         Path target = Path.of(targetPanel.getCurrentPath() + File.separator + element);
         try {
@@ -125,7 +186,7 @@ public class FileOperations {
 
                 @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                    upload(file.toString(), target.resolve(source.relativize(file)).toString(),sourcePanel);
+                    upload(file.toString(), target.resolve(source.relativize(file)).toString(), sourcePanel);
                     return FileVisitResult.CONTINUE;
                 }
             });
@@ -135,7 +196,6 @@ public class FileOperations {
             e.printStackTrace();
         }
     }
-
 
 
     /*Метод для копирования по заданному пути. Необходимо передать текущую директорию для обновления списка файлов

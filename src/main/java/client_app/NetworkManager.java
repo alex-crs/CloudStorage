@@ -45,6 +45,16 @@ public class NetworkManager {
         return queryStringListener();
     }
 
+    public synchronized String[] receiveFileList(String path) {
+        try {
+            out.write(("/ls" + DELIMETER + path + File.separator).getBytes());
+            out.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return queryStringListener();
+    }
+
     public synchronized String[] queryStringListener() {
         int readNumberBytes = 0;
         try {
