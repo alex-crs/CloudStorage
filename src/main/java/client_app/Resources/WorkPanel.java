@@ -59,20 +59,16 @@ public class WorkPanel {
 
         sortBox.setOnAction((event -> {
             if ("Прямая по имени".equals(sortBox.getSelectionModel().getSelectedItem())) {
-                sortType = 1;
-                showDirectory();
+                setSortType(1);
             }
             if ("Обратная по имени".equals(sortBox.getSelectionModel().getSelectedItem())) {
-                sortType = 2;
-                showDirectory();
+                setSortType(2);
             }
             if ("Прямая по типу объекта".equals(sortBox.getSelectionModel().getSelectedItem())) {
-                sortType = 3;
-                showDirectory();
+                setSortType(3);
             }
             if ("Обратная по типу объекта".equals(sortBox.getSelectionModel().getSelectedItem())) {
-                sortType = 4;
-                showDirectory();
+                setSortType(4);
             }
         }));
     }
@@ -151,16 +147,18 @@ public class WorkPanel {
                 Arrays.sort(fileArray, Collections.reverseOrder());
                 sortByFolders(fileArray);
             }
-        } else {
-            if (sortType == 2) {
-                Arrays.sort(fileArray, Collections.reverseOrder());
-            }
-            if (sortType == 3) {
-                sortByFolders(fileArray);
-            }
-            if (sortType == 4) {
-                Arrays.sort(fileArray, Collections.reverseOrder());
-                sortByFolders(fileArray);
+        }
+    }
+
+    private void setSortType(int i) {
+        if (!isOnline) {
+            sortType = i;
+            showDirectory();
+        }
+        if (isOnline) {
+            int answer = networkManager.sortRemoteObjects(i);
+            if (answer > 0) {
+                showDirectory();
             }
         }
     }
@@ -177,9 +175,16 @@ public class WorkPanel {
                 folders.add(element);
             }
         }
-        folders.addAll(files);
+        if (sortType==3) {
+            folders.addAll(files);
         for (int i = 0; i < fileArray.length; i++) {
             fileArray[i] = folders.get(i);
+        }
+        } else {
+            files.addAll(folders);
+            for (int i = 0; i < fileArray.length; i++) {
+                fileArray[i] = files.get(i);
+            }
         }
     }
 

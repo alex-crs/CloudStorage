@@ -138,6 +138,10 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
             case ("/copy"):
                 copy(csUser, header[1], header[2], ctx);
                 break;
+            case ("/sort"):
+                setSortType(Integer.parseInt(header[1]));
+                ctx.writeAndFlush(Unpooled.wrappedBuffer(("/status-ok").getBytes()));
+                break;
         }
     }
 

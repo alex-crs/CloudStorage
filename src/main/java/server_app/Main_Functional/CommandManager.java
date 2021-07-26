@@ -14,11 +14,19 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 
 import static server_app.Handlers.MainHandler.*;
 
 public class CommandManager {
+
+    public static int sortType = 1;
+
+    public static void setSortType(int sortType) {
+        CommandManager.sortType = sortType;
+    }
 
     public static void uploadFile(ChannelHandlerContext ctx, Object msg, File file, long transferFileLength) {
         ByteBuf byteBuf = (ByteBuf) msg;
@@ -83,19 +91,6 @@ public class CommandManager {
         ctx.writeAndFlush(Unpooled.wrappedBuffer(("/status-ok").getBytes()));
     }
 
-    public static String getFilesList(CSUser client, String path) {
-        String[] directoryElements = new File(client.getRoot() + path).list();
-        for (int i = 0; i < directoryElements.length; i++) {
-            File file = new File(client.getRoot() + path + directoryElements[i]);
-            if (file.isDirectory()) {
-                directoryElements[i] = "d:" + directoryElements[i];
-            } else if (file.isFile()) {
-                directoryElements[i] = "f:" + directoryElements[i];
-            }
-        }
-        return String.join(DELIMETER, directoryElements);
-    }
-
     public static void makeDir(CSUser user, String fileName, ChannelHandlerContext ctx) {
         try {
             Files.createDirectory(Path.of(user.getRoot() + fileName));
@@ -134,7 +129,61 @@ public class CommandManager {
                 return FileVisitResult.CONTINUE;
             }
         });
+    }
+
+    //получение листа файлов на сервере
+    public static String getFilesList(CSUser client, String path) {
+        String[] directoryElements = new File(client.getRoot() + path).list();
+        directorySort(client, directoryElements, path);
+        for (int i = 0; i < directoryElements.length; i++) {
+            File file = new File(client.getRoot() + path + directoryElements[i]);
+            if (file.isDirectory()) {
+                directoryElements[i] = "d:" + directoryElements[i];
+            } else if (file.isFile()) {
+                directoryElements[i] = "f:" + directoryElements[i];
+            }
+        }
+        return String.join(DELIMETER, directoryElements);
+    }
+
+    private static void directorySort(CSUser client, String[] fileArray, String path) {
+        if (sortType == 2) {
+            Arrays.sort(fileArray, Collections.reverseOrder());
+        }
+        if (sortType == 3) {
+            sortByFolders(client, fileArray, path);
+        }
+        if (sortType == 4) {
+            Arrays.sort(fileArray, Collections.reverseOrder());
+            sortByFolders(client, fileArray, path);
+        }
 
     }
+
+    private static void sortByFolders(CSUser client, String[] fileArray, String path) {
+        ArrayList<String> folders = new ArrayList<>();
+        ArrayList<String> files = new ArrayList<>();
+        File file;
+        for (String element : fileArray) {
+            file = new File(client.getRoot() + File.separator + element);
+            if (file.isFile()) {
+                files.add(element);
+            } else {
+                folders.add(element);
+            }
+        }
+        if (sortType == 3) {
+            folders.addAll(files);
+            for (int i = 0; i < fileArray.length; i++) {
+                fileArray[i] = folders.get(i);
+            }
+        } else {
+            files.addAll(folders);
+            for (int i = 0; i < fileArray.length; i++) {
+                fileArray[i] = files.get(i);
+            }
+        }
+    }
+
 
 }
