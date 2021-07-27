@@ -1,10 +1,7 @@
 package server_app.Main_Functional;
 
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.EventLoopGroup;
+import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import org.apache.log4j.Logger;
@@ -32,6 +29,7 @@ public class Server {
                             channel.pipeline().addLast(
                                     new ByteBufEncoder(),
                                     new MainHandler());
+                            channel.config().setRecvByteBufAllocator(new FixedRecvByteBufAllocator(8096));
                         }
                     });
             ChannelFuture future = bootstrap.bind(5679).sync();

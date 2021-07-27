@@ -30,7 +30,7 @@ public class NetworkManager {
         this.threadManager = threadManager;
     }
 
-    public synchronized String[] receiveFileList(StringBuilder path) {
+    public String[] receiveFileList(StringBuilder path) {
         try {
             out.write(("/ls" + DELIMETER + path + File.separator).getBytes());
             out.flush();
@@ -40,7 +40,7 @@ public class NetworkManager {
         return queryStringListener();
     }
 
-    public synchronized String[] receiveFileList(String path) {
+    public String[] receiveFileList(String path) {
         try {
             out.write(("/ls" + DELIMETER + path + File.separator).getBytes());
             out.flush();
@@ -50,7 +50,7 @@ public class NetworkManager {
         return queryStringListener();
     }
 
-    public synchronized String[] queryStringListener() {
+    public String[] queryStringListener() {
         int readNumberBytes = 0;
         try {
             readNumberBytes = rbc.read(byteBuffer);

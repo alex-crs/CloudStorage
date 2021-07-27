@@ -37,46 +37,6 @@ public class WorkPanel {
     float totalSpace;
     private String root;
 
-
-    public WorkPanel(String path, ListView<String> listView, TextField pathView, ChoiceBox<String> sortBox) {
-        this.root = path;
-        this.isOnline = false;
-        this.pathView = pathView;
-        this.listView = listView;
-        this.sortBox = sortBox;
-        this.currentPath = new StringBuilder();
-        currentPath.append(path);
-        this.markedFileList = FXCollections.emptyObservableList();
-        this.markedElementsListener = listView.getSelectionModel();
-        this.markedElementsListener.setSelectionMode(SelectionMode.MULTIPLE);
-        try {
-            totalSpace = Files.getFileStore(Path.of(path)).getUnallocatedSpace();
-            tempPath = Files.createTempDirectory(Path.of(path + File.separator + "temp"), "");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        sortBox.getItems().add("Прямая по имени");  //Тип 1
-        sortBox.getItems().add("Обратная по имени"); //Тип 2
-        sortBox.getItems().add("Прямая по типу объекта"); //Тип 3
-        sortBox.getItems().add("Обратная по типу объекта"); //Тип 4
-        sortBox.setValue("Прямая по имени");
-
-        sortBox.setOnAction((event -> {
-            if ("Прямая по имени".equals(sortBox.getSelectionModel().getSelectedItem())) {
-                setSortType(1);
-            }
-            if ("Обратная по имени".equals(sortBox.getSelectionModel().getSelectedItem())) {
-                setSortType(2);
-            }
-            if ("Прямая по типу объекта".equals(sortBox.getSelectionModel().getSelectedItem())) {
-                setSortType(3);
-            }
-            if ("Обратная по типу объекта".equals(sortBox.getSelectionModel().getSelectedItem())) {
-                setSortType(4);
-            }
-        }));
-    }
-
     public float getTotalSpace() {
         return totalSpace;
     }
@@ -122,6 +82,45 @@ public class WorkPanel {
         }
     }
 
+    public WorkPanel(String path, ListView<String> listView, TextField pathView, ChoiceBox<String> sortBox) {
+        this.root = path;
+        this.isOnline = false;
+        this.pathView = pathView;
+        this.listView = listView;
+        this.sortBox = sortBox;
+        this.currentPath = new StringBuilder();
+        currentPath.append(path);
+        this.markedFileList = FXCollections.emptyObservableList();
+        this.markedElementsListener = listView.getSelectionModel();
+        this.markedElementsListener.setSelectionMode(SelectionMode.MULTIPLE);
+        try {
+            totalSpace = Files.getFileStore(Path.of(root)).getUnallocatedSpace();
+            tempPath = Files.createTempDirectory(Path.of(path + File.separator + "temp"), "");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        sortBox.getItems().add("Прямая по имени");  //Тип 1
+        sortBox.getItems().add("Обратная по имени"); //Тип 2
+        sortBox.getItems().add("Прямая по типу объекта"); //Тип 3
+        sortBox.getItems().add("Обратная по типу объекта"); //Тип 4
+        sortBox.setValue("Прямая по имени");
+
+        sortBox.setOnAction((event -> {
+            if ("Прямая по имени".equals(sortBox.getSelectionModel().getSelectedItem())) {
+                setSortType(1);
+            }
+            if ("Обратная по имени".equals(sortBox.getSelectionModel().getSelectedItem())) {
+                setSortType(2);
+            }
+            if ("Прямая по типу объекта".equals(sortBox.getSelectionModel().getSelectedItem())) {
+                setSortType(3);
+            }
+            if ("Обратная по типу объекта".equals(sortBox.getSelectionModel().getSelectedItem())) {
+                setSortType(4);
+            }
+        }));
+    }
+
     private void listViewInitialise(String[] tokens) {
         Platform.runLater(new Runnable() {
             @Override
@@ -141,6 +140,20 @@ public class WorkPanel {
                 }
             }
         });
+    }
+
+    public float getAvailableSpace() {
+        try {
+            if (!isOnline) {
+                totalSpace = Files.getFileStore(Path.of(root)).getUnallocatedSpace();
+            } else {
+
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return totalSpace;
     }
 
     private void directorySort(String[] fileArray) {
@@ -194,6 +207,36 @@ public class WorkPanel {
                 fileArray[i] = files.get(i);
             }
         }
+    }
+
+    public String fileLengthView() {
+        File file;
+        float sumLength = 0;
+        int fileChoice = 0;
+        for (String elements : getSelectedFiles()) {
+            file = new File(getCurrentPath() + File.separator + elements);
+            if (file.exists() && file.isFile()) {
+                sumLength = sumLength + file.length();
+                fileChoice++;
+            }
+        }
+        float availableSpace = getAvailableSpace();
+        return "Выделено объектов " + fileChoice + "." +
+                " Размер файла(ов) на диске " + spaceToString(sumLength) + "."
+                + " Доступно " + spaceToString(availableSpace);
+    }
+
+    public String spaceToString(float digit) {
+        if (digit < 1000) {
+            return String.format("%.0f byte", digit);
+        } else if (digit < 1000000) {
+            return String.format("%.0f kb", digit / 1000);
+        } else if (digit < 1000000000) {
+            return String.format("%.2f mb", digit / 1000000);
+        } else if (digit < 1000000000000L) {
+            return String.format("%.2f Gb", digit / 1000000000L);
+        }
+        return digit + "bytes";
     }
 
     private void showLocalDirectory() {

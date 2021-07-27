@@ -57,7 +57,7 @@
                            <children>
                               <AnchorPane prefHeight="89.0" prefWidth="598.0">
                                  <children>
-                                    <Label fx:id="spaceCalc" layoutX="20.0" layoutY="3.0" prefHeight="74.0" prefWidth="598.0" text="Label" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                                    <Label fx:id="spaceCalc" layoutX="20.0" layoutY="3.0" prefHeight="74.0" prefWidth="598.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
                                  </children>
                               </AnchorPane>
                               <AnchorPane prefHeight="117.0" prefWidth="598.0">
@@ -68,8 +68,9 @@
                                     <Button fx:id="delete" layoutX="280.0" layoutY="26.0" mnemonicParsing="false" onAction="#deleteAction" text="Delete F8" />
                                     <Button fx:id="rename" layoutX="113.0" layoutY="26.0" mnemonicParsing="false" onAction="#renameAction" text="Rename F6" />
                                     <Button fx:id="newButton" layoutX="188.0" layoutY="26.0" mnemonicParsing="false" onAction="#makeDirAction" text="New object F7" />
-                                    <Button fx:id="move" layoutX="429.0" layoutY="26.0" mnemonicParsing="false" onAction="#moveAction" text="Move F9" />
-                                    <Button fx:id="sourceTarget" layoutX="408.0" layoutY="26.0" mnemonicParsing="false" onAction="#sourceEquallyTarget" text="source=target F2" AnchorPane.rightAnchor="0.0" />
+                                    <Button fx:id="move" layoutX="429.0" layoutY="26.0" mnemonicParsing="false" onAction="#moveAction" text="Move F9" AnchorPane.leftAnchor="400.0" />
+                                    <Button fx:id="sourceTarget" layoutX="408.0" layoutY="26.0" mnemonicParsing="false" onAction="#sourceEquallyTarget" text="source=target F2" AnchorPane.leftAnchor="490.0" AnchorPane.rightAnchor="0.0" />
+                                    <Button fx:id="searchBtn" layoutX="346.0" layoutY="26.0" mnemonicParsing="false" onAction="#searchWindow" text="Search" />
                                  </children>
                               </AnchorPane>
                            </children>

@@ -30,7 +30,6 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
     private static Action action = WAIT;
     private static File file;
     private static long transferFileLength;
-    private static Action transferOptions;
     private static final String READY_STATUS = "/upload-ok";
     public static String DELIMETER = ";";
     private static CSUser csUser;
@@ -69,6 +68,7 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         System.out.println("Client disconnected " + ctx.channel().localAddress());
+        csUser = null;
     }
 
     public void stringListener(ChannelHandlerContext ctx, Object msg) throws IOException {
@@ -78,77 +78,83 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
                 .replace("\r", "")
                 .split(DELIMETER, 0);
         LOGGER.info(String.format("Received header with content: [%s]", byteBuf.toString(StandardCharsets.UTF_8)));
+
+        //по умолчанию доступна только авторизация и регистрация
+        //доступ к остальным функциям только после авторизации
         switch (header[0]) {
-            case ("/upload"):
-                if ("f".equals(header[1])) {
-                    file = new File(csUser.getRoot() + header[2]);
-                    transferFileLength = Long.parseLong(header[3]);
-                    if (file.exists()) {
-                        removeFileOrDirectory(csUser, header[2], ctx);
-                    }
-                    if (!file.exists()) {
-                        file.createNewFile();
-                        ctx.writeAndFlush(Unpooled.wrappedBuffer(("/status-ok").getBytes()));
-                    }
-                    if (transferFileLength != 0) {
-                        action = UPLOAD;
-                    }
-                }
-                if ("d".equals(header[1])) {
-                    Files.createDirectory(Path.of(csUser.getCurrentPath() + File.separator + header[2]));
-                    ctx.writeAndFlush(Unpooled.wrappedBuffer(("/status-ok").getBytes()));
-                }
-                break;
-            case ("/download"):
-                file = new File(csUser.getRoot() + header[1]);
-                    ctx.writeAndFlush(Unpooled.wrappedBuffer(("/download-ok" + DELIMETER + file.length()).getBytes()));
-                if (file.length() > 0) {
-                    action = DOWNLOAD;
-                }
-                break;
             case ("/auth"):
                 tryToAuth(ctx, header);
                 break;
             case ("/signup"):
                 tryToReg(ctx, header);
                 break;
-            case ("/ls"):
-                ctx.writeAndFlush(Unpooled.wrappedBuffer((DELIMETER + getFilesList(csUser, header[1])).getBytes()));
-                break;
-            case ("/cd"):
-                File file = new File(csUser.getRoot() + header[1]);
-                if (file.exists()) {
+        }
+        if (csUser != null) {
+            switch (header[0]) {
+                case ("/upload"):
+                    if ("f".equals(header[1])) {
+                        file = new File(csUser.getRoot() + header[2]);
+                        transferFileLength = Long.parseLong(header[3]);
+                        if (file.exists()) {
+                            removeFileOrDirectory(csUser, header[2], ctx);
+                        }
+                        if (!file.exists()) {
+                            file.createNewFile();
+                            ctx.writeAndFlush(Unpooled.wrappedBuffer(("/status-ok").getBytes()));
+                        }
+                        if (transferFileLength != 0) {
+                            action = UPLOAD;
+                        }
+                    }
+                    if ("d".equals(header[1])) {
+                        Files.createDirectory(Path.of(csUser.getCurrentPath() + File.separator + header[2]));
+                        ctx.writeAndFlush(Unpooled.wrappedBuffer(("/status-ok").getBytes()));
+                    }
+                    break;
+                case ("/download"):
+                    file = new File(csUser.getRoot() + header[1]);
+                    ctx.writeAndFlush(Unpooled.wrappedBuffer(("/download-ok" + DELIMETER + file.length()).getBytes()));
+                    if (file.length() > 0) {
+                        action = DOWNLOAD;
+                    }
+                    LOGGER.info(String.format("Output header content: [%s]", "/download-ok" + DELIMETER + file.length()));
+                    break;
+                case ("/ls"):
+                    ctx.writeAndFlush(Unpooled.wrappedBuffer((DELIMETER + getFilesList(csUser, header[1])).getBytes()));
+                    break;
+                case ("/cd"):
+                    File file = new File(csUser.getRoot() + header[1]);
+                    if (file.exists()) {
+                        ctx.writeAndFlush(Unpooled.wrappedBuffer(("/status-ok").getBytes()));
+                    }
+                    break;
+                case ("/mkdir"):
+                    makeDir(csUser, header[1], ctx);
+                    break;
+                case ("/touch"):
+                    touchFile(csUser, header[1], ctx);
+                    break;
+                case ("/rename"):
+                    renameDir(csUser, header[1], header[2]);
                     ctx.writeAndFlush(Unpooled.wrappedBuffer(("/status-ok").getBytes()));
-                }
-                break;
-            case ("/mkdir"):
-                makeDir(csUser, header[1], ctx);
-                break;
-            case ("/touch"):
-                touchFile(csUser, header[1], ctx);
-                break;
-            case ("/rename"):
-                renameDir(csUser, header[1], header[2]);
-                ctx.writeAndFlush(Unpooled.wrappedBuffer(("/status-ok").getBytes()));
-                break;
-            case ("/delete"):
-                removeFileOrDirectory(csUser, header[1], ctx);
-                ctx.writeAndFlush(Unpooled.wrappedBuffer(("/status-ok").getBytes()));
-                break;
-            case ("/copy"):
-                copy(csUser, header[1], header[2], ctx);
-                break;
-            case ("/sort"):
-                setSortType(Integer.parseInt(header[1]));
-                ctx.writeAndFlush(Unpooled.wrappedBuffer(("/status-ok").getBytes()));
-                break;
+                    break;
+                case ("/delete"):
+                    removeFileOrDirectory(csUser, header[1], ctx);
+                    ctx.writeAndFlush(Unpooled.wrappedBuffer(("/status-ok").getBytes()));
+                    break;
+                case ("/copy"):
+                    copy(csUser, header[1], header[2], ctx);
+                    break;
+                case ("/sort"):
+                    setSortType(Integer.parseInt(header[1]));
+                    ctx.writeAndFlush(Unpooled.wrappedBuffer(("/status-ok").getBytes()));
+                    break;
+            }
         }
     }
 
-
     public static void setWaitAction() {
         file = null;
-        transferOptions = null;
         transferFileLength = 0;
         action = WAIT;
     }

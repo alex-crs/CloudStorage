@@ -6,6 +6,7 @@ import client_app.QuestionWindow.QuestionWindowStage;
 import client_app.Registration.RegistrationWindowStage;
 import client_app.Resources.Action;
 import client_app.Resources.WorkPanel;
+import client_app.SearchWindow.SearchWindowStage;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -65,6 +66,9 @@ public class MainWindowController implements Initializable {
 
     @FXML
     Button authCancelButton;
+
+    @FXML
+    Button searchBtn;
 
     @FXML
     Label authInfo;
@@ -162,6 +166,7 @@ public class MainWindowController implements Initializable {
         rename.setFocusTraversable(false);
         newButton.setFocusTraversable(false);
         move.setFocusTraversable(false);
+        searchBtn.setFocusTraversable(false);
         leftPathView.setFocusTraversable(false);
         rightPathView.setFocusTraversable(false);
         sourceTarget.setFocusTraversable(false);
@@ -307,7 +312,7 @@ public class MainWindowController implements Initializable {
             getCurrentActionCondition(leftWorkPanel, rightWorkPanel);
             rightWorkPanel.clearSelectionFiles();
             leftWorkPanel.addElementsToWorkPanel();
-            fileLengthView(leftWorkPanel);
+            spaceCalc.setText(leftWorkPanel.fileLengthView());
 
         }
         if (mouseEvent.getClickCount() == 2) {
@@ -320,42 +325,13 @@ public class MainWindowController implements Initializable {
             getCurrentActionCondition(rightWorkPanel, leftWorkPanel);
             leftWorkPanel.clearSelectionFiles();
             rightWorkPanel.addElementsToWorkPanel();
-            fileLengthView(rightWorkPanel);
+            spaceCalc.setText(rightWorkPanel.fileLengthView());
         }
         if (mouseEvent.getClickCount() == 2) {
             rightWorkPanel.treeMovement();
         }
     }
     //--------------------------------------------------------------------------------
-
-    public void fileLengthView(WorkPanel workPanel) {
-        float sumLength = 0;
-        File file;
-        int fileChoice = 0;
-        for (String elements : workPanel.getSelectedFiles()) {
-            file = new File(workPanel.getCurrentPath() + File.separator + elements);
-            if (file.exists()) {
-                sumLength = sumLength + file.length();
-                fileChoice++;
-            }
-        }
-        String markedFilesLength = "";
-        if (sumLength < 1000) {
-            markedFilesLength = String.format("%.0f byte", sumLength);
-        } else if (sumLength < 1000000) {
-            markedFilesLength = String.format("%.0f kb", sumLength / 1000);
-        } else if (sumLength < 1000000000) {
-            markedFilesLength = String.format("%.2f mb", sumLength / 1000000);
-        } else if (sumLength < 1000000000000L) {
-            markedFilesLength = String.format("%.2f Gb", sumLength / 1000000000L);
-        }
-
-        String availableSpace = String.format("%.0f", workPanel.getTotalSpace() / 1000000000);
-
-        spaceCalc.setText("Выделено объектов " + fileChoice + "." +
-                " Размер файла(ов) на диске " + markedFilesLength + "." + " Доступно " + availableSpace + " Gb");
-    }
-
 
     /*Проверяем текущий выделенный файл в окне (если например выделен файл в правом окне, то копируем в левый
      * если выделен в левом окне, то копируем в правое окно
@@ -515,6 +491,25 @@ public class MainWindowController implements Initializable {
         rs.setResizable(false);
         rs.show();
     }
+
+    public void searchWindow() {
+        if (leftWorkPanel.getListView().isFocused()) { //выделенное окно слева
+            SearchWindowStage sws = new SearchWindowStage(leftWorkPanel, rightWorkPanel);
+            sws.setMinWidth(400);
+            sws.setMinHeight(150);
+            sws.show();
+            //по умолчанию для поиска будет передан текущий путь левого окна
+        }
+        if (rightWorkPanel.getListView().isFocused()) { //выделенное окно справа
+            SearchWindowStage sws = new SearchWindowStage(rightWorkPanel, leftWorkPanel);
+            sws.setMinWidth(400);
+            sws.setMinHeight(150);
+            sws.show();
+            //по умолчанию для поиска будет передан текущий путь правого окна
+        }
+    }
+
+
 }
 
 /*Обнаруженные косяки:
@@ -526,7 +521,7 @@ public class MainWindowController implements Initializable {
  *    а обновляется онлайн директория)*/
 
 /*Что доделать:
- * 1. Размер файла на диске
- * 2. Доступное место на диске
+ * 1. Размер файла на диске (пока только локально)
+ * 2. Доступное место на диске (пока только локально)
  * 3. Сортировка (готово)
  * 4. Ограничить место на диске*/

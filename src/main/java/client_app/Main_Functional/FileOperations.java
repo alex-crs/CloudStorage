@@ -26,9 +26,10 @@ public class FileOperations {
                 delete(new StringBuilder().append(targetPath), elementWithoutHead);
                 Files.createDirectory(newTargetPath);
             }
-            for (String files : sourcePanel.getNetworkManager().receiveFileList(sourcePath + File.separator + elementWithoutHead)) {
+            String newSourcePath = sourcePath + File.separator + elementWithoutHead;
+            for (String files : sourcePanel.getNetworkManager().receiveFileList(newSourcePath)) {
                 if (!files.isEmpty()) {
-                    multipleElementDownload((sourcePath + File.separator + elementWithoutHead), newTargetPath + File.separator, files, sourcePanel);
+                    multipleElementDownload((newSourcePath), newTargetPath + File.separator, files, sourcePanel);
                 }
             }
         }
@@ -105,12 +106,10 @@ public class FileOperations {
         try {
             out.write(("/download" + DELIMETER + (source + File.separator + filename)).getBytes());
             String[] serverAnswer = sourcePanel.getNetworkManager().queryStringListener();
-            if (file.exists()) {
-                delete(new StringBuilder().append(target), filename);
-                file.createNewFile();
-            } else {
-                file.createNewFile();
-            }
+
+                Files.deleteIfExists(Path.of(target + filename));
+                Files.createFile(Path.of(target + filename));
+
             while (true) {
                 if ("/download-ok".equals(serverAnswer[0])) {
                     downloadFileLength = Long.parseLong(serverAnswer[1]);
@@ -119,9 +118,9 @@ public class FileOperations {
             }
             RandomAccessFile randomAccessFile = null;
             FileChannel fileChannel = null;
-            if (downloadFileLength > 0) {
                 out.write(" ".getBytes()); //отправляем для запуска процесса закачки, сервер готов, просто ждет сигнала
                 out.flush();
+            if (downloadFileLength > 0) {
                 randomAccessFile = new RandomAccessFile(file, "rw");
                 fileChannel = randomAccessFile.getChannel();
                 while ((rbc.read(byteBuffer)) > 0) {
