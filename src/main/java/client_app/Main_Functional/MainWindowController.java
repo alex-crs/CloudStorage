@@ -120,7 +120,6 @@ public class MainWindowController implements Initializable {
     //----------------------------------------------------
     private static WorkPanel leftWorkPanel;
     private static WorkPanel rightWorkPanel;
-    public static NumberFormat nf = NumberFormat.getNumberInstance();
     //спрашивать каждый раз при удалении или замене файла
     public static boolean isClarifyEveryTime = true;
     private String root = "c:\\";
@@ -143,16 +142,6 @@ public class MainWindowController implements Initializable {
     //авторизация и статусы подключения
     //----------------------------------------------------
     private StringBuilder nickname = new StringBuilder();
-    private boolean isAuthorized;
-
-    public void setAuthorized(boolean authorized) {
-        this.isAuthorized = authorized;
-
-        if (!isAuthorized) {
-        } else {
-        }
-    }
-    //----------------------------------------------------
 
 
     @Override
@@ -241,6 +230,14 @@ public class MainWindowController implements Initializable {
         }
     }
 
+    public static WorkPanel getLeftWorkPanel() {
+        return leftWorkPanel;
+    }
+
+    public static WorkPanel getRightWorkPanel() {
+        return rightWorkPanel;
+    }
+
     public void connect() {
         try {
             socket = new Socket(ADDRESS, PORT);
@@ -264,7 +261,6 @@ public class MainWindowController implements Initializable {
             Thread netClientThread = new Thread(() -> {
                 String[] serverAnswer = networkManager.queryStringListener();
                 if (!serverAnswer[0].isEmpty() && "/auth-ok".equals(serverAnswer[0])) {
-                    setAuthorized(true);
                     nickname.append(serverAnswer[1].replace("\n", ""));
                     hideAuthFields();
 
@@ -287,7 +283,6 @@ public class MainWindowController implements Initializable {
                             authInfo.setText("Wrong login/password, try again");
                         }
                     });
-//                        }
                 }
             });
             threadManager.execute(netClientThread);

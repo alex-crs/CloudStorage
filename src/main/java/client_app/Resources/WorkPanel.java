@@ -36,6 +36,7 @@ public class WorkPanel {
     int sortType = 1;
     float totalSpace;
     private String root;
+    private String[] queryAnswer;
 
     public float getTotalSpace() {
         return totalSpace;
@@ -184,6 +185,10 @@ public class WorkPanel {
         }
     }
 
+    public String[] getCurrentDirectoryList(){
+        return queryAnswer;
+    }
+
     private void sortByFolders(String[] fileArray) {
         ArrayList<String> folders = new ArrayList<>();
         ArrayList<String> files = new ArrayList<>();
@@ -219,6 +224,9 @@ public class WorkPanel {
                 sumLength = sumLength + file.length();
                 fileChoice++;
             }
+            if (file.exists() && file.isDirectory()) {
+                fileChoice++;
+            }
         }
         float availableSpace = getAvailableSpace();
         return "Выделено объектов " + fileChoice + "." +
@@ -242,9 +250,9 @@ public class WorkPanel {
     private void showLocalDirectory() {
         try {
             File fileDirectory = new File(currentPath.toString());
-            String[] tokens = fileDirectory.list();
-            directorySort(tokens);
-            listViewInitialise(tokens);
+            queryAnswer = fileDirectory.list();
+            directorySort(queryAnswer);
+            listViewInitialise(queryAnswer);
             setLocalPathView();
             listView.setCellFactory(l -> new ListCell<String>() {
                 @Override
@@ -295,9 +303,9 @@ public class WorkPanel {
 
     private void showOnlineDirectory() {
         try {
-            String[] serverAnswer = networkManager.receiveFileList(currentPath);
+            queryAnswer = networkManager.receiveFileList(currentPath);
             setOnlinePathView();
-            listViewInitialise(serverAnswer);
+            listViewInitialise(queryAnswer);
             if (!tempPath.toFile().exists()) {
                 tempPath.toFile().createNewFile();
             }

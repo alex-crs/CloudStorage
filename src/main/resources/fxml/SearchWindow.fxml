@@ -9,7 +9,7 @@
 
 <AnchorPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="client_app.SearchWindow.SearchWindowController">
    <children>
-      <ListView fx:id="searchResult" layoutX="28.0" layoutY="60.0" minHeight="320.0" minWidth="600.0" prefHeight="320.0" prefWidth="600.0" AnchorPane.bottomAnchor="30.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="52.0" />
+      <ListView fx:id="searchResult" layoutX="28.0" layoutY="60.0" minHeight="320.0" minWidth="600.0" onMouseClicked="#mouseEvent" prefHeight="320.0" prefWidth="600.0" AnchorPane.bottomAnchor="30.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="52.0" />
       <Button fx:id="searchBtn" mnemonicParsing="false" onAction="#searchObject" prefHeight="25.0" prefWidth="136.0" text="Search object" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0" />
       <TextField fx:id="searchPath" layoutX="239.0" layoutY="21.0" prefHeight="25.0" prefWidth="355.0" promptText="Search path" AnchorPane.leftAnchor="240.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="25.0" />
       <Button fx:id="cancelBtn" layoutY="29.0" mnemonicParsing="false" onAction="#close" prefHeight="25.0" prefWidth="136.0" text="Cancel" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="25.0" />
