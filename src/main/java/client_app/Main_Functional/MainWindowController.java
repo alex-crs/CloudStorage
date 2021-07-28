@@ -25,7 +25,10 @@ import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileTime;
 import java.text.NumberFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -142,7 +145,8 @@ public class MainWindowController implements Initializable {
     //авторизация и статусы подключения
     //----------------------------------------------------
     private StringBuilder nickname = new StringBuilder();
-    private static long userQuota;
+    private static long remoteAvailableSpace;
+    private static long remoteUserQuota;
 
 
     @Override
@@ -239,6 +243,14 @@ public class MainWindowController implements Initializable {
         return rightWorkPanel;
     }
 
+    public static long getRemoteAvailableSpace() {
+        return remoteAvailableSpace;
+    }
+
+    public static long getRemoteUserQuota() {
+        return remoteUserQuota;
+    }
+
     public void connect() {
         try {
             socket = new Socket(ADDRESS, PORT);
@@ -276,6 +288,9 @@ public class MainWindowController implements Initializable {
                     leftWorkPanel.connectToServer(networkManager);
                     rightWorkPanel.setOnline(true);
                     rightWorkPanel.showDirectory();
+                    String[] userProperties = networkManager.getRemoteSpaceProperties();
+                    remoteAvailableSpace = Long.parseLong(userProperties[1]);
+                    remoteUserQuota = Long.parseLong(userProperties[2]);
                 }
                 if (!serverAnswer[0].isEmpty() && "/auth-no".equals(serverAnswer[0].replace("\n", ""))) {
                     Platform.runLater(new Runnable() {
@@ -308,7 +323,7 @@ public class MainWindowController implements Initializable {
             getCurrentActionCondition(leftWorkPanel, rightWorkPanel);
             rightWorkPanel.clearSelectionFiles();
             leftWorkPanel.addElementsToWorkPanel();
-            spaceCalc.setText(leftWorkPanel.fileLengthView());
+            spaceCalc.setText(leftWorkPanel.objectProperties());
 
         }
         if (mouseEvent.getClickCount() == 2) {
@@ -321,7 +336,7 @@ public class MainWindowController implements Initializable {
             getCurrentActionCondition(rightWorkPanel, leftWorkPanel);
             leftWorkPanel.clearSelectionFiles();
             rightWorkPanel.addElementsToWorkPanel();
-            spaceCalc.setText(rightWorkPanel.fileLengthView());
+            spaceCalc.setText(rightWorkPanel.objectProperties());
         }
         if (mouseEvent.getClickCount() == 2) {
             rightWorkPanel.treeMovement();
@@ -505,19 +520,19 @@ public class MainWindowController implements Initializable {
         }
     }
 
+    public void printTotalOccupiedSpace() {
+        if (leftWorkPanel.getMarkedFileList().size() > 0) { //если выделенные файлы слева
+            leftWorkPanel.folderPropertiesViewer(spaceCalc);
+
+        }
+        if (rightWorkPanel.getMarkedFileList().size() > 0) { //если выделенные файлы справа
+            rightWorkPanel.folderPropertiesViewer(spaceCalc);
+        }
+    }
+
+
 
 }
 
 /*Обнаруженные косяки:
- * 1. при вставке пути вместо имени файла (например C:\path\) выскакивает исключение
- * 2. когда у пользователя в директории ничего нет, ничего не открывается:) надо поправить
- * 3. не забыть при создании файла или папки убирать в окончании пробелы
- * 4. При выравнивании папок (онлайн) появляется кнопка BACK
- * 5. после переименования файла также выскакивает BACK (при этом переименование происходит в локальной директории
- *    а обновляется онлайн директория)*/
-
-/*Что доделать:
- * 1. Размер файла на диске (пока только локально)
- * 2. Доступное место на диске (пока только локально)
- * 3. Сортировка (готово)
- * 4. Ограничить место на диске*/
+ * 1. при вставке пути вместо имени файла (например C:\path\) выскакивает исключение*/

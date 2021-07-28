@@ -42,6 +42,7 @@ public class CommandManager {
             if (transferFileLength == file.length()) {
                 ctx.writeAndFlush(Unpooled.wrappedBuffer(("/status-ok").getBytes()));
                 MainHandler.setWaitAction();
+                getCsUser().setAvailableSpace(availableSpaceCalc(getCsUser().getRoot() + File.separator));
             }
 
             byteBuf.release();
@@ -183,6 +184,27 @@ public class CommandManager {
                 fileArray[i] = files.get(i);
             }
         }
+    }
+
+    public static long availableSpaceCalc(String sourcePath) {
+        long totalSize = 0;
+        File file;
+        File sourceDirectory = new File(sourcePath);
+        if (!sourceDirectory.isFile()) {
+            for (String element : sourceDirectory.list()) {
+                String path = sourcePath + element;
+                file = new File(path);
+                if (file.isFile()) {
+                    totalSize += file.length();
+                }
+                if (file.isDirectory()) {
+                    totalSize += availableSpaceCalc(path + File.separator);
+                }
+            }
+        } else {
+            totalSize += sourceDirectory.length();
+        }
+        return totalSize;
     }
 
 

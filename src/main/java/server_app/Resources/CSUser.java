@@ -5,17 +5,21 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import static server_app.Main_Functional.CommandManager.availableSpaceCalc;
+
 
 //данный класс хранит настройки пользователя и управляет корневыми путями,
 public class CSUser {
     private String root;
     private String userName;
     private StringBuilder currentPath;
-    private long userQuota = 1000000;
+    private long userQuota = 400000000L;
+    private long availableSpace;
 
     public CSUser(String user) {
         currentPath = new StringBuilder();
         root = "server" + File.separator + user;
+        this.availableSpace = availableSpaceCalc(root + File.separator);
         setCurrentPath(root);
         userName = user;
         Path path = Path.of(root);
@@ -26,6 +30,18 @@ public class CSUser {
                 e.printStackTrace();
             }
         }
+    }
+
+    public long getUserQuota() {
+        return userQuota;
+    }
+
+    public long getAvailableSpace() {
+        return availableSpace;
+    }
+
+    public void setAvailableSpace(long availableSpace) {
+        this.availableSpace = availableSpace;
     }
 
     public void setUserName(String userName) {

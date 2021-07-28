@@ -57,7 +57,7 @@
                            <children>
                               <AnchorPane prefHeight="89.0" prefWidth="598.0">
                                  <children>
-                                    <Label fx:id="spaceCalc" layoutX="20.0" layoutY="3.0" prefHeight="74.0" prefWidth="598.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+                                    <Label fx:id="spaceCalc" alignment="CENTER" layoutX="20.0" layoutY="3.0" onMouseClicked="#printTotalOccupiedSpace" prefHeight="74.0" prefWidth="598.0" text="Выберите папку и кликните по этой надписи." textAlignment="CENTER" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
                                  </children>
                               </AnchorPane>
                               <AnchorPane prefHeight="117.0" prefWidth="598.0">

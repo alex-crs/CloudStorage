@@ -20,7 +20,6 @@ public class NetworkManager {
     ExecutorService threadManager;
 
 
-
     public NetworkManager(DataOutputStream out, DataInputStream in, ReadableByteChannel rbc,
                           ByteBuffer byteBuffer, ExecutorService threadManager) {
         this.out = out;
@@ -153,7 +152,7 @@ public class NetworkManager {
         return -1;
     }
 
-    public int sortRemoteObjects(int i){
+    public int sortRemoteObjects(int i) {
         try {
             out.write(("/sort" + DELIMETER + i).getBytes());
             out.flush();
@@ -168,6 +167,19 @@ public class NetworkManager {
         return -1;
     }
 
-
+    public String[] getRemoteSpaceProperties() {
+        try {
+            out.write(("/space").getBytes());
+            out.flush();
+            String[] serverAnswer = queryStringListener();
+            if ("/status-ok".equals(serverAnswer[0])) {
+                LOGGER.info(String.format("Available space received: operation successfully"));
+                return serverAnswer;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 
 }

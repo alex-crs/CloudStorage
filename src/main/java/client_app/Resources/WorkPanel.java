@@ -6,6 +6,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.scene.control.*;
+import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -18,10 +19,16 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileTime;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.regex.Matcher;
+
+import static client_app.Main_Functional.MainWindowController.getRemoteAvailableSpace;
+import static client_app.Main_Functional.MainWindowController.getRemoteUserQuota;
 
 public class WorkPanel {
     private final StringBuilder currentPath;  //текущий локальный путь
@@ -214,6 +221,14 @@ public class WorkPanel {
         }
     }
 
+    public String objectProperties(){
+        if (!isOnline){
+            return fileLengthView();
+        } else {
+            return cloudStorageProperties();
+        }
+    }
+
     public String fileLengthView() {
         File file;
         float sumLength = 0;
@@ -245,6 +260,51 @@ public class WorkPanel {
             return String.format("%.2f Gb", digit / 1000000000L);
         }
         return digit + "bytes";
+    }
+
+    public long getFolderOccupiedSpace(String sourcePath) {
+        long totalSize = 0;
+        File file;
+        File sourceDirectory = new File(sourcePath);
+        if (!sourceDirectory.isFile()) {
+            for (String element : sourceDirectory.list()) {
+                String path = sourcePath + element;
+                file = new File(path);
+                if (file.isFile()) {
+                    totalSize += file.length();
+                }
+                if (file.isDirectory()) {
+                    totalSize += getFolderOccupiedSpace(path + File.separator);
+                }
+            }
+        } else {
+            totalSize += sourceDirectory.length();
+        }
+        return totalSize;
+    }
+
+    public String cloudStorageProperties(){
+        return "CloudStorage: занято - "
+                + spaceToString(getRemoteAvailableSpace())
+                + " из " + spaceToString(getRemoteUserQuota());
+    }
+
+    public void folderPropertiesViewer(Label spaceCalc) {
+        try {
+            String folderPath = getCurrentPath().toString()
+                    + getSelectedFiles().get(0) + File.separator;
+            Path path = Path.of(folderPath);
+            if (path.toFile().isDirectory()) {
+                float totalSize = getFolderOccupiedSpace(folderPath);
+                BasicFileAttributes attr = Files.readAttributes(path, BasicFileAttributes.class);
+                FileTime date = attr.creationTime();
+                SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy");
+                String dateCreated = df.format(date.toMillis());
+                spaceCalc.setText("Размер файлов в папке - " + spaceToString(totalSize) + ", дата изменения: " + dateCreated);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private void showLocalDirectory() {

@@ -39,6 +39,10 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
         csUser = new CSUser(user);
     }
 
+    public static CSUser getCsUser() {
+        return csUser;
+    }
+
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         cause.printStackTrace();
@@ -148,6 +152,13 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
                 case ("/sort"):
                     setSortType(Integer.parseInt(header[1]));
                     ctx.writeAndFlush(Unpooled.wrappedBuffer(("/status-ok").getBytes()));
+                    break;
+                case ("/space"):
+                    ctx.writeAndFlush(Unpooled.wrappedBuffer(
+                            ("/status-ok" +
+                                    DELIMETER + csUser.getAvailableSpace() +
+                                    DELIMETER + csUser.getUserQuota())
+                                    .getBytes()));
                     break;
             }
         }
