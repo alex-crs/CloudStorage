@@ -142,6 +142,7 @@ public class MainWindowController implements Initializable {
     //авторизация и статусы подключения
     //----------------------------------------------------
     private StringBuilder nickname = new StringBuilder();
+    private static long userQuota;
 
 
     @Override

@@ -11,6 +11,7 @@ public class CSUser {
     private String root;
     private String userName;
     private StringBuilder currentPath;
+    private long userQuota = 1000000;
 
     public CSUser(String user) {
         currentPath = new StringBuilder();
@@ -18,7 +19,7 @@ public class CSUser {
         setCurrentPath(root);
         userName = user;
         Path path = Path.of(root);
-        if (!path.toFile().exists()){
+        if (!path.toFile().exists()) {
             try {
                 Files.createDirectories(path);
             } catch (IOException e) {
