@@ -1,5 +1,6 @@
 package client_app.Main_Functional;
 
+import client_app.InfoWindow.InfoWindowStage;
 import client_app.ObjectEditors.RenameWindowStage;
 import client_app.ObjectMakers.MakeFileOrDirStage;
 import client_app.QuestionWindow.QuestionWindowStage;
@@ -25,10 +26,6 @@ import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.FileTime;
-import java.text.NumberFormat;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -145,7 +142,7 @@ public class MainWindowController implements Initializable {
     //авторизация и статусы подключения
     //----------------------------------------------------
     private StringBuilder nickname = new StringBuilder();
-    private static long remoteAvailableSpace;
+    private static long remoteOccupiedSpace;
     private static long remoteUserQuota;
 
 
@@ -243,8 +240,8 @@ public class MainWindowController implements Initializable {
         return rightWorkPanel;
     }
 
-    public static long getRemoteAvailableSpace() {
-        return remoteAvailableSpace;
+    public static long getRemoteOccupiedSpace() {
+        return remoteOccupiedSpace;
     }
 
     public static long getRemoteUserQuota() {
@@ -289,7 +286,7 @@ public class MainWindowController implements Initializable {
                     rightWorkPanel.setOnline(true);
                     rightWorkPanel.showDirectory();
                     String[] userProperties = networkManager.getRemoteSpaceProperties();
-                    remoteAvailableSpace = Long.parseLong(userProperties[1]);
+                    remoteOccupiedSpace = Long.parseLong(userProperties[1]);
                     remoteUserQuota = Long.parseLong(userProperties[2]);
                 }
                 if (!serverAnswer[0].isEmpty() && "/auth-no".equals(serverAnswer[0].replace("\n", ""))) {
@@ -380,7 +377,24 @@ public class MainWindowController implements Initializable {
                 break;
             case COPY_REMOTE:
             case DOWNLOAD:
+                qws = new QuestionWindowStage(sourcePanel, targetPanel, action);
+                qws.setResizable(false);
+                qws.show();
+                break;
             case UPLOAD:
+                long totalSpace = 0;
+                for (String element : sourcePanel.getSelectedFiles()) {
+                    totalSpace += sourcePanel.getFolderOccupiedSpace(sourcePanel.getCurrentPath() + element + File.separator);
+                }
+                if (totalSpace > getRemoteUserQuota() - getRemoteOccupiedSpace()) {
+                    InfoWindowStage iws = new InfoWindowStage("Недостаточно места на диске:\n"
+                            +"Требуется: "+ sourcePanel.spaceToString(totalSpace)
+                            + "\nДоступно: "
+                            + sourcePanel.spaceToString(getRemoteUserQuota() - getRemoteOccupiedSpace()));
+                    iws.setResizable(false);
+                    iws.show();
+                    break;
+                }
                 qws = new QuestionWindowStage(sourcePanel, targetPanel, action);
                 qws.setResizable(false);
                 qws.show();
@@ -529,7 +543,6 @@ public class MainWindowController implements Initializable {
             rightWorkPanel.folderPropertiesViewer(spaceCalc);
         }
     }
-
 
 
 }

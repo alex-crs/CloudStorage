@@ -27,7 +27,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.regex.Matcher;
 
-import static client_app.Main_Functional.MainWindowController.getRemoteAvailableSpace;
+import static client_app.Main_Functional.MainWindowController.getRemoteOccupiedSpace;
 import static client_app.Main_Functional.MainWindowController.getRemoteUserQuota;
 
 public class WorkPanel {
@@ -285,7 +285,7 @@ public class WorkPanel {
 
     public String cloudStorageProperties(){
         return "CloudStorage: занято - "
-                + spaceToString(getRemoteAvailableSpace())
+                + spaceToString(getRemoteOccupiedSpace())
                 + " из " + spaceToString(getRemoteUserQuota());
     }
 
