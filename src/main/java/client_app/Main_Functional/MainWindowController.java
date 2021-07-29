@@ -210,7 +210,7 @@ public class MainWindowController implements Initializable {
                         firstWorkPanel.addElementsToWorkPanel();
                         renameAction();
                     }
-                    if (event.getCode() == KeyCode.F6) {
+                    if (event.getCode() == KeyCode.F6 && !move.isDisable()) {
                         event.consume();
                         firstWorkPanel.addElementsToWorkPanel();
                         moveAction();

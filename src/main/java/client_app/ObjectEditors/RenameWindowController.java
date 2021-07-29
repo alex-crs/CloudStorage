@@ -40,11 +40,11 @@ public class RenameWindowController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         if (action == RENAME) {
-            tokens = getFileName().replace(".", ":").split(":", 2);
+            tokens = getFileName().replace(".", ":").split(":");
         }
         if (action == RENAME_REMOTE) {
             oldName = getFileName().replaceAll(".:", "");
-            tokens = oldName.replace(".", ":").split(":", 2);
+            tokens = oldName.replace(".", ":").split(":");
         }
         if (tokens.length == 1) {
             extension.setVisible(false);
@@ -53,8 +53,8 @@ public class RenameWindowController implements Initializable {
             fileName.setText(tokens[0]);
             fileName.focusedProperty();
         } else {
-            fileName.setText(tokens[0]);
-            extension.setText(tokens[1].replace(":", "."));
+            fileName.setText(getFileName().replaceAll("." + tokens[tokens.length - 1], ""));
+            extension.setText(tokens[tokens.length-1]);
             fileName.focusedProperty();
         }
     }
