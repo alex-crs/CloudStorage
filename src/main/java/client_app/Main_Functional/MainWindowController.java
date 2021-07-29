@@ -10,13 +10,14 @@ import client_app.Resources.WorkPanel;
 import client_app.SearchWindow.SearchWindowStage;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
-import javafx.scene.input.MouseEvent;
+import javafx.scene.input.*;
 import javafx.stage.Stage;
 
 import java.io.*;
@@ -152,6 +153,8 @@ public class MainWindowController implements Initializable {
         rightWorkPanel = new WorkPanel(root, rightList, rightPathView, rightSortBox);
         leftWorkPanel.showDirectory();
         rightWorkPanel.showDirectory();
+        hotKeyListener(leftList, leftWorkPanel, rightWorkPanel);
+        hotKeyListener(rightList, rightWorkPanel, leftWorkPanel);
         copy.setFocusTraversable(false);
         delete.setFocusTraversable(false);
         rename.setFocusTraversable(false);
@@ -161,11 +164,81 @@ public class MainWindowController implements Initializable {
         leftPathView.setFocusTraversable(false);
         rightPathView.setFocusTraversable(false);
         sourceTarget.setFocusTraversable(false);
+        leftSortBox.setFocusTraversable(false);
+        rightSortBox.setFocusTraversable(false);
         authInfo.setVisible(false);
         loginField.setVisible(false);
         passwordField.setVisible(false);
         authEnterButton.setVisible(false);
         authCancelButton.setVisible(false);
+    }
+
+    private void hotKeyListener(ListView<String> listView, WorkPanel firstWorkPanel, WorkPanel secondWorkPanel) {
+        listView.setOnKeyPressed(new EventHandler<KeyEvent>() {
+            final KeyCombination renameComb = new KeyCodeCombination(KeyCode.F6,
+                    KeyCombination.SHIFT_DOWN);
+            final KeyCombination equalCombRight = new KeyCodeCombination(KeyCode.RIGHT,
+                    KeyCombination.CONTROL_DOWN);
+            final KeyCombination equalCombLeft = new KeyCodeCombination(KeyCode.LEFT,
+                    KeyCombination.CONTROL_DOWN);
+
+            @Override
+            public void handle(KeyEvent event) {
+                try {
+                    System.out.println(event);
+                    if (event.getCode() == KeyCode.ENTER) {
+                        event.consume();
+                        firstWorkPanel.treeMovement();
+                    }
+                    if (event.getCode() == KeyCode.BACK_SPACE) {
+                        event.consume();
+                        listView.getSelectionModel().select(0);
+                        firstWorkPanel.treeMovement();
+                    }
+                    if (event.getCode() == KeyCode.F5) {
+                        event.consume();
+                        firstWorkPanel.addElementsToWorkPanel();
+                        copyAction();
+                    }
+                    if (event.getCode() == KeyCode.DELETE) {
+                        event.consume();
+                        firstWorkPanel.addElementsToWorkPanel();
+                        deleteAction();
+                    }
+                    if (renameComb.match(event)) {
+                        event.consume();
+                        firstWorkPanel.addElementsToWorkPanel();
+                        renameAction();
+                    }
+                    if (event.getCode() == KeyCode.F6) {
+                        event.consume();
+                        firstWorkPanel.addElementsToWorkPanel();
+                        moveAction();
+                    }
+                    if (event.getCode() == KeyCode.F7) {
+                        event.consume();
+                        makeDirAction();
+                    }
+                    if (equalCombRight.match(event) || equalCombLeft.match(event)) {
+                        event.consume();
+                        sourceEquallyTarget();
+                    }
+                    if (event.getCode() == KeyCode.DOWN||event.getCode() == KeyCode.UP){
+                        spaceCalc.setText(firstWorkPanel.objectProperties());
+                    }
+                    if (event.getCode() == KeyCode.SPACE){
+                        firstWorkPanel.addElementsToWorkPanel();
+                        printTotalOccupiedSpace();
+                    }
+                    if (event.getCode() == KeyCode.TAB) {
+                        getCurrentActionCondition(secondWorkPanel, firstWorkPanel);
+                        spaceCalc.setText(firstWorkPanel.objectProperties());
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
     }
 
     public void showAuthFields() {
@@ -345,10 +418,10 @@ public class MainWindowController implements Initializable {
      * если выделен в левом окне, то копируем в правое окно
      * Если левое или правое окно подключены к облачному хранилищу, то вместо команды copy(), запускается метод upload*/
     public void copyAction() throws IOException {
-        if (leftWorkPanel.getMarkedFileList().size() > 0) { //если выделенные файлы слева
+        if (leftWorkPanel.getListView().isFocused()) { //если выделенные файлы слева
             prepareAndCopy(leftWorkPanel, rightWorkPanel, copyAction);
         }
-        if (rightWorkPanel.getMarkedFileList().size() > 0) { //если выделенные файлы справа
+        if (rightWorkPanel.getListView().isFocused()) { //если выделенные файлы справа
             prepareAndCopy(rightWorkPanel, leftWorkPanel, copyAction);
         }
     }
@@ -388,7 +461,7 @@ public class MainWindowController implements Initializable {
                 }
                 if (totalSpace > getRemoteUserQuota() - getRemoteOccupiedSpace()) {
                     InfoWindowStage iws = new InfoWindowStage("Недостаточно места на диске:\n"
-                            +"Требуется: "+ sourcePanel.spaceToString(totalSpace)
+                            + "Требуется: " + sourcePanel.spaceToString(totalSpace)
                             + "\nДоступно: "
                             + sourcePanel.spaceToString(getRemoteUserQuota() - getRemoteOccupiedSpace()));
                     iws.setResizable(false);
@@ -403,10 +476,10 @@ public class MainWindowController implements Initializable {
     }
 
     public void deleteAction() throws IOException {
-        if (leftWorkPanel.getMarkedFileList().size() > 0) { //если выделенные файлы слева
+        if (leftWorkPanel.getListView().isFocused()) { //если выделенные файлы слева
             prepareAndDelete(leftWorkPanel, rightWorkPanel, deleteAction);
         }
-        if (rightWorkPanel.getMarkedFileList().size() > 0) { //если выделенные файлы справа
+        if (rightWorkPanel.getListView().isFocused()) { //если выделенные файлы справа
             prepareAndDelete(rightWorkPanel, leftWorkPanel, deleteAction);
         }
     }
@@ -429,10 +502,10 @@ public class MainWindowController implements Initializable {
     }
 
     public void renameAction() {
-        if (leftWorkPanel.getMarkedFileList().size() > 0) { //если выделенные файлы слева
+        if (leftWorkPanel.getListView().isFocused()) { //если выделенные файлы слева
             prepareAndRename(leftWorkPanel, rightWorkPanel, renameAction);
         }
-        if (rightWorkPanel.getMarkedFileList().size() > 0) { //если выделенные файлы справа
+        if (rightWorkPanel.getListView().isFocused()) { //если выделенные файлы справа
             prepareAndRename(rightWorkPanel, leftWorkPanel, renameAction);
         }
     }
@@ -466,14 +539,14 @@ public class MainWindowController implements Initializable {
 
     //перемещает выбранные файлы
     public void moveAction() {
-        if (leftWorkPanel.getMarkedFileList().size() > 0) { //если выделенные файлы слева
+        if (leftWorkPanel.getListView().isFocused()) { //если выделенные файлы слева
             if (!leftWorkPanel.getCurrentPath().toString().equals(rightWorkPanel.getCurrentPath().toString())) {
                 QuestionWindowStage qws = new QuestionWindowStage(leftWorkPanel, rightWorkPanel, moveAction);
                 qws.setResizable(false);
                 qws.show();
             }
         }
-        if (rightWorkPanel.getMarkedFileList().size() > 0) { //если выделенные файлы справа
+        if (rightWorkPanel.getListView().isFocused()) { //если выделенные файлы справа
             if (!leftWorkPanel.getCurrentPath().toString().equals(rightWorkPanel.getCurrentPath().toString())) {
                 QuestionWindowStage qws = new QuestionWindowStage(rightWorkPanel, leftWorkPanel, moveAction);
                 qws.setResizable(false);
@@ -535,11 +608,11 @@ public class MainWindowController implements Initializable {
     }
 
     public void printTotalOccupiedSpace() {
-        if (leftWorkPanel.getMarkedFileList().size() > 0) { //если выделенные файлы слева
+        if (leftWorkPanel.getListView().isFocused()) { //если выделенные файлы слева
             leftWorkPanel.folderPropertiesViewer(spaceCalc);
 
         }
-        if (rightWorkPanel.getMarkedFileList().size() > 0) { //если выделенные файлы справа
+        if (rightWorkPanel.getListView().isFocused()) { //если выделенные файлы справа
             rightWorkPanel.folderPropertiesViewer(spaceCalc);
         }
     }

@@ -55,6 +55,8 @@ public class SearchWindowController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         searchPath.setText(getSearchPathFromPanel());
+        searchResult.setFocusTraversable(false);
+        searchObject.requestFocus();
         fileList = FXCollections.emptyObservableList();
         this.markedElementsListener = searchResult.getSelectionModel();
 
