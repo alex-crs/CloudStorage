@@ -24,6 +24,7 @@ public class StartClient extends Application {
             @Override
             public void handle(WindowEvent event) {
                 MainWindowController controller = mainWindow.getController();
+                controller.clearTempDirectory();
                 controller.disconnect();
             }
         });

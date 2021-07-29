@@ -53,7 +53,8 @@ public class RenameWindowController implements Initializable {
             fileName.setText(tokens[0]);
             fileName.focusedProperty();
         } else {
-            fileName.setText(getFileName().replaceAll("." + tokens[tokens.length - 1], ""));
+            fileName.setText(getFileName().replaceAll(".:", "")
+                    .replaceAll("." + tokens[tokens.length - 1], ""));
             extension.setText(tokens[tokens.length-1]);
             fileName.focusedProperty();
         }

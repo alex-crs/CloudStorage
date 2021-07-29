@@ -401,16 +401,18 @@ public class MainWindowController implements Initializable {
 
     }
 
-    public void disconnect(){
-        threadManager.shutdown();
-        networkManager = null;
-        try {
-            out.close();
-            socket.close();
-            rbc.close();
-            in.close();
-        } catch (IOException e) {
-            e.printStackTrace();
+    public void disconnect() {
+        if (socket != null) {
+            threadManager.shutdown();
+            networkManager = null;
+            try {
+                out.close();
+                socket.close();
+                rbc.close();
+                in.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -647,5 +649,11 @@ public class MainWindowController implements Initializable {
         }
     }
 
-
+    public void clearTempDirectory() {
+        try {
+            delete(new StringBuilder().append(root), "temp");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }

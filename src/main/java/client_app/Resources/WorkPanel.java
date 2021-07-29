@@ -46,6 +46,9 @@ public class WorkPanel {
     private String localRoot;
     private String[] queryAnswer;
 
+    public Path getTempPath() {
+        return tempPath;
+    }
 
     public float getTotalSpace() {
         return totalSpace;
@@ -115,7 +118,8 @@ public class WorkPanel {
         this.markedElementsListener.setSelectionMode(SelectionMode.MULTIPLE);
         try {
             totalSpace = Files.getFileStore(Path.of(localRoot)).getUnallocatedSpace();
-            tempPath = Files.createTempDirectory(Path.of(path + File.separator + "temp"), "");
+            Files.createDirectories(Path.of(path + "temp"));
+            tempPath = Files.createTempDirectory(Path.of(path + "temp"), "");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -393,9 +397,9 @@ public class WorkPanel {
             queryAnswer = networkManager.receiveFileList(currentPath);
             setOnlinePathView();
             listViewInitialise(queryAnswer);
-            if (!tempPath.toFile().exists()) {
-                tempPath.toFile().createNewFile();
-            }
+//            if (!tempPath.toFile().exists()) {
+//                tempPath.toFile().createNewFile();
+//            }
             tempPath.toFile().deleteOnExit();
             listView.setCellFactory(l -> new ListCell<String>() {
                 @Override
