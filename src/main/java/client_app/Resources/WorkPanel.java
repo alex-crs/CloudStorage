@@ -37,13 +37,15 @@ public class WorkPanel {
     private boolean isOnline;
     private ListView<String> listView;
     ChoiceBox<String> sortBox;
+    ChoiceBox<String> pathChoiceBox;
     TextField pathView;
     private NetworkManager networkManager;
     Path tempPath;
     int sortType = 1;
     float totalSpace;
-    private String root;
+    private String localRoot;
     private String[] queryAnswer;
+
 
     public float getTotalSpace() {
         return totalSpace;
@@ -76,6 +78,15 @@ public class WorkPanel {
     public void setOnline(boolean online) {
         isOnline = online;
         setCurrentPath("");
+        pathChoiceBox.setValue("Переключиться на");
+        showDirectory();
+    }
+
+    public void setOffline() {
+        isOnline = false;
+        setCurrentPath(localRoot);
+        pathChoiceBox.setValue("Переключиться на");
+        showDirectory();
     }
 
     public boolean isOnline() {
@@ -90,23 +101,27 @@ public class WorkPanel {
         }
     }
 
-    public WorkPanel(String path, ListView<String> listView, TextField pathView, ChoiceBox<String> sortBox) {
-        this.root = path;
+    public WorkPanel(String path, ListView<String> listView, TextField pathView, ChoiceBox<String> sortBox, ChoiceBox<String> pathChoiceBox) {
+        this.localRoot = path;
         this.isOnline = false;
         this.pathView = pathView;
         this.listView = listView;
         this.sortBox = sortBox;
+        this.pathChoiceBox = pathChoiceBox;
         this.currentPath = new StringBuilder();
         currentPath.append(path);
         this.markedFileList = FXCollections.emptyObservableList();
         this.markedElementsListener = listView.getSelectionModel();
         this.markedElementsListener.setSelectionMode(SelectionMode.MULTIPLE);
         try {
-            totalSpace = Files.getFileStore(Path.of(root)).getUnallocatedSpace();
+            totalSpace = Files.getFileStore(Path.of(localRoot)).getUnallocatedSpace();
             tempPath = Files.createTempDirectory(Path.of(path + File.separator + "temp"), "");
         } catch (IOException e) {
             e.printStackTrace();
         }
+        pathChoiceBox.getItems().add("Локальный каталог");
+        pathChoiceBox.getItems().add("Переключиться на");
+        pathChoiceBox.setValue("Переключиться на");
         sortBox.getItems().add("Прямая по имени");  //Тип 1
         sortBox.getItems().add("Обратная по имени"); //Тип 2
         sortBox.getItems().add("Прямая по типу объекта"); //Тип 3
@@ -125,6 +140,14 @@ public class WorkPanel {
             }
             if ("Обратная по типу объекта".equals(sortBox.getSelectionModel().getSelectedItem())) {
                 setSortType(4);
+            }
+        }));
+        pathChoiceBox.setOnAction((event -> {
+            if ("Локальный каталог".equals(pathChoiceBox.getSelectionModel().getSelectedItem())){
+                setOffline();
+            }
+            if ("Удаленный каталог".equals(pathChoiceBox.getSelectionModel().getSelectedItem())){
+                setOnline(true);
             }
         }));
     }
@@ -150,10 +173,14 @@ public class WorkPanel {
         });
     }
 
+    public void addOnlinePathToPathChoiceBox(){
+        pathChoiceBox.getItems().add("Удаленный каталог");
+    }
+
     public float getAvailableSpace() {
         try {
             if (!isOnline) {
-                totalSpace = Files.getFileStore(Path.of(root)).getUnallocatedSpace();
+                totalSpace = Files.getFileStore(Path.of(localRoot)).getUnallocatedSpace();
             } else {
 
             }
@@ -192,7 +219,7 @@ public class WorkPanel {
         }
     }
 
-    public String[] getCurrentDirectoryList(){
+    public String[] getCurrentDirectoryList() {
         return queryAnswer;
     }
 
@@ -221,8 +248,8 @@ public class WorkPanel {
         }
     }
 
-    public String objectProperties(){
-        if (!isOnline){
+    public String objectProperties() {
+        if (!isOnline) {
             return fileLengthView();
         } else {
             return cloudStorageProperties();
@@ -283,7 +310,7 @@ public class WorkPanel {
         return totalSize;
     }
 
-    public String cloudStorageProperties(){
+    public String cloudStorageProperties() {
         return "CloudStorage: занято - "
                 + spaceToString(getRemoteOccupiedSpace())
                 + " из " + spaceToString(getRemoteUserQuota());
@@ -415,7 +442,7 @@ public class WorkPanel {
                             tempElement.toFile().delete();
                         }
                     } catch (Exception e) {
-                        e.printStackTrace();
+
                     }
                 }
             });

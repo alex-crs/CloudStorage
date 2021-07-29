@@ -93,7 +93,16 @@ public class MainWindowController implements Initializable {
     ChoiceBox<String> rightSortBox;
 
     @FXML
+    ChoiceBox<String> leftPathChoice;
+
+    @FXML
+    ChoiceBox<String> rightPathChoice;
+
+    @FXML
     Label spaceCalc;
+
+    @FXML
+    Menu menuConnect;
 
     Stage stage;
     //----------------------------------------------------
@@ -149,8 +158,8 @@ public class MainWindowController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        leftWorkPanel = new WorkPanel(root, leftList, leftPathView, leftSortBox);
-        rightWorkPanel = new WorkPanel(root, rightList, rightPathView, rightSortBox);
+        leftWorkPanel = new WorkPanel(root, leftList, leftPathView, leftSortBox, leftPathChoice);
+        rightWorkPanel = new WorkPanel(root, rightList, rightPathView, rightSortBox, rightPathChoice);
         leftWorkPanel.showDirectory();
         rightWorkPanel.showDirectory();
         hotKeyListener(leftList, leftWorkPanel, rightWorkPanel);
@@ -166,6 +175,8 @@ public class MainWindowController implements Initializable {
         sourceTarget.setFocusTraversable(false);
         leftSortBox.setFocusTraversable(false);
         rightSortBox.setFocusTraversable(false);
+        leftPathChoice.setFocusTraversable(false);
+        rightPathChoice.setFocusTraversable(false);
         authInfo.setVisible(false);
         loginField.setVisible(false);
         passwordField.setVisible(false);
@@ -185,7 +196,6 @@ public class MainWindowController implements Initializable {
             @Override
             public void handle(KeyEvent event) {
                 try {
-                    System.out.println(event);
                     if (event.getCode() == KeyCode.ENTER) {
                         event.consume();
                         firstWorkPanel.treeMovement();
@@ -223,10 +233,10 @@ public class MainWindowController implements Initializable {
                         event.consume();
                         sourceEquallyTarget();
                     }
-                    if (event.getCode() == KeyCode.DOWN||event.getCode() == KeyCode.UP){
+                    if (event.getCode() == KeyCode.DOWN || event.getCode() == KeyCode.UP) {
                         spaceCalc.setText(firstWorkPanel.objectProperties());
                     }
-                    if (event.getCode() == KeyCode.SPACE){
+                    if (event.getCode() == KeyCode.SPACE) {
                         firstWorkPanel.addElementsToWorkPanel();
                         printTotalOccupiedSpace();
                     }
@@ -356,11 +366,10 @@ public class MainWindowController implements Initializable {
                     byteBuffer.clear();
                     rightWorkPanel.connectToServer(networkManager);
                     leftWorkPanel.connectToServer(networkManager);
+                    rightWorkPanel.addOnlinePathToPathChoiceBox();
+                    leftWorkPanel.addOnlinePathToPathChoiceBox();
                     rightWorkPanel.setOnline(true);
-                    rightWorkPanel.showDirectory();
-                    String[] userProperties = networkManager.getRemoteSpaceProperties();
-                    remoteOccupiedSpace = Long.parseLong(userProperties[1]);
-                    remoteUserQuota = Long.parseLong(userProperties[2]);
+                    getCloudStorageProperties(); //получает информацию о облаке (доступное место на диске)
                 }
                 if (!serverAnswer[0].isEmpty() && "/auth-no".equals(serverAnswer[0].replace("\n", ""))) {
                     Platform.runLater(new Runnable() {
@@ -375,13 +384,34 @@ public class MainWindowController implements Initializable {
             byteBuffer.clear();
             out.flush();
         } catch (IOException e) {
+            threadManager.shutdown();
             e.printStackTrace();
         }
     }
 
+    public void getCloudStorageProperties() {
+        String[] userProperties = networkManager.getRemoteSpaceProperties();
+        remoteOccupiedSpace = Long.parseLong(userProperties[1]);
+        remoteUserQuota = Long.parseLong(userProperties[2]);
+    }
 
-    public void disconnect() {
+
+    public void cancelConnect() {
         hideAuthFields();
+
+    }
+
+    public void disconnect(){
+        threadManager.shutdown();
+        networkManager = null;
+        try {
+            out.close();
+            socket.close();
+            rbc.close();
+            in.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     //--------------------------------------------------------------------------------
@@ -619,6 +649,3 @@ public class MainWindowController implements Initializable {
 
 
 }
-
-/*Обнаруженные косяки:
- * 1. при вставке пути вместо имени файла (например C:\path\) выскакивает исключение*/

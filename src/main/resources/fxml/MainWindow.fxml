@@ -39,7 +39,7 @@
                               <PasswordField fx:id="passwordField" layoutX="28.0" layoutY="131.0" onAction="#authorisation" promptText="password" AnchorPane.leftAnchor="30.0" AnchorPane.rightAnchor="30.0" AnchorPane.topAnchor="130.0" />
                               <Label fx:id="authInfo" layoutX="28.0" layoutY="68.0" text="Enter login and password" AnchorPane.leftAnchor="30.0" AnchorPane.topAnchor="65.0" />
                               <Button fx:id="authEnterButton" layoutX="28.0" layoutY="166.0" mnemonicParsing="false" onAction="#authorisation" prefHeight="25.0" prefWidth="149.0" text="Enter" AnchorPane.leftAnchor="30.0" AnchorPane.rightAnchor="30.0" AnchorPane.topAnchor="170.0" />
-                              <Button fx:id="authCancelButton" layoutX="28.0" layoutY="204.0" mnemonicParsing="false" onAction="#disconnect" prefHeight="25.0" prefWidth="149.0" text="Cancel" AnchorPane.leftAnchor="30.0" AnchorPane.rightAnchor="30.0" AnchorPane.topAnchor="210.0" />
+                              <Button fx:id="authCancelButton" layoutX="28.0" layoutY="204.0" mnemonicParsing="false" onAction="#cancelConnect" prefHeight="25.0" prefWidth="149.0" text="Cancel" AnchorPane.leftAnchor="30.0" AnchorPane.rightAnchor="30.0" AnchorPane.topAnchor="210.0" />
                            </children>
                         </AnchorPane>
                     </items>
@@ -62,7 +62,7 @@
                               </AnchorPane>
                               <AnchorPane prefHeight="117.0" prefWidth="598.0">
                                  <children>
-                                    <ChoiceBox fx:id="leftSortBox" layoutY="1.0" prefWidth="150.0" />
+                                    <ChoiceBox fx:id="leftSortBox" prefWidth="150.0" />
                                     <ChoiceBox fx:id="rightSortBox" prefWidth="150.0" AnchorPane.rightAnchor="0.0" />
                                     <Button fx:id="copy" layoutX="67.0" layoutY="26.0" mnemonicParsing="false" onAction="#copyAction" prefHeight="25.0" prefWidth="67.0" text="Copy F5" AnchorPane.leftAnchor="67.0" />
                                     <Button fx:id="delete" layoutX="320.0" layoutY="26.0" mnemonicParsing="false" onAction="#deleteAction" prefHeight="25.0" prefWidth="78.0" text="Delete DEL" />
@@ -71,6 +71,8 @@
                                     <Button fx:id="move" layoutX="253.0" layoutY="26.0" mnemonicParsing="false" onAction="#moveAction" prefHeight="25.0" prefWidth="67.0" text="Move F6" AnchorPane.leftAnchor="253.0" />
                                     <Button fx:id="sourceTarget" layoutX="408.0" layoutY="26.0" mnemonicParsing="false" onAction="#sourceEquallyTarget" text="L=R ctrl+&lt;&gt;" AnchorPane.leftAnchor="490.0" AnchorPane.rightAnchor="0.0" />
                                     <Button fx:id="searchBtn" layoutY="26.0" mnemonicParsing="false" onAction="#searchWindow" text="Search F4" />
+                                    <ChoiceBox fx:id="leftPathChoice" layoutX="150.0" prefWidth="150.0" />
+                                    <ChoiceBox fx:id="rightPathChoice" layoutX="300.0" prefWidth="150.0" />
                                  </children>
                               </AnchorPane>
                            </children>
@@ -80,14 +82,14 @@
                </children></AnchorPane>
         </items>
       </SplitPane>
-      <MenuBar layoutY="2.0" maxHeight="-Infinity" minHeight="-Infinity" prefHeight="25.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+      <MenuBar fx:id="menuBar" layoutY="2.0" maxHeight="-Infinity" minHeight="-Infinity" prefHeight="25.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
         <menus>
           <Menu mnemonicParsing="false" text="File">
             <items>
               <MenuItem mnemonicParsing="false" text="Close" />
             </items>
           </Menu>
-          <Menu mnemonicParsing="false" text="Connect">
+          <Menu fx:id="menuConnect" mnemonicParsing="false" text="Connect">
             <items>
               <MenuItem fx:id="connectToServer" mnemonicParsing="false" onAction="#showAuthFields" text="Connect to server" />
                   <MenuItem mnemonicParsing="false" onAction="#registration" text="Registration" />
