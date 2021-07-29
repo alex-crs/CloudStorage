@@ -31,6 +31,9 @@ public class CSUser {
             }
         }
     }
+    public void calcAvailableSpace(){
+        this.availableSpace = availableSpaceCalc(root + File.separator);
+    }
 
     public long getUserQuota() {
         return userQuota;

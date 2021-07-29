@@ -119,6 +119,7 @@ public class QuestionWindowController implements Initializable {
                         sourcePanel.showDirectory();
                         targetPanel.showDirectory();
                     }
+                    sourcePanel.getNetworkManager().getCloudStorageProperties();
                     closeButton();
                     break;
                 case DELETE:
@@ -147,6 +148,7 @@ public class QuestionWindowController implements Initializable {
                         sourcePanel.showDirectory();
                         targetPanel.showDirectory();
                     }
+                    sourcePanel.getNetworkManager().getCloudStorageProperties();
                     closeButton();
                     break;
                 case UPLOAD:
@@ -165,6 +167,7 @@ public class QuestionWindowController implements Initializable {
                         targetPanel.showDirectory();
                     }
                     updateAllFilesLists();
+                    sourcePanel.getNetworkManager().getCloudStorageProperties();
                     closeButton();
                     break;
                 case DOWNLOAD:

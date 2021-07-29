@@ -182,4 +182,10 @@ public class NetworkManager {
         return null;
     }
 
+    public void getCloudStorageProperties() {
+        String[] userProperties = getRemoteSpaceProperties();
+        MainWindowController.remoteOccupiedSpace = Long.parseLong(userProperties[1]);
+        MainWindowController.remoteUserQuota = Long.parseLong(userProperties[2]);
+
+    }
 }

@@ -154,6 +154,7 @@ public class MainHandler extends ChannelInboundHandlerAdapter {
                     ctx.writeAndFlush(Unpooled.wrappedBuffer(("/status-ok").getBytes()));
                     break;
                 case ("/space"):
+                    csUser.calcAvailableSpace();
                     ctx.writeAndFlush(Unpooled.wrappedBuffer(
                             ("/status-ok" +
                                     DELIMETER + csUser.getAvailableSpace() +

@@ -152,9 +152,12 @@ public class MainWindowController implements Initializable {
     //авторизация и статусы подключения
     //----------------------------------------------------
     private StringBuilder nickname = new StringBuilder();
-    private static long remoteOccupiedSpace;
-    private static long remoteUserQuota;
+    public static long remoteOccupiedSpace;
+    public static long remoteUserQuota;
 
+    public static void setRemoteOccupiedSpace(long remoteOccupiedSpace) {
+        MainWindowController.remoteOccupiedSpace = remoteOccupiedSpace;
+    }
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
@@ -196,6 +199,10 @@ public class MainWindowController implements Initializable {
             @Override
             public void handle(KeyEvent event) {
                 try {
+                    if (event.getCode() == KeyCode.F4) {
+                        event.consume();
+                        searchWindow();
+                    }
                     if (event.getCode() == KeyCode.ENTER) {
                         event.consume();
                         firstWorkPanel.treeMovement();
@@ -238,10 +245,15 @@ public class MainWindowController implements Initializable {
                     }
                     if (event.getCode() == KeyCode.SPACE) {
                         firstWorkPanel.addElementsToWorkPanel();
+                        firstWorkPanel.getNetworkManager().getCloudStorageProperties();
                         printTotalOccupiedSpace();
                     }
                     if (event.getCode() == KeyCode.TAB) {
-                        getCurrentActionCondition(secondWorkPanel, firstWorkPanel);
+                        if (firstWorkPanel.getListView().isFocused()) {
+                            getCurrentActionCondition(firstWorkPanel, secondWorkPanel);
+                        } else {
+                            getCurrentActionCondition(secondWorkPanel, firstWorkPanel);
+                        }
                         spaceCalc.setText(firstWorkPanel.objectProperties());
                     }
                 } catch (IOException e) {
@@ -369,7 +381,7 @@ public class MainWindowController implements Initializable {
                     rightWorkPanel.addOnlinePathToPathChoiceBox();
                     leftWorkPanel.addOnlinePathToPathChoiceBox();
                     rightWorkPanel.setOnline(true);
-                    getCloudStorageProperties(); //получает информацию о облаке (доступное место на диске)
+                    networkManager.getCloudStorageProperties(); //получает информацию о облаке (доступное место на диске)
                 }
                 if (!serverAnswer[0].isEmpty() && "/auth-no".equals(serverAnswer[0].replace("\n", ""))) {
                     Platform.runLater(new Runnable() {
@@ -389,11 +401,6 @@ public class MainWindowController implements Initializable {
         }
     }
 
-    public void getCloudStorageProperties() {
-        String[] userProperties = networkManager.getRemoteSpaceProperties();
-        remoteOccupiedSpace = Long.parseLong(userProperties[1]);
-        remoteUserQuota = Long.parseLong(userProperties[2]);
-    }
 
 
     public void cancelConnect() {
@@ -487,6 +494,7 @@ public class MainWindowController implements Initializable {
                 qws.show();
                 break;
             case UPLOAD:
+                sourcePanel.getNetworkManager().getCloudStorageProperties();
                 long totalSpace = 0;
                 for (String element : sourcePanel.getSelectedFiles()) {
                     totalSpace += sourcePanel.getFolderOccupiedSpace(sourcePanel.getCurrentPath() + element + File.separator);
