@@ -16,7 +16,7 @@ public class StartClient extends Application {
         FXMLLoader mainWindow = new FXMLLoader(getClass().getResource("/fxml/MainWindow.fxml"));
         Parent main = mainWindow.load();
         primaryStage.setResizable(false);
-        primaryStage.setScene(new Scene(main, 600, 500));
+        primaryStage.setScene(new Scene(main, 915, 650));
         primaryStage.show();
         primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
             @Override

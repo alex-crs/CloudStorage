@@ -9,31 +9,33 @@
 <?import javafx.scene.control.MenuBar?>
 <?import javafx.scene.control.MenuItem?>
 <?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.ProgressBar?>
 <?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.ToolBar?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.VBox?>
 
-<AnchorPane prefHeight="500.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Main_Functional.MainWindowController">
+<AnchorPane prefHeight="650.0" prefWidth="915.0" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Main_Functional.MainWindowController">
    <children>
-      <SplitPane dividerPositions="0.8456659619450317" layoutX="246.0" layoutY="94.0" orientation="VERTICAL" prefHeight="400.0" prefWidth="600.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="25.0">
+      <SplitPane dividerPositions="0.8456659619450317" layoutX="246.0" layoutY="94.0" orientation="VERTICAL" prefHeight="400.0" prefWidth="600.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="65.0">
         <items>
           <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="100.0" prefWidth="160.0">
                <children>
                   <SplitPane dividerPositions="0.4848993288590604" layoutX="199.0" layoutY="69.0" prefHeight="356.0" prefWidth="598.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                     <items>
-                      <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="160.0" prefWidth="100.0">
+                      <AnchorPane minHeight="160.0" minWidth="460.0" prefHeight="160.0" prefWidth="460.0">
                            <children>
                               <ListView fx:id="leftList" layoutX="43.0" layoutY="59.0" onMouseClicked="#leftEvent" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="25.0" />
                               <TextField fx:id="leftPathView" editable="false" layoutY="2.0" prefHeight="25.0" prefWidth="286.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
                            </children>
                         </AnchorPane>
-                      <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="238.0" prefWidth="304.0">
+                      <AnchorPane minHeight="0.0" minWidth="460.0" prefHeight="465.0" prefWidth="460.0">
                            <opaqueInsets>
                               <Insets />
                            </opaqueInsets>
                            <children>
-                              <ListView fx:id="rightList" layoutX="35.0" layoutY="61.0" onMouseClicked="#rightEvent" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="25.0" />
+                              <ListView fx:id="rightList" layoutX="12.0" layoutY="61.0" onMouseClicked="#rightEvent" prefHeight="440.0" prefWidth="454.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="25.0" />
                               <TextField fx:id="rightPathView" editable="false" layoutX="3.0" layoutY="2.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
                               <TextField fx:id="loginField" layoutX="28.0" layoutY="93.0" onAction="#authorisation" promptText="login" AnchorPane.leftAnchor="30.0" AnchorPane.rightAnchor="30.0" AnchorPane.topAnchor="90.0" />
                               <PasswordField fx:id="passwordField" layoutX="28.0" layoutY="131.0" onAction="#authorisation" promptText="password" AnchorPane.leftAnchor="30.0" AnchorPane.rightAnchor="30.0" AnchorPane.topAnchor="130.0" />
@@ -62,17 +64,18 @@
                               </AnchorPane>
                               <AnchorPane prefHeight="117.0" prefWidth="598.0">
                                  <children>
-                                    <ChoiceBox fx:id="leftSortBox" prefWidth="150.0" />
-                                    <ChoiceBox fx:id="rightSortBox" prefWidth="150.0" AnchorPane.rightAnchor="0.0" />
-                                    <Button fx:id="copy" layoutX="67.0" layoutY="26.0" mnemonicParsing="false" onAction="#copyAction" prefHeight="25.0" prefWidth="67.0" text="Copy F5" AnchorPane.leftAnchor="67.0" />
-                                    <Button fx:id="delete" layoutX="320.0" layoutY="26.0" mnemonicParsing="false" onAction="#deleteAction" prefHeight="25.0" prefWidth="78.0" text="Delete DEL" />
-                                    <Button fx:id="rename" layoutX="134.0" layoutY="26.0" mnemonicParsing="false" onAction="#renameAction" prefHeight="25.0" prefWidth="119.0" text="Rename SHIFT+F6" />
-                                    <Button fx:id="newButton" layoutX="398.0" layoutY="26.0" mnemonicParsing="false" onAction="#makeDirAction" text="New object F7" />
-                                    <Button fx:id="move" layoutX="253.0" layoutY="26.0" mnemonicParsing="false" onAction="#moveAction" prefHeight="25.0" prefWidth="67.0" text="Move F6" AnchorPane.leftAnchor="253.0" />
-                                    <Button fx:id="sourceTarget" layoutX="408.0" layoutY="26.0" mnemonicParsing="false" onAction="#sourceEquallyTarget" text="L=R ctrl+&lt;&gt;" AnchorPane.leftAnchor="490.0" AnchorPane.rightAnchor="0.0" />
-                                    <Button fx:id="searchBtn" layoutY="26.0" mnemonicParsing="false" onAction="#searchWindow" text="Search F4" />
-                                    <ChoiceBox fx:id="leftPathChoice" layoutX="150.0" prefWidth="150.0" />
-                                    <ChoiceBox fx:id="rightPathChoice" layoutX="300.0" prefWidth="150.0" />
+                                    <ToolBar layoutY="5.0" prefHeight="40.0" prefWidth="900.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="5.0">
+                                       <items>
+                                          <Button fx:id="searchBtn" mnemonicParsing="false" onAction="#searchWindow" prefWidth="125.0" text="Search F4" />
+                                          <Button fx:id="copy" mnemonicParsing="false" onAction="#copyAction" prefHeight="25.0" prefWidth="125.0" text="Copy F5" />
+                                          <Button fx:id="rename" mnemonicParsing="false" onAction="#renameAction" prefHeight="25.0" prefWidth="125.0" text="Rename SHIFT+F6" />
+                                          <Button fx:id="move" mnemonicParsing="false" onAction="#moveAction" prefHeight="25.0" prefWidth="125.0" text="Move F6" />
+                                          <Button fx:id="delete" mnemonicParsing="false" onAction="#deleteAction" prefWidth="125.0" text="Delete DEL" />
+                                          <Button fx:id="newButton" mnemonicParsing="false" onAction="#makeDirAction" prefHeight="25.0" prefWidth="125.0" text="New object F7" />
+                                          <Button fx:id="sourceTarget" mnemonicParsing="false" onAction="#sourceEquallyTarget" prefHeight="25.0" prefWidth="125.0" text="L=R ctrl+&lt;&gt;" />
+                                       </items>
+                                    </ToolBar>
+                                    <ProgressBar layoutY="48.0" prefHeight="18.0" prefWidth="913.0" progress="0.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="45.0" />
                                  </children>
                               </AnchorPane>
                            </children>
@@ -102,5 +105,13 @@
           </Menu>
         </menus>
       </MenuBar>
+      <ToolBar layoutY="38.0" prefHeight="40.0" prefWidth="913.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="25.0">
+         <items>
+            <ChoiceBox fx:id="leftPathChoice" prefWidth="227.0" />
+            <ChoiceBox fx:id="leftSortBox" prefHeight="25.0" prefWidth="217.0" />
+            <ChoiceBox fx:id="rightSortBox" prefHeight="25.0" prefWidth="217.0" />
+            <ChoiceBox fx:id="rightPathChoice" prefWidth="229.0" />
+         </items>
+      </ToolBar>
    </children>
 </AnchorPane>
