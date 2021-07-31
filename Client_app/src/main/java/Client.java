@@ -7,7 +7,7 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
-public class StartClient extends Application {
+public class Client extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
         primaryStage.setMinWidth(600);

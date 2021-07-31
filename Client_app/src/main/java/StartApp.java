@@ -1,5 +1,5 @@
 public class StartApp {
     public static void main(String[] args) {
-        StartClient.main(args);
+        Client.main(args);
     }
 }
