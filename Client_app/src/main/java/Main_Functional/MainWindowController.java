@@ -244,8 +244,11 @@ public class MainWindowController implements Initializable {
                         spaceCalc.setText(firstWorkPanel.objectProperties());
                     }
                     if (event.getCode() == KeyCode.SPACE) {
-                        firstWorkPanel.addElementsToWorkPanel();
-                        firstWorkPanel.getNetworkManager().getCloudStorageProperties();
+                        if (!firstWorkPanel.isOnline()) {
+                            firstWorkPanel.addElementsToWorkPanel();
+                        } else {
+                            firstWorkPanel.getNetworkManager().getCloudStorageProperties();
+                        }
                         printTotalOccupiedSpace();
                     }
                     if (event.getCode() == KeyCode.TAB) {
@@ -400,7 +403,6 @@ public class MainWindowController implements Initializable {
             e.printStackTrace();
         }
     }
-
 
 
     public void cancelConnect() {

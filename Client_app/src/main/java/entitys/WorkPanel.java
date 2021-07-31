@@ -81,14 +81,14 @@ public class WorkPanel {
     public void setOnline(boolean online) {
         isOnline = online;
         setCurrentPath("");
-        pathChoiceBox.setValue("Переключиться на");
+        pathChoiceBox.setValue("Переключить текущий каталог");
         showDirectory();
     }
 
     public void setOffline() {
         isOnline = false;
         setCurrentPath(localRoot);
-        pathChoiceBox.setValue("Переключиться на");
+        pathChoiceBox.setValue("Переключить текущий каталог");
         showDirectory();
     }
 
@@ -124,25 +124,25 @@ public class WorkPanel {
             e.printStackTrace();
         }
         pathChoiceBox.getItems().add("Локальный каталог");
-        pathChoiceBox.getItems().add("Переключиться на");
-        pathChoiceBox.setValue("Переключиться на");
-        sortBox.getItems().add("Прямая по имени");  //Тип 1
-        sortBox.getItems().add("Обратная по имени"); //Тип 2
-        sortBox.getItems().add("Прямая по типу объекта"); //Тип 3
-        sortBox.getItems().add("Обратная по типу объекта"); //Тип 4
-        sortBox.setValue("Прямая по имени");
+        pathChoiceBox.getItems().add("Переключить текущий каталог");
+        pathChoiceBox.setValue("Переключить текущий каталог");
+        sortBox.getItems().add("Сортировка: ↑ по имени");  //Тип 1
+        sortBox.getItems().add("Сортировка: ↓ по имени"); //Тип 2
+        sortBox.getItems().add("Сортировка: ↑ по типу объекта"); //Тип 3
+        sortBox.getItems().add("Сортировка: ↓ по типу объекта"); //Тип 4
+        sortBox.setValue("Сортировка: ↑ по имени");
 
         sortBox.setOnAction((event -> {
-            if ("Прямая по имени".equals(sortBox.getSelectionModel().getSelectedItem())) {
+            if ("Сортировка: ↑ по имени".equals(sortBox.getSelectionModel().getSelectedItem())) {
                 setSortType(1);
             }
-            if ("Обратная по имени".equals(sortBox.getSelectionModel().getSelectedItem())) {
+            if ("Сортировка: ↓ по имени".equals(sortBox.getSelectionModel().getSelectedItem())) {
                 setSortType(2);
             }
-            if ("Прямая по типу объекта".equals(sortBox.getSelectionModel().getSelectedItem())) {
+            if ("Сортировка: ↑ по типу объекта".equals(sortBox.getSelectionModel().getSelectedItem())) {
                 setSortType(3);
             }
-            if ("Обратная по типу объекта".equals(sortBox.getSelectionModel().getSelectedItem())) {
+            if ("Сортировка: ↓ по типу объекта".equals(sortBox.getSelectionModel().getSelectedItem())) {
                 setSortType(4);
             }
         }));
