@@ -104,6 +104,9 @@ public class MainWindowController implements Initializable {
     @FXML
     Menu menuConnect;
 
+    @FXML
+    ProgressBar progressBar;
+
     Stage stage;
     //----------------------------------------------------
 

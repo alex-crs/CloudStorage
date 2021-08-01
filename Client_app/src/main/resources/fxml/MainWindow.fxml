@@ -75,7 +75,7 @@
                                           <Button fx:id="sourceTarget" mnemonicParsing="false" onAction="#sourceEquallyTarget" prefHeight="25.0" prefWidth="125.0" text="L=R ctrl+&lt;&gt;" />
                                        </items>
                                     </ToolBar>
-                                    <ProgressBar layoutY="48.0" prefHeight="18.0" prefWidth="913.0" progress="0.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="45.0" />
+                                    <ProgressBar fx:id="progressBar" layoutY="48.0" prefHeight="18.0" prefWidth="913.0" progress="0.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="45.0" />
                                  </children>
                               </AnchorPane>
                            </children>

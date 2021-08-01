@@ -191,14 +191,17 @@ public class CommandManager {
         File file;
         File sourceDirectory = new File(sourcePath);
         if (!sourceDirectory.isFile()) {
-            for (String element : sourceDirectory.list()) {
-                String path = sourcePath + element;
-                file = new File(path);
-                if (file.isFile()) {
-                    totalSize += file.length();
-                }
-                if (file.isDirectory()) {
-                    totalSize += availableSpaceCalc(path + File.separator);
+            String[] sourceDirectoryFilesList = sourceDirectory.list();
+            if (sourceDirectoryFilesList != null && sourceDirectoryFilesList.length != 0) {
+                for (String element : sourceDirectoryFilesList) {
+                    String path = sourcePath + element;
+                    file = new File(path);
+                    if (file.isFile()) {
+                        totalSize += file.length();
+                    }
+                    if (file.isDirectory()) {
+                        totalSize += availableSpaceCalc(path + File.separator);
+                    }
                 }
             }
         } else {
